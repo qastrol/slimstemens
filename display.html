@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <title>De Slimste Mens - Display</title>
+    <link rel="stylesheet" href="css/display.css">
+  <link rel="stylesheet" href="css/display-collectief.css">
+</head>
+<body>
+    <!-- 🎬 SCENE 1: Geen verbinding -->
+    <div id="scene-no-connection" class="scene">
+        <div class="initial-title-bar">
+            de slimste mens
+            <img src="assets/slimstemens.png" alt="Het Slimste Mens logo">
+            van twitch
+        </div>
+        <div class="status-text">Geen verbinding met de quizserver.</div>
+        <div class="hint-text">Controleer of de host-tool geopend is.</div>
+    </div>
+
+    <!-- 🎬 SCENE 2: Verbonden met server -->
+    <div id="scene-waiting-host" class="scene">
+        <div class="initial-title-bar">
+            de slimste mens
+            <img src="assets/slimstemens.png" alt="logo">
+            van twitch
+        </div>
+        <div class="status-text">Verbonden met server</div>
+        <div class="hint-text">Wacht op verbinding met host-dashboard...</div>
+    </div>
+
+    <!-- 🎬 SCENE 3: Wachten op spel -->
+    <div id="scene-waiting-game" class="scene">
+        <div class="initial-title-bar">
+            de slimste mens
+            <img src="assets/slimstemens.png" alt="logo">
+            van twitch
+        </div>
+        <div class="screen-title">Wachten op nieuw spel...</div>
+        <div class="small-text">De host kan via "Maak spel" een nieuw spel starten.</div>
+    </div>
+
+    <!-- 🎬 SCENE 4: Lobby -->
+    <div id="scene-lobby" class="scene">
+        <div class="initial-title-bar">
+            de slimste mens
+            <img src="assets/slimstemens.png" alt="logo">
+            van twitch
+        </div>
+        <div id="lobbyPlayerImages"></div>
+    </div>
+
+    <!-- 🎬 SCENE 5 & 6 COMBINED: 3-6-9 -->
+    <div id="scene-round-369" class="scene">
+      <div class="round-grid">
+        <!-- Linksboven: mini-lobby -->
+        <div class="grid-part part1">
+          <div class="mini-lobby">
+            <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
+            <div id="miniLobbyPlayers"></div>
+          </div>
+        </div>
+
+        <!-- Rechtsboven: vraag & beurt -->
+        <div class="grid-part part2">
+          <div class="question-box">
+            <div id="roundName" class="round-name">3-6-9 Ronde</div>
+            <div id="roundStatus" class="round-status">Druk op “Volgende vraag” om te beginnen.</div>
+            <div id="roundQuestion" class="round-question">—</div>
+          </div>
+        </div>
+
+        <!-- Onderste helft: spelers + vraagnummers -->
+        <div class="grid-part part3">
+          <div id="playersBarContainer" class="players-bar">
+            <!-- Spelers + seconden -->
+          </div>
+          <div id="questionNumbersContainer" class="question-numbers">
+            <!-- Vraagnummers -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+<div id="scene-round-opendeur-lobby" class="scene">
+        <div class="initial-title-bar">
+            de slimste mens
+            <img src="assets/slimstemens.png" alt="Het Slimste Mens logo">
+            van twitch
+        </div>
+        <div class="status-text">OPEN DEUR RONDE</div>
+        <div id="opendeurLobbyStatus" class="hint-text">Wacht op de host om de ronde te starten.</div>
+        <div id="lobbyPlayerImagesOd" class="player-images-container">
+            </div>
+    </div>
+
+    <div id="scene-round-opendeur-vragensteller" class="scene">
+        <div id="opendeur-vragensteller-grid" class="round-grid">
+            <div class="grid-part part1">
+                <div class="mini-lobby">
+                    <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
+                    <div id="odVragenstellerMiniLobby"></div>
+                </div>
+            </div>
+<div class="grid-part part2 vragensteller-status-box">
+  <div class="round-name">OPEN DEUR</div>
+  <div class="round-status">Kiest nu...</div>
+
+  <!-- Tussenstanden onder status -->
+  <div id="od-vragensteller-scores" class="players-bar-compact" style="margin-top:2rem;"></div>
+</div>
+
+            <div class="grid-part part3 vragenstellers-container" id="vragenstellersContainer">
+                </div>
+        </div>
+    </div>
+
+    <div id="scene-round-opendeur-vraag" class="scene">
+        <div id="opendeur-vraag-grid">
+            <div class="left-half" id="odAnswerContainer">
+                </div>
+            <div class="grid-part part2-mini-lobby">
+                <div class="mini-lobby">
+                    <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
+                    <div id="odVraagMiniLobby"></div>
+                </div>
+            </div>
+            <div class="grid-part part4-status">
+  <div id="od-beurt-info" class="od-status"></div>
+  <div id="od-vragensteller-vraag" class="od-question"></div>
+  <div id="od-antwoord-teller" class="od-teller"></div>
+  <div id="od-vraag-scores" class="players-bar-compact"></div>
+
+            </div>
+        </div>
+    </div>
+
+<div id="scene-round-puzzel-waiting" class="scene">
+  <div class="round-grid">
+    <!-- Linkerhelft: lege puzzeltabel -->
+    <div class="grid-part part1 puzzel-table">
+      <div id="puzzelTableWaiting" class="puzzel-table-grid">
+        <!-- lege tabel -->
+      </div>
+      <div id="puzzelLinksContainerWaiting">
+        <!-- eventueel lege links -->
+      </div>
+    </div>
+
+    <!-- Rechterboven: mini-lobby -->
+    <div class="grid-part part2">
+      <div class="mini-lobby">
+        <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
+        <div id="puzzelWaitingMiniLobby"></div>
+      </div>
+    </div>
+
+    <!-- Rechtsonder: ronde-info + spelers -->
+    <div class="grid-part part3 puzzel-info">
+      <div id="puzzelWaitingRoundInfo" class="puzzel-round-info">Puzzelronde</div>
+      <div id="puzzelWaitingPlayersBar" class="players-bar-compact"></div>
+    </div>
+  </div>
+</div>
+
+
+
+
+<!-- 🎬 SCENE: Puzzel - Actieve puzzel -->
+<div id="scene-round-puzzel-active" class="scene">
+  <div class="round-grid">
+    <!-- Linkerhelft: puzzeltabel -->
+<div class="grid-part part1 puzzel-table"> 
+      <div id="puzzelTable" class="puzzel-table-grid">
+        </div>
+      <div id="puzzelLinksContainer">
+        </div>
+    </div>
+
+    <!-- Rechterbovenkwart: mini-lobby -->
+    <div class="grid-part part2">
+      <div class="mini-lobby">
+        <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
+        <div id="puzzelActiveMiniLobby"></div>
+      </div>
+    </div>
+
+    <!-- Rechtsonderkwart: ronde-info + spelers -->
+    <div class="grid-part part3 puzzel-info">
+      <div id="puzzelRoundInfo" class="puzzel-round-info"></div>
+      <div id="puzzelActivePlayersBar" class="players-bar-compact"></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- 🎬 SCENE: Puzzel - Ronde afgelopen -->
+<div id="scene-round-puzzel-done" class="scene">
+  <div class="initial-title-bar">
+    de slimste mens
+    <img src="assets/slimstemens.png" alt="logo">
+    van twitch
+  </div>
+  <div class="status-text">PUZZELRONDE AFGELOPEN</div>
+  <div class="hint-text">Wacht op de host voor de volgende ronde...</div>
+
+  <div class="puzzel-layout">
+    <div class="mini-lobby">
+      <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
+      <div id="puzzelDoneMiniLobby"></div>
+    </div>
+
+    <div id="puzzelDonePlayersBar" class="players-bar-compact"></div>
+  </div>
+</div>
+
+<div id="scene-round-galerij-pre" class="scene">
+    <div id="galerij-pre-grid" class="galerij-round-grid">
+        <!-- Linkerhelft: Lege ruimte voor intro/wachtscherm -->
+        <div class="grid-part part-left-full" id="galerijPreMainContainer">
+            <div class="round-name" style="font-size: 4em; text-align: center; margin-top: 200px;">Galerijronde</div>
+            <div class="round-status" style="font-size: 2em; text-align: center; margin-top: 30px; color: #ffd17a;">Klaar om te starten</div>
+        </div>
+        
+        <!-- Rechterboven: Mini-lobby -->
+        <div class="grid-part part2">
+            <div class="mini-lobby">
+                <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
+                <div id="galerijPreMiniLobby"></div>
+            </div>
+        </div>
+        
+        <!-- Rechtsonder: Info en spelersbalk -->
+        <div class="grid-part part4-status">
+            <div id="galerijPreInfo" class="round-status">
+                <div class="round-name">Galerij</div>
+                <div class="round-status">Wacht op de host om de galerij te starten.</div>
+            </div>
+            <div id="galerijPrePlayersBar" class="players-bar-compact"></div>
+        </div>
+    </div>
+</div>
+
+<div id="scene-round-galerij-main" class="scene">
+    <div id="galerij-main-grid" class="galerij-round-grid">
+        <div class="grid-part part-left-full" id="galerijMainImageContainer">
+            </div>
+        
+        <div class="grid-part part2">
+            <div class="mini-lobby">
+                <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
+                <div id="galerijMainMiniLobby"></div>
+            </div>
+        </div>
+        
+        <div class="grid-part part4-status" id="galerijMainInfoContainer">
+            <div class="round-name" id="galerijMainTheme">Galerij</div>
+            <div class="round-status" id="galerijMainStatus">Beurt van Speler X</div>
+            <div id="galerijMainAnswers" class="galerij-answers">
+                </div>
+        </div>
+    </div>
+</div>
+
+<div id="scene-round-galerij-slideshow" class="scene">
+    <div id="galerij-slideshow-grid" class="galerij-round-grid">
+        <div class="grid-part part-left-full" id="galerijSlideshowImageContainer">
+            </div>
+            <div id="galerijSlideshowAnswerContainer">
+            </div>
+        
+    <div class="grid-part part2">
+      <div class="mini-lobby">
+        <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
+        <div id="galerijSlideshowMiniLobby"></div>
+      </div>
+    </div>
+
+    <div class="grid-part part4-status" id="galerijSlideshowInfoContainer">
+      <div id="galerijSlideshowInfo" class="round-status"></div>
+    <div id="galerijSlideshowPlayersBar" class="players-bar-compact"></div>
+    </div>
+    </div>
+</div>
+
+
+<div id="scene-round-galerij-aanvul" class="scene">
+  <div id="galerij-aanvul-grid" class="galerij-round-grid">
+    <div class="grid-part part-left-full" id="galerijAanvulAnswersContainer">
+      <div id="galerijAanvulAnswers" class="galerij-aanvul-answers-list"></div>
+    </div>
+
+    <div class="grid-part part2">
+      <div class="mini-lobby">
+        <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
+        <div id="galerijAanvulMiniLobby"></div>
+      </div>
+    </div>
+
+    <div class="grid-part part4-status" id="galerijAanvulInfoContainer">
+      <div id="galerijAanvulInfo" class="round-status"></div>
+    <div id="galerijAanvulPlayersBar" class="players-bar-compact"></div>
+
+    </div>
+  </div>
+</div>
+
+
+<div id="scene-round-galerij-done" class="scene">
+    <div id="galerij-done-grid" class="galerij-round-grid">
+        <!-- Linkerhelft: Afrondingsscherm -->
+        <div class="grid-part part-left-full" id="galerijDoneMainContainer">
+            <div class="round-name" style="font-size: 4em; text-align: center; margin-top: 200px;">Galerijronde Afgerond</div>
+            <div class="round-status" style="font-size: 2em; text-align: center; margin-top: 30px; color: #ffd17a;">Alle kandidaten hebben hun galerij gehad</div>
+        </div>
+        
+        <!-- Rechterboven: Mini-lobby -->
+        <div class="grid-part part2">
+            <div class="mini-lobby">
+                <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
+                <div id="galerijDoneMiniLobby"></div>
+            </div>
+        </div>
+        
+        <!-- Rechtsonder: Info en spelersbalk -->
+        <div class="grid-part part4-status">
+            <div id="galerijDoneInfo" class="round-status">
+                <div class="round-name">Einde van de ronde Galerij</div>
+            </div>
+            <div id="galerijDonePlayersBar" class="players-bar-compact"></div>
+        </div>
+    </div>
+</div>
+
+
+<div id="scene-round-collectief-pre" class="scene">
+    <div id="collectief-pre-grid" class="galerij-round-grid">
+      <!-- Linkerhelft: Intro/wachtscherm -->
+      <div class="grid-part part-left-full" id="collectiefPreMainContainer">
+        <div class="round-name" style="font-size: 4em; text-align: center; margin-top: 200px;">Het Collectieve Geheugen</div>
+        <div class="round-status" style="font-size: 2em; text-align: center; margin-top: 30px; color: #ffd17a;">Klaar om te starten</div>
+      </div>
+        
+      <!-- Rechterboven: Mini-lobby -->
+      <div class="grid-part part2">
+        <div class="mini-lobby">
+          <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
+          <div id="collectiefPreMiniLobby"></div>
+        </div>
+      </div>
+        
+      <!-- Rechtsonder: Info en spelersbalk -->
+      <div class="grid-part part4-status">
+        <div id="collectiefPreInfo" class="round-status">
+          <div class="round-name">Het Collectief Geheugen</div>
+          <div class="round-status">Wacht op de host om de video te starten.</div>
+        </div>
+        <div id="collectiefPrePlayersBar" class="players-bar-compact"></div>
+      </div>
+    </div>
+</div>
+
+  <!-- 🎬 SCENE: Collectief Geheugen - Video (fullscreen) -->
+  <div id="scene-round-collectief-video" class="scene" style="background: #000;">
+    <video id="collectiefVideoPlayer" style="width: 100%; height: 100%; object-fit: contain;" autoplay>
+      <source id="collectiefVideoSource" src="" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+</div>
+
+  <!-- 🎬 SCENE: Collectief Geheugen - Main (vraag/antwoorden) -->
+<div id="scene-round-collectief-main" class="scene">
+    <div id="collectief-main-grid" class="galerij-round-grid">
+      <!-- Linkerhelft: Antwoorden (5 opties) -->
+      <div class="grid-part part-left-full" id="collectiefMainAnswersContainer">
+        <div id="collectiefMainAnswers" class="collectief-answers-list"></div>
+      </div>
+        
+      <!-- Rechterboven: Mini-lobby -->
+      <div class="grid-part part2">
+        <div class="mini-lobby">
+          <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
+          <div id="collectiefMainMiniLobby"></div>
+        </div>
+      </div>
+        
+      <!-- Rechtsonder: Info en spelersbalk -->
+      <div class="grid-part part4-status" id="collectiefMainInfoContainer">
+        <div id="collectiefMainInfo" class="round-status"></div>
+        <div id="collectiefMainPlayersBar" class="players-bar-compact"></div>
+        </div>
+    </div>
+</div>
+
+  <!-- 🎬 SCENE: Collectief Geheugen - Tussenstand -->
+<div id="scene-round-collectief-tussenstand" class="scene">
+    <div id="collectief-tussenstand-grid" class="galerij-round-grid">
+      <!-- Linkerhelft: Tussenstanden -->
+      <div class="grid-part part-left-full" id="collectiefTussenstandMainContainer">
+        <div class="round-name" style="font-size: 3.5em; text-align: center; margin-top: 100px;">Tussenstand</div>
+        <div id="collectiefTussenstandAnswers" class="collectief-tussenstand-list" style="margin-top: 50px;"></div>
+      </div>
+        
+      <!-- Rechterboven: Mini-lobby -->
+      <div class="grid-part part2">
+        <div class="mini-lobby">
+          <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
+          <div id="collectiefTussenstandMiniLobby"></div>
+        </div>
+      </div>
+        
+      <!-- Rechtsonder: Info en spelersbalk -->
+      <div class="grid-part part4-status">
+        <div id="collectiefTussenstandInfo" class="round-status">
+          <div class="round-name">Het Collectief Geheugen</div>
+          <div class="round-status">Tussenstand na dit fragment</div>
+        </div>
+        <div id="collectiefTussenstandPlayersBar" class="players-bar-compact"></div>
+        </div>
+    </div>
+</div>
+
+  <!-- 🎬 SCENE: Collectief Geheugen - Done (eindstand) -->
+<div id="scene-round-collectief-done" class="scene">
+    <div id="collectief-done-grid" class="galerij-round-grid">
+      <!-- Linkerhelft: Eindresultaat -->
+      <div class="grid-part part-left-full" id="collectiefDoneMainContainer">
+        <div class="round-name" style="font-size: 4em; text-align: center; margin-top: 200px;">Het Collectieve Geheugen Afgerond</div>
+        <div class="round-status" style="font-size: 2em; text-align: center; margin-top: 30px; color: #ffd17a;">
+          <span id="collectiefSlimsteVanDeDag"></span>
+        </div>
+        <div class="round-status" style="font-size: 1.5em; text-align: center; margin-top: 20px;">
+          Naar de finale: <span id="collectiefFinalisten"></span>
+        </div>
+      </div>
+        
+      <!-- Rechterboven: Mini-lobby -->
+      <div class="grid-part part2">
+        <div class="mini-lobby">
+          <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
+          <div id="collectiefDoneMiniLobby"></div>
+        </div>
+      </div>
+        
+      <!-- Rechtsonder: Info en spelersbalk -->
+      <div class="grid-part part4-status">
+        <div id="collectiefDoneInfo" class="round-status">
+          <div class="round-name">Eindstand</div>
+        </div>
+        <div id="collectiefDonePlayersBar" class="players-bar-compact"></div>
+      </div>
+    </div>
+</div>
+
+  <!-- 🎬 SCENE: Finale - Pre (Finalisten bekendmaking) -->
+<div id="scene-round-finale-pre" class="scene">
+    <div id="finale-pre-grid" class="galerij-round-grid">
+      <!-- Linkerhelft: Finalisten bekendmaking -->
+      <div class="grid-part part-left-full" id="finalePreMainContainer">
+        <div class="round-name" style="font-size: 4em; text-align: center; margin-top: 150px;">DE FINALE</div>
+        <div class="round-status" style="font-size: 2.5em; text-align: center; margin-top: 40px; color: #ffd17a;">
+          <span id="finaleFinalistenText"></span>
+        </div>
+        <div class="round-status" style="font-size: 1.8em; text-align: center; margin-top: 30px; color: #eee;">
+          <span id="finaleAfvallerText"></span>
+        </div>
+      </div>
+        
+      <!-- Rechterboven: Mini-lobby -->
+      <div class="grid-part part2">
+        <div class="mini-lobby">
+          <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
+          <div id="finalePreMiniLobby"></div>
+        </div>
+      </div>
+        
+      <!-- Rechtsonder: Spelersbalk -->
+      <div class="grid-part part4-status">
+        <div id="finalePreInfo" class="round-status">
+          <div class="round-name">Finalisten</div>
+        </div>
+        <div id="finalePrePlayersBar" class="players-bar-compact"></div>
+      </div>
+    </div>
+</div>
+
+  <!-- 🎬 SCENE: Finale - Main (Vraag actief) -->
+<div id="scene-round-finale-main" class="scene">
+    <div id="finale-main-grid" class="galerij-round-grid">
+      <!-- Linkerhelft: Antwoorden (5 opties) -->
+      <div class="grid-part part-left-full" id="finaleMainAnswersContainer">
+        <div id="finaleMainAnswers" class="collectief-answers-list"></div>
+      </div>
+        
+      <!-- Rechterboven: Mini-lobby -->
+      <div class="grid-part part2">
+        <div class="mini-lobby">
+          <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
+          <div id="finaleMainMiniLobby"></div>
+        </div>
+      </div>
+        
+      <!-- Rechtsonder: Info en spelersbalk -->
+      <div class="grid-part part4-status" id="finaleMainInfoContainer">
+        <div id="finaleMainInfo" class="round-status"></div>
+        <div id="finaleMainPlayersBar" class="players-bar-compact"></div>
+      </div>
+    </div>
+</div>
+
+  <!-- 🎬 SCENE: Finale - End (Winnaar) -->
+<div id="scene-round-finale-end" class="scene">
+    <div id="finale-end-grid" class="galerij-round-grid">
+      <!-- Linkerhelft: Winnaar bekendmaking -->
+      <div class="grid-part part-left-full" id="finaleEndMainContainer">
+        <div class="round-name" style="font-size: 5em; text-align: center; margin-top: 180px; color: #ffd17a;">
+          <span id="finaleWinnerName"></span>
+        </div>
+        <div class="round-status" style="font-size: 3em; text-align: center; margin-top: 40px;">
+          <span id="finaleWinnerTitle"></span>
+        </div>
+        <div class="round-status" style="font-size: 1.8em; text-align: center; margin-top: 30px; color: #eee;">
+          <span id="finaleLoserText"></span>
+        </div>
+      </div>
+        
+      <!-- Rechterboven: Mini-lobby -->
+      <div class="grid-part part2">
+        <div class="mini-lobby">
+          <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
+          <div id="finaleEndMiniLobby"></div>
+        </div>
+      </div>
+        
+      <!-- Rechtsonder: Eindstand -->
+      <div class="grid-part part4-status">
+        <div id="finaleEndInfo" class="round-status">
+          <div class="round-name">Finale Afgelopen</div>
+        </div>
+        <div id="finaleEndPlayersBar" class="players-bar-compact"></div>
+      </div>
+    </div>
+</div>
+
+    <div id="flashMessage"></div>
+    <script src="js/display.js"></script>
+</body>
+</html>

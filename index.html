@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>De Slimste Mens — Host Tool (Simulatie)</title>
+  <link rel="stylesheet" href="css/index.css" />
+  <style>
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>De Slimste Mens</h1>
+    <div class="grid">
+      <!-- Links: instellingen / controls -->
+      <div class="card">
+        <div style="height:8px"></div>
+        <label>Voer kandidaatnamen in</label>
+<div id="playersInputs" class="players-list">
+  <div class="player-entry">
+    <input class="playerName" data-index="0" value="Kandidaat A" />
+    <input class="playerPhoto" type="file" accept="image/*" data-index="0" />
+  </div>
+  <div class="player-entry">
+    <input class="playerName" data-index="1" value="Kandidaat B" />
+    <input class="playerPhoto" type="file" accept="image/*" data-index="1" />
+  </div>
+  <div class="player-entry">
+    <input class="playerName" data-index="2" value="Kandidaat C" />
+    <input class="playerPhoto" type="file" accept="image/*" data-index="2" />
+  </div>
+</div>
+
+        <div class="controls">
+          <button id="applyBtn">Maak spel</button>
+          <button id="resetBtn" class="secondary">Reset</button>
+        </div>
+
+        <hr class="divider" />
+        <div>
+          <label>Startseconden per kandidaat</label>
+          <input id="startSeconds" type="number" min="10" value="60" />
+        </div>
+
+        <hr class="divider" />
+<div>
+  <label>Aantal vragen 3-6-9 (standaard 12)</label>
+  <input id="threeSixNineCount" type="number" min="1" max="50" value="12" />
+  <div class="controls">
+    <button id="setThreeSixNineCountBtn" class="secondary">Aantal vragen instellen</button>
+  </div>
+</div>
+
+        <div style="height:8px"></div>
+          <div>
+            <label>Foto's in Galerij-ronde</label>
+            <select id="galerijPhotoCount">
+              <option value="10" selected>10 (standaard)</option>
+              <option value="8">8</option>
+            </select>
+          </div>
+
+<hr class="divider" />
+<div>
+  <label>Collectief Geheugen eindinstelling:</label>
+  <select id="collectiefEndOption">
+    <option value="lowestOut">Laagste score valt af, overige gaan naar finale</option>
+    <option value="highestWinner">Hoogste score Slimste van de Dag, overige naar finale</option>
+  </select>
+</div>
+
+
+
+
+        <hr class="divider" />
+        <div>
+          <h4>Audio</h4>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button id="playBumper">Bumper</button>
+            <button id="playSting">Sting</button>
+            <button id="playKlok">Klok</button>
+            <button id="stopKlokFout" class="secondary">Stop Klok (fout-sound)</button>
+            <button id="playFinaleBumper">Finale Bumper</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Rechts: spel interface -->
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div class="small">Huidige ronde</div>
+            <div id="currentRound" class="big">—</div>
+            <div class="small">Spelers: <span id="playerCount">0</span></div>
+          </div>
+        </div>
+
+        <hr class="divider" />
+
+        <div id="playersArea" class="player-row"></div>
+
+        <div class="button-row">
+          <button id="startRound">Start ronde</button>
+          <button id="nextRound" class="secondary">Volgende ronde</button>
+        </div>
+
+        <div class="question-area" id="currentQuestion">
+          <em>Hier verschijnt de vraag en media — (nog geen vragen geladen)</em>
+        </div>
+
+
+        <div style="margin-top:10px;" id="roundControls"></div>
+
+      </div>
+
+    </div>
+  </div>
+<script src="js/369vragen.js"></script>
+<script src="js/round-3-6-9.js"></script>
+<script src="js/vragen-opendeur.js"></script>
+<script src="js/round-opendeur.js"></script>
+<script src="js/vragen-puzzel.js"></script>
+<script src="js/round-puzzel.js"></script>
+<script src="js/vragen-galerij.js"></script>
+<script src="js/round-galerij.js"></script>
+<script src="js/core.js"></script>
+<script src="js/vragen-collectiefgeheugen.js"></script>
+<script src="js/round-collectiefgeheugen.js"></script>
+<script src="js/vragen-finale.js"></script>
+<script src="js/round-finale.js"></script>
+</body>
+</html>
