@@ -2,37 +2,47 @@
 SETLOCAL
 title De Slimste Mens
 
-echo Controleer of Node.js is geinstalleerd...
-node -v >nul 2>&1
-if %errorlevel% neq 0 (
-    echo [FOUT] Node.js is niet gevonden.
-    echo Installeer Node.js via https://nodejs.org/em/
-    pause
-    exit /b
-)
-
-echo Node.js gevonden!
+echo ========================================
+echo       DE SLIMSTE MENS - STARTUP
+echo ========================================
 echo.
 
-:: Ga naar de directory waar dit script staat, ongeacht vanaf waar het is opgeroepen
-cd /d "%~dp0"
-
-echo Map ingesteld op: %cd%
-
-:: Controleer of server.js bestaat
-if not exist "server.js" (
-    echo [FOUT] server.js is niet gevonden in deze map.
+:: 1. Controleer op Node.js
+echo [1/4] Controleer of Node.js is geinstalleerd...
+node -v >nul 2>&1
+if %errorlevel% neq 0 (
+    echo.
+    echo [FOUT] Node.js is niet gevonden!
+    echo Download en installeer Node.js via: https://nodejs.org/en/download
     pause
     exit /b
 )
 
-:: Controleer of de 'ws' module aanwezig is (node_modules)
+:: 2. Ga naar de juiste map
+cd /d "%~dp0"
+
+:: 3. Controleer 'ws' module
+echo [2/4] Controleer server-bestanden...
 if not exist "node_modules\ws" (
-    echo 'ws' module niet gevonden. Bezig met installeren...
+    echo      'ws' module ontbreekt. Bezig met installeren...
     npm install ws
 )
 
-echo WebSocket Server wordt gestart...
+:: 4. Open de browser (vóór of tijdens het starten van de server)
+echo [3/4] Pagina's openen in de browser...
+:: Start index.html (Host Dashboard)
+start "" "index.html"
+:: Wacht heel even en start display.html (Kandidaat/Stream Scherm)
+timeout /t 1 /nobreak >nul
+start "" "display.html"
+
+:: 5. Start de server
+echo [4/4] WebSocket Server starten op poort 8081...
+echo.
+echo ----------------------------------------
+echo DE SERVER DRAAIT NU. 
+echo Sluit dit venster NIET tijdens het spelen.
+echo ----------------------------------------
 echo.
 node server.js
 
