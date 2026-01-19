@@ -1,20 +1,18 @@
-/* ===== OPEN DEUR RONDE (strikter, verbeterd) ===== */
-
 function shuffle(arr) {
   return [...arr].sort(() => Math.random() - 0.5);
 }
 
 function setupOpenDeurRound() {
-  // Zorg ervoor dat er minstens 3 vragen zijn. De vraag moet een 'from' veld hebben.
+  
   if (typeof openDeurQuestions === 'undefined' || openDeurQuestions.length < 3) {
       flash('Fout: Onvoldoende Open Deur-vragen beschikbaar (minstens 3 nodig).');
       return;
   }
 
-  // Selecteer 3 vragen en voeg de spelerindex (simuleert de vragensteller) toe
+  
   perRoundState.questions = shuffle(openDeurQuestions).slice(0, 3).map((q, index) => ({
       ...q,
-      // Gebruik hier de naam uit de data, of als die er niet is, 'Vragensteller 1' etc.
+      
       fromPlayerIndex: index, 
       played: false 
   }));
@@ -22,11 +20,11 @@ function setupOpenDeurRound() {
   perRoundState.remainingPlayers = [...players]
     .sort((a,b) => a.seconds - b.seconds)
     .map(p => p.index);
-  perRoundState.playersWhoChoseQuestion = []; // Nieuwe lijst
+  perRoundState.playersWhoChoseQuestion = []; 
   perRoundState.currentQuestion = null;
   currentQuestionIndex = 0;
 
-// Eerst activePlayerIndex instellen
+
 activePlayerIndex = perRoundState.remainingPlayers[0];
 highlightActive();
 
@@ -39,16 +37,16 @@ currentQuestionEl.innerHTML = `
 renderOpenDeurChoices();
 
 
-  // STUUR INITIËLE STATUS NAAR DISPLAY (VRAGENSTELLER KEUZE SCÈNE - Scène 2)
+  
   sendOpenDeurDisplayUpdate('round_start', 'scene-round-opendeur-vragensteller');
 }
 
 function renderOpenDeurChoices() {
   const cont = document.getElementById('opendeurChoices');
-  if (!cont) return; // check of het element bestaat
+  if (!cont) return; 
   cont.innerHTML = '';
 
-  // Alleen vragen die nog niet gespeeld zijn tonen
+  
   const remainingQuestions = perRoundState.questions.filter(q => !q.played);
   if (remainingQuestions.length === 0) {
     cont.innerHTML = '<em>Geen vragen meer over.</em>';
@@ -65,20 +63,20 @@ function renderOpenDeurChoices() {
 }
 
 function nextOpenDeurTurn() {
-  // Kandidaten die nog geen vragensteller hebben gekozen
+  
   const candidates = perRoundState.remainingPlayers
     .filter(idx => !perRoundState.playersWhoChoseQuestion.includes(idx))
     .sort((a,b) => players[a].seconds - players[b].seconds);
 
   if(candidates.length === 0){
-    // Ronde afgelopen
+    
     flash('Open Deur-ronde afgerond!');
     currentQuestionEl.innerHTML = '<em>Einde van de Open Deur-ronde.</em>';
     document.getElementById('opendeurChoices').innerHTML = '';
     document.getElementById('roundControls').innerHTML = '';
     perRoundState.currentQuestion = null;
     
-    // Einde ronde, toon de eindstand of ga naar de volgende ronde
+    
     sendDisplayUpdate({ type: 'round_end' });
     return;
   }
@@ -94,7 +92,7 @@ if(remainingQuestions.length === 0){
     return;
 }
 
-// Kies de nieuwe speler die aan de beurt is
+
 activePlayerIndex = candidates[0];
 highlightActive();
 resetRoundControls();
@@ -106,7 +104,7 @@ currentQuestionEl.innerHTML = `
 renderOpenDeurChoices();
 
 
-  // NIEUW: STUUR UPDATE NAAR DISPLAY (LOBBY SCÈNE)
+  
   sendOpenDeurDisplayUpdate('update', 'scene-round-opendeur-lobby');
 }
 
@@ -118,22 +116,22 @@ function chooseOpenDeurQuestion(index){
 
   q.played = true;
   perRoundState.currentQuestion = q;
-  // Zorg ervoor dat er altijd 4 antwoorden zijn voor de display
+  
   q.answersDisplay = q.answers.slice(0, 4); 
   q.answered = Array(q.answersDisplay.length).fill(false);
   q.passedPlayers = [];
 
-  // Voeg huidige speler toe aan lijst van spelers die al een vraag gekozen hebben
+  
   if(!perRoundState.playersWhoChoseQuestion.includes(activePlayerIndex)){
     perRoundState.playersWhoChoseQuestion.push(activePlayerIndex);
   }
 
-  // Initieer huidige aanvulronde
+  
   perRoundState.currentAnswerPlayers = [...perRoundState.remainingPlayers]
     .filter(idx => !q.passedPlayers.includes(idx))
     .sort((a,b)=>players[a].seconds - players[b].seconds);
   
-  // Standaard host UI
+  
   currentQuestionEl.innerHTML = `
     <div class="small muted">Beurt: <strong>${players[activePlayerIndex].name}</strong></div>
     <strong>Vraag van ${q.from}</strong>
@@ -145,7 +143,7 @@ function chooseOpenDeurQuestion(index){
   showOpenDeurAnswerControls();
   flash(`${players[activePlayerIndex].name} mag antwoorden...`);
 
-  // NIEUW: STUUR UPDATE NAAR DISPLAY (VRAAG SCÈNE)
+  
   sendOpenDeurDisplayUpdate('update', 'scene-round-opendeur-vraag');
 }
 
@@ -182,12 +180,12 @@ function showOpenDeurAnswerControls(){
 }
 
 function startOpenDeurTimer(){
-  // Zorg ervoor dat de stop functie uit core.js beschikbaar is
+  
   if (typeof stopLoopTimerSFX !== 'function') return flash('Error: stopLoopTimerSFX not found'); 
   
-  stopLoopTimerSFX(); // Stop eerst elke lopende klok
+  stopLoopTimerSFX(); 
 
-  // Stuur display aan om klok te loopen (geen lokaal geluid op host)
+  
   try { sendDisplayUpdate({ type: 'audio', action: 'loopStart', src: 'SFX/klok2.mp3' }); } catch(e) {}
   
   flash(`Tijd gestart voor ${players[activePlayerIndex].name}`);
@@ -195,14 +193,14 @@ function startOpenDeurTimer(){
 thinkingTimerInterval = setInterval(()=>{
     players[activePlayerIndex].seconds = Math.max(0, players[activePlayerIndex].seconds - 1);
 
-    renderPlayers(); // voor host
-    sendOpenDeurDisplayUpdate('update', 'scene-round-opendeur-vraag'); // voor display
+    renderPlayers(); 
+    sendOpenDeurDisplayUpdate('update', 'scene-round-opendeur-vraag'); 
 
     if (players[activePlayerIndex].seconds <= 0) {
         clearInterval(thinkingTimerInterval);
         stopLoopTimerSFX();
         flash(`${players[activePlayerIndex].name} is door zijn tijd heen!`);
-        sendOpenDeurDisplayUpdate('update', 'scene-round-opendeur-vraag'); // update na tijdslimiet
+        sendOpenDeurDisplayUpdate('update', 'scene-round-opendeur-vraag'); 
     }
 }, 1000);
 
@@ -220,24 +218,24 @@ function markOpenDeurAnswer(ansIndex){
   playSFX('SFX/goed.mp3');
   renderPlayers();
 
-  // ✅ Stuur altijd een update naar het display na een goed antwoord
+  
   sendOpenDeurDisplayUpdate('update', 'scene-round-opendeur-vraag');
 
-  // Check of alles goed is beantwoord
+  
   if(q.answered.every(a => a)){
     clearInterval(thinkingTimerInterval);
     if (typeof stopLoopTimerSFX === 'function') stopLoopTimerSFX();
     flash(`Vraag "${q.from}" volledig opgelost!`);
     playSFX('SFX/goed.mp3');
 
-    // ✅ Stuur “vraag voltooid”-melding naar display
+    
     sendOpenDeurDisplayUpdate('vraag_voltooid', 'scene-round-opendeur-vraag');
 
-    // ❌ Niet automatisch doorschakelen — alleen visuele bevestiging
-    // De host krijgt een knop om terug te keren naar het vragenstellerscherm
+    
+    
     showReturnToQuestionerButton();
 
-    // Reset currentQuestion, maar wissel niet automatisch
+    
     perRoundState.currentQuestion = null;
     return;
   }
@@ -247,12 +245,12 @@ function markOpenDeurAnswer(ansIndex){
 
 
 function showRemainingQuestionsForNextPlayer(){
-  // Huidige speler highlighten
+  
   highlightActive();
 
   const remainingQuestions = perRoundState.questions.filter(q => !q.played);
   if(remainingQuestions.length === 0){
-    // Geen vragen meer → einde ronde
+    
     flash('Open Deur-ronde afgerond!');
     currentQuestionEl.innerHTML = '<em>Einde van de Open Deur-ronde.</em>';
     const cont = document.getElementById('opendeurChoices');
@@ -262,7 +260,7 @@ function showRemainingQuestionsForNextPlayer(){
     return;
   }
 
-  // Toon overgebleven vragenstellers
+  
   currentQuestionEl.innerHTML = `
     <em>${players[activePlayerIndex].name} mag een vraag kiezen van de overgebleven vraagstellers.</em>
     <div id="opendeurChoices" style="margin-top:1em"></div>
@@ -271,13 +269,13 @@ function showRemainingQuestionsForNextPlayer(){
 }
 
 function nextOpenDeurTurn() {
-  // Kandidaten die nog geen vragensteller hebben gekozen
+  
   const candidates = perRoundState.remainingPlayers
     .filter(idx => !perRoundState.playersWhoChoseQuestion.includes(idx))
     .sort((a,b) => players[a].seconds - players[b].seconds);
 
   if(candidates.length === 0){
-    // Ronde afgelopen
+    
     flash('Open Deur-ronde afgerond!');
     currentQuestionEl.innerHTML = '<em>Einde van de Open Deur-ronde.</em>';
     document.getElementById('opendeurChoices').innerHTML = '';
@@ -286,7 +284,7 @@ function nextOpenDeurTurn() {
     return;
   }
 
-  // Volgende kandidaat die een vragensteller mag kiezen
+  
   activePlayerIndex = candidates[0];
   highlightActive();
   perRoundState.currentQuestion = null;
@@ -316,27 +314,27 @@ function passOpenDeur(){
 
   flash(`${players[activePlayerIndex].name} heeft gepast`);
 
-  // Voeg speler toe aan passedPlayers voor deze vraag
+  
   if(!q.passedPlayers.includes(activePlayerIndex)){
     q.passedPlayers.push(activePlayerIndex);
   }
 
-  // Update lijst van wie nog kan aanvullen
+  
   perRoundState.currentAnswerPlayers = perRoundState.currentAnswerPlayers
     .filter(idx => !q.passedPlayers.includes(idx));
 
   if(perRoundState.currentAnswerPlayers.length > 0){
-    // Volgende speler mag aanvullen
+    
     activePlayerIndex = perRoundState.currentAnswerPlayers[0];
     highlightActive();
     flash(`${players[activePlayerIndex].name} mag antwoorden of passen...`);
     
-    // NIEUW: STUUR UPDATE NAAR DISPLAY (VRAAG SCÈNE)
+    
     sendOpenDeurDisplayUpdate('update', 'scene-round-opendeur-vraag');
   } else {
-    // Iedereen heeft gepast → volgende hoofdbeurt
+    
     perRoundState.currentQuestion = null;
-    nextOpenDeurTurn(); // Stuurt zelf een update voor de lobby
+    nextOpenDeurTurn(); 
   }
 }
 
@@ -394,24 +392,21 @@ if (scene === 'scene-round-opendeur-vragensteller') {
         data.isTimerRunning = !!thinkingTimerInterval;
     }
 
-    // ✅ Extra melding bij volledig opgeloste vraag
+    
     if (type === 'vraag_voltooid') {
         data.questionCompleted = true;
     }
 
     sendDisplayUpdate(data);
 }
-/**
- * Toont de knop "Terug naar vragenstellers" alleen als een vraag volledig opgelost is.
- */
 function showReturnToQuestionerButton() {
   const rc = document.getElementById('roundControls');
   if (!rc) return;
 
-  // Eerst bestaande knoppen wissen
+  
   rc.innerHTML = '';
 
-  // Maak nieuwe knop
+  
   const returnBtn = document.createElement('button');
   returnBtn.textContent = 'Terug naar vragenstellers';
   returnBtn.className = 'secondary highlight-return';
@@ -419,17 +414,17 @@ function showReturnToQuestionerButton() {
   returnBtn.style.padding = '0.5em 1em';
   returnBtn.style.fontWeight = 'bold';
 
-  // Klikgedrag
+  
 returnBtn.addEventListener('click', () => {
     flash('Terug naar vragensteller-keuze');
 
-    // Kies de volgende speler die nog geen vraag heeft gekozen
+    
     const remainingCandidates = perRoundState.remainingPlayers
         .filter(idx => !perRoundState.playersWhoChoseQuestion.includes(idx))
         .sort((a,b) => players[a].seconds - players[b].seconds);
 
     if (remainingCandidates.length > 0) {
-        activePlayerIndex = remainingCandidates[0]; // volgende speler
+        activePlayerIndex = remainingCandidates[0]; 
     }
 
     const currentPlayer = players[activePlayerIndex];
@@ -452,9 +447,6 @@ returnBtn.addEventListener('click', () => {
 }
 
 
-/**
- * Verwijdert alle knoppen in het control-gebied (na klikken of bij nieuwe beurt).
- */
 function resetRoundControls() {
   const rc = document.getElementById('roundControls');
   if (!rc) return;

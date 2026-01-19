@@ -1,4 +1,4 @@
-// ===== PUZZEL RONDE (Aangepast met Host-Timer en Beurtwissel) =====
+
 
 let puzzelTimerActive = false;
 let puzzelTimerInterval = null;
@@ -10,7 +10,7 @@ function sendPuzzelDisplayUpdate(scene, extraData = {}) {
     return;
   }
 
-  // De globale 'loopTimerSeconds' uit core.js wordt aangenomen.
+  
   const currentLoopTime = (typeof loopTimerSeconds !== 'undefined') ? loopTimerSeconds : 0;
 
   const payload = {
@@ -22,7 +22,7 @@ function sendPuzzelDisplayUpdate(scene, extraData = {}) {
       seconds: p.seconds,
       photoUrl: p.photoUrl,
       isActive: i === activePlayerIndex,
-      // HIER IS DE KERN: Stuur de real-time kloktijd mee voor de actieve speler
+      
       loopTimerSeconds: (i === activePlayerIndex && puzzelTimerActive) ? currentLoopTime : 0
     })),
     activeIndex: activePlayerIndex,
@@ -37,18 +37,18 @@ function sendPuzzelDisplayUpdate(scene, extraData = {}) {
 
 
 
-// Functie om de puzzelronde op te zetten
+
 function setupPuzzelRound() {
   if (typeof puzzelQuestions === 'undefined' || puzzelQuestions.length < 9) {
     flash('Fout: Onvoldoende puzzelvragen beschikbaar. Zorg voor minstens 9 unieke links.');
     return;
   }
   
-  // Bouw 3 puzzels met elk 3 links waarbij de 12 kernantwoorden binnen één puzzel uniek zijn.
+  
   const pool = shuffle(puzzelQuestions.slice());
   const puzzles = [];
 
-  // Helper: controleer of een set van links samen unieke answers hebben
+  
   function linksHaveUniqueAnswers(links) {
     const seen = new Set();
     for (const l of links) {
@@ -62,7 +62,7 @@ function setupPuzzelRound() {
     return true;
   }
 
-  // Probeer tot maximaal N pogingen om een unieke groep van 3 links te selecteren
+  
   function pickUniqueGroup(available) {
     const tries = 300;
     for (let t = 0; t < tries; t++) {
@@ -70,7 +70,7 @@ function setupPuzzelRound() {
       if (cand.length < 3) return null;
       if (linksHaveUniqueAnswers(cand)) return cand;
     }
-    // fallback: return first 3 (we'll dedupe later)
+    
     return available.slice(0, 3);
   }
 
@@ -80,11 +80,11 @@ function setupPuzzelRound() {
     const group = pickUniqueGroup(available);
     if (!group || group.length < 3) break;
     puzzles.push({ links: group, played: false, currentWords: [] });
-    // verwijder geselecteerde links uit beschikbaar
+    
     available = available.filter(l => !group.includes(l));
   }
 
-  // Fallback: als we minder dan 3 groepen konden maken, vul aan met wat er nog is
+  
   if (puzzles.length < 3) {
     const remaining = pool.filter(l => !puzzles.flatMap(p => p.links).includes(l));
     while (puzzles.length < 3 && remaining.length >= 3) {
@@ -92,7 +92,7 @@ function setupPuzzelRound() {
     }
   }
 
-  // Zorg dat we exact 3 puzzels hebben; als niet, val terug op oude slicing
+  
   if (puzzles.length !== 3) {
     const fallback = shuffle(puzzelQuestions.slice()).slice(0, 9);
     perRoundState.puzzles = [
@@ -104,9 +104,9 @@ function setupPuzzelRound() {
     perRoundState.puzzles = puzzles;
   }
 
-  // Vul per puzzel de huidige woorden (shuffle) en remaining/found
+  
   perRoundState.puzzles.forEach(puzzel => {
-    // Neem alle answers en verwijder (case-insensitieve) duplicaten, behoud volgorde
+    
     const seen = new Set();
     const allWords = [];
     puzzel.links.forEach(link => {
@@ -127,9 +127,9 @@ function setupPuzzelRound() {
   perRoundState.currentPuzzel = perRoundState.puzzles[0];
   perRoundState.playerOrder = [];
   perRoundState.originalPlayer = null; 
-  perRoundState.timerRunning = false; // Status van de timer
+  perRoundState.timerRunning = false; 
 
-  // Bepaal wie de eerste puzzel krijgt (laagste score na ronde 2)
+  
   const sortedPlayers = [...players].sort((a, b) => a.seconds - b.seconds);
   activePlayerIndex = sortedPlayers[0].index;
 
@@ -157,7 +157,7 @@ function nextPuzzelQuestion() {
 
   const puzzel = perRoundState.puzzles[perRoundState.currentPuzzelIndex];
 
-  // Reset puzzel volledig als nieuwe start
+  
   if (!puzzel.played) {
     puzzel.played = true;
     perRoundState.currentPuzzel = puzzel;
@@ -165,14 +165,14 @@ function nextPuzzelQuestion() {
     perRoundState.playerOrder = [activePlayerIndex]; 
     perRoundState.passCount = 0;
 
-    // Reset huidige woorden zodat oude markeringen niet blijven
+    
     puzzel.remainingWords = [...puzzel.currentWords];
   }
 
 highlightActive();
-  renderPuzzelDisplay(puzzel); // Dit is voor de HOST
+  renderPuzzelDisplay(puzzel); 
 
-  // AANPASSING: Stuur de volledige puzzelstaat (incl. links) naar het DISPLAY
+  
   sendPuzzelDisplayUpdate('scene-round-puzzel-active', {
     puzzelWords: puzzel.currentWords.map(w => ({ 
         text: w, 
@@ -182,15 +182,15 @@ highlightActive();
     puzzelLinks: puzzel.links.map(link => ({
         link: link.link,
         found: false,
-        timeGain: 30 // Aanname van 30 seconden
+        timeGain: 30 
     }))
   });
 }
 
 function sendLoopTimerUpdate(seconds) {
     if (!streamerBotWS || streamerBotWS.readyState !== WebSocket.OPEN) {
-        // console.warn('Display update kon niet worden verzonden (WebSocket niet verbonden).');
-        // connectToQuizServer(); // probeer opnieuw te verbinden
+        
+        
         return;
     }
     
@@ -202,9 +202,6 @@ function sendLoopTimerUpdate(seconds) {
     streamerBotWS.send(JSON.stringify(payload));
 }
 
-/**
- * Stopt de nadenkmuziek (klok2.mp3) en interval.
- */
 function stopPuzzelTimerAndSound() {
   if (typeof thinkingTimerInterval !== 'undefined') clearInterval(thinkingTimerInterval);
   if (typeof stopLoopTimerSFX === 'function') stopLoopTimerSFX(); 
@@ -218,61 +215,55 @@ function stopPuzzelTimerAndSound() {
   if (typeof loopTimerInterval !== 'undefined') clearInterval(loopTimerInterval);
 }
 
-
-/**
- * Bepaalt wie de volgende puzzel mag starten (Puzzel 1, 2 of 3) op basis van de Open Deur logica:
- * Laagste score van de kandidaten die nog geen puzzel gestart zijn.
- * * @returns {number} De index van de speler die mag starten.
- */
 function getPuzzelStarterIndex() {
-    // Sorteer alle spelers op laagste tijd
+    
     const sortedPlayers = [...players].sort((a, b) => a.seconds - b.seconds);
     
-    // Filter op spelers die nog geen puzzel gestart hebben
+    
     const availablePlayers = sortedPlayers
         .filter(p => !perRoundState.playersWhoStartedPuzzel.includes(p.index));
 
     if (availablePlayers.length > 0) {
-        // De speler met de laagste tijd uit de beschikbare spelers
+        
         return availablePlayers[0].index;
     }
 
-    // Dit gebeurt alleen als er meer dan 3 puzzels zijn, of als er een fout is.
-    // Valback: geef de speler met de laagste score.
+    
+    
     return sortedPlayers[0].index;
 }
 
-// Functie om de timer te starten voor de actieve speler (vergelijkbaar met Open Deur)
+
 function startPuzzelTimer() {
-  // Controleer op de benodigde globale functies (gedefinieerd in core.js)
+  
   if (typeof stopLoopTimerSFX !== 'function' || typeof flash !== 'function' || typeof renderPlayers !== 'function') {
     flash('Fout: Benodigde kernfuncties (timer/UI) niet gevonden in core.js.');
     return;
   }
   
-  stopLoopTimerSFX(); // Stop eerst elke lopende klok (gedefinieerd in core.js)
+  stopLoopTimerSFX(); 
 
-  // Stuur display aan om klok te loopen (geen lokaal geluid op host)
+  
   try { sendDisplayUpdate({ type: 'audio', action: 'loopStart', src: 'SFX/klok2.mp3' }); } catch(e) {}
   
   flash(`Tijd gestart voor ${players[activePlayerIndex].name}`);
 
-  // Wis de oude interval
-  if(thinkingTimerInterval) clearInterval(thinkingTimerInterval); // thinkingTimerInterval is globaal
+  
+  if(thinkingTimerInterval) clearInterval(thinkingTimerInterval); 
 
-  // Start de nieuwe interval die de individuele tijd van de speler aftrekt
+  
   thinkingTimerInterval = setInterval(()=>{
     players[activePlayerIndex].seconds = Math.max(0, players[activePlayerIndex].seconds - 1);
     renderPlayers();
     
-    // **NIEUWE LIJN:** Verstuur de geüpdate spelerstijden naar de display
+    
     sendPuzzelDisplayUpdate('scene-round-puzzel-active'); 
     
-    // Timer is op: speler moet passen
+    
     if (players[activePlayerIndex].seconds <= 0) {
       clearInterval(thinkingTimerInterval);
       stopLoopTimerSFX();
-      if (typeof playSFX === 'function') playSFX('SFX/klokeind.mp3'); // Speel eindgeluid
+      if (typeof playSFX === 'function') playSFX('SFX/klokeind.mp3'); 
       flash(`${players[activePlayerIndex].name} is door zijn tijd heen! Moet nu passen.`);
       
       perRoundState.timerRunning = false;
@@ -280,20 +271,20 @@ function startPuzzelTimer() {
       document.getElementById('puzzelPassBtn').disabled = true;
       document.querySelectorAll('#checkLinks button').forEach(btn => btn.disabled = true);
 
-      // Ga automatisch over naar de volgende speler (Pas-actie)
+      
       if (typeof passPuzzel === 'function') passPuzzel();
     }
   }, 1000);
 
   perRoundState.timerRunning = true;
   
-  // UI Knoppen inschakelen/uitschakelen
+  
   document.getElementById('startTimerBtn').disabled = true;
   document.getElementById('puzzelPassBtn').disabled = false;
   document.querySelectorAll('#checkLinks button').forEach(btn => btn.disabled = false);
 }
 
-// Functie om de puzzel op het scherm te tonen en controls te laden
+
 function renderPuzzelDisplay(puzzel) {
   const puzzelNumber = perRoundState.currentPuzzelIndex + 1;
   const allWords = puzzel.currentWords;
@@ -307,7 +298,7 @@ function renderPuzzelDisplay(puzzel) {
       tableHtml += '</tr><tr>';
     }
 
-    // Bepaal bij welke link(s) dit woord hoort (indices)
+    
     const linkIndices = puzzel.links.reduce((acc, link, idx) => {
       try {
         if (Array.isArray(link.answers) && link.answers.some(a => String(a) === String(word))) acc.push(idx);
@@ -315,7 +306,7 @@ function renderPuzzelDisplay(puzzel) {
       return acc;
     }, []);
 
-    // Klassen: basis + per-link + found/unfound
+    
     const classes = ['puzzel-word'];
     if (isFound) classes.push('found');
     if (linkIndices.length) {
@@ -334,7 +325,7 @@ function renderPuzzelDisplay(puzzel) {
 
   tableHtml += '</tr></table>';
 
-  // Helper voor HTML-escaping (veiligere output)
+  
   function escapeHtml(str) {
     return String(str)
       .replace(/&/g, '&amp;')
@@ -359,14 +350,14 @@ function renderPuzzelDisplay(puzzel) {
     <div class="muted small">De kandidaat noemt de link. De host klikt op de knop om de link goed te keuren.</div>
   `;
 
-  // --- Controls: Knoppen om link goed te rekenen ---
+  
   const rc = document.getElementById('roundControls');
   
   const disabledAttr = (perRoundState.timerRunning) ? '' : 'disabled';
   const checkLinkButtons = puzzel.links
     .filter(link => !puzzel.foundLinks.includes(link))
     .map(link => {
-      // Buttons enabled only when timer is running
+      
       return `<button onclick="markPuzzelLink('${link.link.replace(/'/g, "\\'")}')" class="right" ${disabledAttr}>${link.link} goed (${link.answers.join(', ')})</button>`;
     })
     .join('');
@@ -409,18 +400,18 @@ function markPuzzelLink(linkName) {
   flash(`${players[activePlayerIndex].name} juist! Verband gevonden: "${linkName}" (+${gained}s)`);
   if (typeof playSFX === 'function') playSFX('SFX/goed.mp3');
 
-  // Update de puzzelstatus
+  
 puzzel.foundLinks.push(foundLink);
   puzzel.remainingWords = puzzel.remainingWords.filter(word => !foundLink.answers.includes(word));
-  renderPlayers(); // Host UI
+  renderPlayers(); 
 
   const payloadWords = puzzel.currentWords.map(word => {
       let foundState = { text: word, found: false, linkIndex: null };
       
-      // Check alle gevonden links om te zien of dit woord erbij hoort
+      
       puzzel.foundLinks.forEach(fl => {
           if (fl.answers.includes(word)) {
-              const fl_index = puzzel.links.indexOf(fl); // Krijg index (0, 1, of 2)
+              const fl_index = puzzel.links.indexOf(fl); 
               foundState.found = true;
               foundState.linkIndex = fl_index; 
           }
@@ -439,57 +430,57 @@ puzzel.foundLinks.push(foundLink);
       puzzelLinks: payloadLinks
   });
 
-  // Re-render host grid & controls so CSS classes are applied consistently
+  
   renderPuzzelDisplay(puzzel);
 
-  // Controleer of puzzel volledig is opgelost
+  
 if (puzzel.foundLinks.length === puzzel.links.length) {
     stopPuzzelTimerAndSound();
     flash(`Puzzel ${perRoundState.currentPuzzelIndex + 1} volledig opgelost!`);
 
-    // Bepaal of dit de laatste puzzel was
+    
     const isLastPuzzle = (perRoundState.currentPuzzelIndex + 1) >= perRoundState.puzzles.length;
 
     if (isLastPuzzle) {
-        // Einde van de HELE ronde
-        perRoundState.currentPuzzelIndex++; // Index is nu gelijk aan puzzles.length
         
-        // Stuur update om op 'active' te blijven, maar met een eindstatus
+        perRoundState.currentPuzzelIndex++; 
+        
+        
         sendPuzzelDisplayUpdate('scene-round-puzzel-active', {
-            puzzelWords: [], // Leeg het bord
+            puzzelWords: [], 
             statusText: "Alle puzzels voltooid. Wacht op host."
         });
         
-        // Host controls: toon de 'Volgende ronde' knop (uit index.html)
+        
         document.getElementById('roundControls').innerHTML = '';
         document.getElementById('nextRound').disabled = false; 
 
     } else {
-        // Nog niet de laatste puzzel, bepaal volgende starter
-        determineNextPuzzleStarter(); // Bepaalt de *nieuwe* activePlayerIndex
         
-        perRoundState.currentPuzzelIndex++; // Verhoog de index voor de *volgende* puzzel
+        determineNextPuzzleStarter(); 
+        
+        perRoundState.currentPuzzelIndex++; 
         
         if(perRoundState.currentPuzzelIndex < perRoundState.puzzles.length){
             const nextPuzzel = perRoundState.puzzles[perRoundState.currentPuzzelIndex];
-            nextPuzzel.played = false; // reset zodat nextPuzzelQuestion correct werkt
+            nextPuzzel.played = false; 
         }
 
-        // Stuur update om op 'active' te blijven
+        
         sendPuzzelDisplayUpdate('scene-round-puzzel-active', {
-            puzzelWords: [], // Leeg het bord
-            // Stuur een statusbericht (de helper vult de rest aan)
+            puzzelWords: [], 
+            
             statusText: `Puzzel voltooid. ${players[activePlayerIndex].name} start Puzzel ${perRoundState.currentPuzzelIndex + 1}.`
         });
 
-        // Update de host controls
+        
         document.getElementById('roundControls').innerHTML = '<button onclick="nextPuzzelQuestion()">Start Volgende Puzzel</button>';
     }
   }
 }
 
 
-// passPuzzel aangepast
+
 function passPuzzel() {
   stopPuzzelTimerAndSound();
 
@@ -526,7 +517,7 @@ function passPuzzel() {
     }))
   });
   } else {
-    // Iedereen heeft gepast of puzzel opgelost
+    
     showPuzzelSolution(puzzel);
   }
 }
@@ -534,28 +525,28 @@ function passPuzzel() {
 
 
 function determineNextPuzzleStarter() {
-  // Initialiseer lijst van kandidaten die al een puzzel zijn gestart
+  
   if (!perRoundState.playersWhoStartedPuzzel) perRoundState.playersWhoStartedPuzzel = [];
 
-  // Bepaal beschikbare kandidaten die nog geen puzzel gestart hebben
+  
   const availablePlayers = players
     .map((p, i) => ({ ...p, index: i }))
     .filter(p => !perRoundState.playersWhoStartedPuzzel.includes(p.index));
 
-  // Sorteer op laagste tijd
+  
   availablePlayers.sort((a, b) => a.seconds - b.seconds);
 
   if (availablePlayers.length > 0) {
-    // De kandidaat met de laagste tijd start de volgende puzzel
+    
     activePlayerIndex = availablePlayers[0].index;
     perRoundState.playersWhoStartedPuzzel.push(activePlayerIndex);
   } else {
-    // Fallback: iedereen heeft al een puzzel gestart, kies hoogste score
+    
     const highestScorer = [...players].sort((a, b) => b.seconds - a.seconds)[0];
     activePlayerIndex = highestScorer.index;
   }
 
-  perRoundState.originalPlayer = activePlayerIndex; // onthoud wie de puzzel start
+  perRoundState.originalPlayer = activePlayerIndex; 
   highlightActive();
   flash(`Volgende puzzel start door ${players[activePlayerIndex].name}`);
 
@@ -586,11 +577,11 @@ function showPuzzelSolution(puzzel) {
     <div style="margin-top: 1em;">${solutionDisplay}</div>
   `;
 
-  // 🔹 Stuur volledige puzzel zichtbaar naar display, in dezelfde actieve scene
+  
   sendPuzzelDisplayUpdate('scene-round-puzzel-active', {
     puzzelWords: puzzel.currentWords.map(w => ({
       text: w,
-      found: true, // Alles zichtbaar
+      found: true, 
       linkIndex: (() => {
         const fl = puzzel.links.find(fl => fl.answers.includes(w));
         return fl ? puzzel.links.indexOf(fl) : null;
@@ -605,11 +596,11 @@ function showPuzzelSolution(puzzel) {
     statusText: "Alle kandidaten hebben gepast. Volledige puzzel wordt getoond."
   });
 
-  // 🔹 Ga naar volgende puzzel of ronde-einde
+  
   perRoundState.currentPuzzelIndex++;
 
   if (perRoundState.currentPuzzelIndex < perRoundState.puzzles.length) {
-    // Volgende puzzel bepalen
+    
     if (perRoundState.currentPuzzelIndex === 2 && perRoundState.puzzles.length > 2) {
       const highestScorer = [...players].sort((a, b) => b.seconds - a.seconds)[0];
       activePlayerIndex = highestScorer.index;
@@ -622,7 +613,7 @@ function showPuzzelSolution(puzzel) {
     document.getElementById('roundControls').innerHTML =
       '<button onclick="nextPuzzelQuestion()">Start Volgende Puzzel</button>';
   } else {
-    // Laatste puzzel klaar → ronde afronden
+    
     document.getElementById('roundControls').innerHTML = '';
     flash('Einde van de Puzzelronde! Druk op "Volgende ronde" om verder te gaan.');
     document.getElementById('nextRound').disabled = false;

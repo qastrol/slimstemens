@@ -1,4 +1,4 @@
-// ===== 3-6-9 RONDE =====
+
 function shuffleArray(array) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -10,10 +10,10 @@ function shuffleArray(array) {
 let defaultThreeSixNineMax = 12;
 
 function setupThreeSixNineRound() {
-  // Kopieer de vragen en shuffle
+  
   perRoundState.questions = shuffleArray(Q_3_6_9.slice());
   
-  // Gebruik de ingestelde max
+  
   perRoundState.max = defaultThreeSixNineMax;
 
   currentQuestionIndex = 0;
@@ -23,7 +23,7 @@ currentQuestionEl.innerHTML = `<em>3-6-9 ronde: ${perRoundState.max} vragen. Dru
 
   renderThreeSixNineControls();
 
-  // STUUR INITIËLE STATUS NAAR DISPLAY
+  
 sendDisplayUpdate({
     type: 'round_start',
     name: '3-6-9 Ronde',
@@ -69,7 +69,7 @@ function nextThreeSixNineQuestion() {
   }
 
   const q = perRoundState.questions[currentQuestionIndex] || { text: 'Placeholdervraag', answers: [] };
-  perRoundState.currentQuestion = q; // actieve vraag
+  perRoundState.currentQuestion = q; 
   currentQuestionIndex++;
 
   const activePlayerName = players[activePlayerIndex]?.name || '-';
@@ -104,7 +104,7 @@ function markThreeSixNineAnswer(isRight) {
   const currentPlayer = players[activePlayerIndex];
 
   if (isRight) {
-    // Alleen elke derde vraag geeft 10 seconden
+    
     if (currentQuestionIndex % 3 === 0) {
       currentPlayer.seconds += 10;
       flash(`GOED! +10s bonus voor ${currentPlayer.name}!`, 'good');
@@ -112,18 +112,18 @@ function markThreeSixNineAnswer(isRight) {
       flash(`GOED! Geen tijd, ${currentPlayer.name} blijft aan de beurt.`, 'good');
     }
 
-    // De speler blijft altijd aan de beurt bij een goed antwoord
+    
 
   } else {
-    // Bij fout antwoord gaat de beurt naar de volgende speler
+    
     activePlayerIndex = (activePlayerIndex + 1) % players.length;
     flash(`FOUT! Beurt naar ${players[activePlayerIndex].name} voor dezelfde vraag.`, 'wrong');
   }
 
-  // Zorg dat seconden niet negatief worden
+  
   currentPlayer.seconds = Math.max(0, currentPlayer.seconds);
 
-  // Verstuur update naar de display
+  
   sendDisplayUpdate({
     type: 'update',
     action: 'answer',

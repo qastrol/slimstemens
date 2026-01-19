@@ -27,7 +27,6 @@ const puzzelQuestions = [
   { link: "Popcorn", answers: ["In de bioscoop", "Maïs", "Snack", "Zoet of zout"]  },
   { link: "Kerk", answers: ["Biechtstoel", "Altaar", "Sacristie", "De kogel is door de"]  },
   { link: "Augurk", answers: ["Familie van de komkommer", "Pickle", "Vaak op een burger", "Kesbeke"] },
-  { link: "Harde Hugo", answers: ["HARD!", "DGHHPS", "Livestreamer", "Waarom dit paneel er niet professioneel uitziet?"]},
   { link: "Complot", answers: ["Theorie", "Samenzwering", "De maanlanding is nep!", "Klinkt als appelmoes"]  },
   { link: "Er was eens..", answers: ["Zo beginnen sprookjes", "Once upon a time", "En ze leefden nog lang en gelukkig", "Il était une fois"] },
   { link: "Ex", answers: ["On the beach", "Odus", "Je voormalige partner", "Lat"]},

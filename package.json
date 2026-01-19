@@ -11,8 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "express": "^5.1.0",
-    "ws": "^8.18.3"
+    "ws": "^8.19.0"
   },
-  "devDependencies": {},
   "description": ""
 }

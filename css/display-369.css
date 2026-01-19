@@ -1,163 +1,175 @@
 @font-face {
-    font-family: 'DIN Black Text';
-    src: url('fonts/DIN-Black.woff2') format('woff2'),
-         url('fonts/DIN-Black.woff') format('woff');
-    font-weight: normal;
-    font-style: normal;
+  font-family: 'DIN Black Text';
+  src: url('fonts/DIN-Black.woff2') format('woff2'),
+    url('fonts/DIN-Black.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
 }
 
-/* Basisstijlen voor het display */
-        body {
-            /* Fullscreen voor 1920x1080 */
-            width: 1920px;
-            height: 1080px;
-            background-color: transparent; /* Belangrijk voor OBS! */
-            color: white;
-            font-family: 'DIN Black', Arial, sans-serif; /* <--- AANGEPAST */
-            padding: 0;
-            overflow: hidden; 
-            display: flex; /* Gebruik flexbox voor lay-out */
-            flex-direction: column;
-            justify-content: space-between; /* Verdeel ruimte tussen content en spelers */
-        }
+body {
+  width: 1920px;
+  height: 1080px;
+  background-color: transparent;
+  color: white;
+  font-family: 'DIN Black', Arial, sans-serif;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
 
-        /* --- Status Scherm --- */
-        #statusScreen {
-            position: absolute; 
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: #bd321d; /* Rood/Oranje Achtergrond */
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-size: 3em;
-            text-align: center;
-            z-index: 999;
-            transition: opacity 0.5s ease;
-            opacity: 0;
-            pointer-events: none;
-        }
-        
-        .initial-title-bar {
-            font-family: 'Formula Condensed Bold', Impact, sans-serif;
-            font-size: 6.0em; /* Groter gemaakt voor 1920x1080 resolutie */
-            color: white;
-            margin-bottom: 30px;
-            display: flex; /* Maak inline-layout mogelijk */
-            align-items: center; 
-            gap: 15px; /* Ruimte tussen de elementen */
-            text-transform: lowercase; /* Alles in kleine letters */
-            line-height: 1; /* Zorg dat de elementen op één lijn staan */
-            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.6);
-        }
+#statusScreen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #bd321d;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 3em;
+  text-align: center;
+  z-index: 999;
+  transition: opacity 0.5s ease;
+  opacity: 0;
+  pointer-events: none;
+}
 
-        .initial-title-bar img {
-            height: 1em; /* Maak de afbeelding even hoog als de tekst */
-            width: auto;
-            vertical-align: middle;
-            display: block; /* Zorgt voor correcte uitlijning met line-height */
-        }
-        
-        #connection-status {
-            font-size: 1.2em;
-            color: #eee;
-            margin-top: 10px;
-            font-weight: bold;
-        }
+.initial-title-bar {
+  font-family: 'Formula Condensed Bold', Impact, sans-serif;
+  font-size: 6.0em;
+  color: white;
+  margin-bottom: 30px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  text-transform: lowercase;
+  line-height: 1;
+  text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.6);
+}
+
+.initial-title-bar img {
+  height: 1em;
+  width: auto;
+  vertical-align: middle;
+  display: block;
+}
+
+#connection-status {
+  font-size: 1.2em;
+  color: #eee;
+  margin-top: 10px;
+  font-weight: bold;
+}
 
 .scene {
-    position: absolute;
-    top: 0; left: 0;
-    width: 1920px; height: 1080px;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    text-align: center;
-    color: white;
-    background: #bd321d;
-    transition: opacity 0.3s ease;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1920px;
+  height: 1080px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+  color: white;
+  background: #bd321d;
+  transition: opacity 0.3s ease;
 }
 
 .scene .screen-title {
-    font-size: 3em;
-    margin-bottom: 20px;
+  font-size: 3em;
+  margin-bottom: 20px;
 }
 
 .scene .status-text {
-    font-size: 1.8em;
-    color: #eee;
+  font-size: 1.8em;
+  color: #eee;
 }
 
 .scene .hint-text {
-    font-size: 1.2em;
-    color: #aaa;
-    margin-top: 10px;
+  font-size: 1.2em;
+  color: #aaa;
+  margin-top: 10px;
 }
 
-.scene#scene-no-connection { background: #bd321d; }
-.scene#scene-waiting-host { background: #bd321d; }
-.scene#scene-waiting-game { background: #bd321d; }
-/* 🎬 Lobby-scène met achtergrondafbeelding */
+.scene#scene-no-connection {
+  background: #bd321d;
+}
+
+.scene#scene-waiting-host {
+  background: #bd321d;
+}
+
+.scene#scene-waiting-game {
+  background: #bd321d;
+}
+
 .scene#scene-lobby {
-    background-color: #bd321d; /* fallbackkleur */
-    background-image: url("../assets/kandidatenstoelen.jpg");
-    background-size: cover;
-    background-position: center center;
-    background-repeat: no-repeat;
-    background-blend-mode: normal; /* je kunt 'overlay' of 'multiply' gebruiken voor kleurfilter */
+  background-color: #bd321d;
+  background-image: url("../assets/kandidatenstoelen.jpg");
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-blend-mode: normal;
 }
 
 
-/* 🎬 LOBBY: vaste posities voor de drie kandidaten */
 #lobbyPlayerImages {
-    position: relative;
-    width: 1920px;
-    height: 1080px;
+  position: relative;
+  width: 1920px;
+  height: 1080px;
 }
 
-/* Algemene stijl voor de foto's */
 .lobby-photo {
-    position: absolute;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    color: white;
-    font-size: 1.4em;
-    text-align: center;
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: white;
+  font-size: 1.4em;
+  text-align: center;
 }
 
-/* Vierkante profielfoto's */
 .lobby-photo img {
-    width: 220px;
-    height: 220px;
-    object-fit: cover;
-    border-radius: 16px; /* geen cirkel meer */
-    border: 6px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 0 30px rgba(0,0,0,0.5);
-    margin-bottom: 12px;
+  width: 220px;
+  height: 220px;
+  object-fit: cover;
+  border-radius: 16px;
+  border: 6px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+  margin-bottom: 12px;
 }
 
-/* Vaste posities voor de 3 stoelen (afhankelijk van jouw achtergrondbeeld) */
 .lobby-photo:nth-child(1) {
-    top: 450px;
-    left: 550px;
+  top: 450px;
+  left: 550px;
 }
+
 .lobby-photo:nth-child(2) {
-    top: 450px;
-    left: 850px;
+  top: 450px;
+  left: 850px;
 }
+
 .lobby-photo:nth-child(3) {
-    top: 450px;
-    right: 530px;
+  top: 450px;
+  right: 530px;
 }
 
 
 
-.scene#scene-round-intro { background: #bd321d; }
-.scene#scene-round-active { background: #bd321d; }
+.scene#scene-round-intro {
+  background: #bd321d;
+}
 
-/* === SCÈNES 5 & 6 – 3-6-9 layout === */
+.scene#scene-round-active {
+  background: #bd321d;
+}
+
 #scene-round-intro,
 #scene-round-active {
   background: #bd321d;
@@ -168,9 +180,9 @@
 }
 
 #scene-round-369 {
-    background-color: #bd321d; /* dezelfde rode kleur als eerdere scènes */
-    background-size: cover;
-    background-position: center center;
+  background-color: #bd321d;
+  background-size: cover;
+  background-position: center center;
 }
 
 
@@ -182,7 +194,6 @@
   height: 1080px;
 }
 
-/* Linksboven – mini stoelen met foto's */
 .grid-part.part1 {
   grid-column: 1;
   grid-row: 1;
@@ -201,37 +212,48 @@
   width: 960px;
   height: 540px;
   object-fit: cover;
-  top: 0; left: 0;
+  top: 0;
+  left: 0;
   opacity: 0.35;
 }
 
-/* Kleine foto’s in mini-lobby */
 #miniLobbyPlayers,
 #activeMiniLobby {
   position: absolute;
   width: 960px;
   height: 540px;
 }
+
 .mini-lobby .player {
   position: absolute;
   text-align: center;
   color: white;
   font-size: 1.1em;
 }
+
 .mini-lobby .player img {
   width: 100px;
   height: 100px;
   object-fit: cover;
   border-radius: 8px;
-  border: 3px solid rgba(255,255,255,0.3);
+  border: 3px solid rgba(255, 255, 255, 0.3);
 }
 
-/* voorbeeldposities voor 3 spelers (pas aan naar wens) */
-.mini-lobby .player:nth-child(1) { top: 320px; left: 280px; }
-.mini-lobby .player:nth-child(2) { top: 320px; left: 430px; }
-.mini-lobby .player:nth-child(3) { top: 320px; right: 275px; }
+.mini-lobby .player:nth-child(1) {
+  top: 320px;
+  left: 280px;
+}
 
-/* Rechtsboven – vraag en beurt */
+.mini-lobby .player:nth-child(2) {
+  top: 320px;
+  left: 430px;
+}
+
+.mini-lobby .player:nth-child(3) {
+  top: 320px;
+  right: 275px;
+}
+
 .grid-part.part2 {
   grid-column: 2;
   grid-row: 1;
@@ -240,28 +262,28 @@
   align-items: center;
   justify-content: center;
 }
+
 .question-box {
-  background: rgba(0,0,0,0.3);
+  background: rgba(0, 0, 0, 0.3);
   border-radius: 20px;
   padding: 30px;
   width: 90%;
   text-align: center;
 }
+
 .round-name {
   font-size: 2.2em;
   font-weight: bold;
   margin-bottom: 15px;
 }
+
 .round-question {
   font-size: 1.6em;
 }
+
 .round-status {
   font-size: 1.4em;
 }
-
-/* display.css: Aanpassingen in de sectie === SCÈNES 5 & 6 – 3-6-9 layout === */
-
-/* === 🎬 SPECIFIEKE 3-6-9 RONDE (1080p OPTIMALISATIE) === */
 
 #scene-round-369 {
   background-color: #bd321d;
@@ -270,16 +292,14 @@
   overflow: hidden;
 }
 
-/* Grid behoudt verhouding 2x2, maar iets meer ruimte in bovenste helft voor de vraag */
 #scene-round-369 .round-grid {
   display: grid;
   grid-template-columns: 960px 960px;
-  grid-template-rows: 520px 560px; /* iets minder boven, meer onder */
+  grid-template-rows: 520px 560px;
   width: 100%;
   height: 100%;
 }
 
-/* 🔹 Rechterboven: vraagvenster groter en visueel dominanter */
 #scene-round-369 .grid-part.part2 {
   padding: 60px 80px;
   display: flex;
@@ -293,7 +313,7 @@
   padding: 50px;
   width: 95%;
   text-align: center;
-  box-shadow: 0 0 40px rgba(0,0,0,0.3);
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
 }
 
 #scene-round-369 .round-name {
@@ -314,14 +334,13 @@
   font-weight: 600;
   line-height: 1.3;
   color: white;
-  text-shadow: 3px 3px 6px rgba(0,0,0,0.5);
+  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
 }
 
-/* Onderkant: spelers bovenaan, vraagnummers onderaan */
 #scene-round-369 .grid-part.part3 {
   grid-column: 1 / span 2;
   grid-row: 2;
-  position: relative; /* nodig voor absolute positioning van binnenste elementen */
+  position: relative;
   width: 100%;
   height: 100%;
   display: flex;
@@ -330,21 +349,19 @@
   background: transparent;
 }
 
-/* 🔸 Spelersbalk bovenaan van part3 */
 #scene-round-369 .players-bar {
   position: absolute;
-  top: 40px; /* afstand vanaf de bovenkant */
+  top: 40px;
   left: 0;
   right: 0;
   display: flex;
   justify-content: center;
-  gap: 180px; /* afstand tussen spelers */
+  gap: 180px;
 }
 
-/* 🔸 Vraagnummers onderaan op vaste positie */
 #scene-round-369 .question-numbers {
   position: absolute;
-  bottom: 60px; /* afstand vanaf onderkant */
+  bottom: 60px;
   left: 0;
   right: 0;
   display: flex;
@@ -354,12 +371,11 @@
   color: white;
 }
 
-/* Kleine visuele verbeteringen */
 #scene-round-369 .question-numbers div {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  border: 3px solid rgba(255,255,255,0.4);
+  border: 3px solid rgba(255, 255, 255, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -375,7 +391,6 @@
 }
 
 
-/* Spelerkaart: naam en seconden visueel groter */
 #scene-round-369 .player-card {
   display: flex;
   flex-direction: column;
@@ -387,10 +402,9 @@
   font-weight: 800;
   font-size: 2.2em;
   margin-bottom: 18px;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
-/* Grote, ovale secondeweergave */
 #scene-round-369 .player-seconds {
   width: 180px;
   height: 90px;
@@ -402,7 +416,7 @@
   font-weight: bold;
   font-size: 2.8em;
   color: #bd321d;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
   transition: all 0.3s ease;
 }
 
@@ -418,7 +432,7 @@
   position: relative;
   width: 960px;
   height: 540px;
-  background: #bd321d; /* donkere achtergrond in plaats van transparant rood */
+  background: #bd321d;
   overflow: hidden;
 }
 
@@ -429,52 +443,50 @@
   object-fit: cover;
   top: 0;
   left: 0;
-  opacity: 1; /* geen transparantie meer */
+  opacity: 1;
 }
 
-/* Scène 1: Vragensteller Kiezen */
-        .scene#scene-round-opendeur-vragensteller {
-            background-color: #bd321d; /* Donkerdere kleur */
-        }
-        
-        #opendeur-vragensteller-grid {
-            display: grid;
-            grid-template-columns: 960px 960px;
-            grid-template-rows: 540px 540px;
-            width: 1920px;
-            height: 1080px;
-        }
+.scene#scene-round-opendeur-vragensteller {
+  background-color: #bd321d;
+}
 
-        #opendeur-vragensteller-grid .part1 {
-            grid-column: 1;
-            grid-row: 1;
-            position: relative;
-            overflow: hidden;
-        }
+#opendeur-vragensteller-grid {
+  display: grid;
+  grid-template-columns: 960px 960px;
+  grid-template-rows: 540px 540px;
+  width: 1920px;
+  height: 1080px;
+}
+
+#opendeur-vragensteller-grid .part1 {
+  grid-column: 1;
+  grid-row: 1;
+  position: relative;
+  overflow: hidden;
+}
 
 #opendeur-vragensteller-grid .part2 {
-    grid-column: 2;
-    grid-row: 1;
-    background-color: #bd321d;
-    display: flex;
-    flex-direction: column; /* <-- stapel elementen verticaal */
-    align-items: center;    /* centreren horizontaal */
-    justify-content: flex-start; /* optioneel: bovenaan uitlijnen */
-    gap: 2rem;              /* verticale ruimte tussen de items */
-    padding: 40px;           /* optioneel voor wat extra ruimte rondom */
+  grid-column: 2;
+  grid-row: 1;
+  background-color: #bd321d;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 2rem;
+  padding: 40px;
 }
 
 
-        #opendeur-vragensteller-grid .part3 {
-            grid-column: 1 / span 2;
-            grid-row: 2;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            padding: 0 50px;
-        }
+#opendeur-vragensteller-grid .part3 {
+  grid-column: 1 / span 2;
+  grid-row: 2;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0 50px;
+}
 
-/* Layout van de drie vraagstellers */
 .vragenstellers-container {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -485,7 +497,7 @@
 }
 
 .vragensteller-box {
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 20px;
   padding: 1.5rem;
   text-align: center;
@@ -499,12 +511,10 @@
   transition: all 0.3s ease;
 }
 
-/* Nog beschikbaar */
 .vragensteller-box.beschikbaar {
   border: 3px solid #4caf50;
 }
 
-/* Al gekozen */
 .vragensteller-box.gekozen {
   border: 3px solid #888;
   opacity: 0.4;
@@ -521,205 +531,190 @@
 }
 
 
-        .vragensteller-box.selected {
-            opacity: 0.3; /* Fade-out effect */
-            transform: scale(0.95);
-        }
-        
-        /* Scène 2: Vraag/Antwoorden */
-        .scene#scene-round-opendeur-vraag {
-            background-color: #bd321d;
-        }
+.vragensteller-box.selected {
+  opacity: 0.3;
+  transform: scale(0.95);
+}
 
-        #opendeur-vraag-grid {
-            display: grid;
-            grid-template-columns: 960px 960px;
-            grid-template-rows: 540px 540px;
-            width: 1920px;
-            height: 1080px;
-        }
+.scene#scene-round-opendeur-vraag {
+  background-color: #bd321d;
+}
 
-        /* Tussenstanden onder de vraag/antwoord-informatie */
+#opendeur-vraag-grid {
+  display: grid;
+  grid-template-columns: 960px 960px;
+  grid-template-rows: 540px 540px;
+  width: 1920px;
+  height: 1080px;
+}
+
 #od-vraag-scores {
-    grid-column: 2; /* rechterhelft */
-    grid-row: 2; /* onder de info */
-    display: flex;
-    justify-content: center;
-    gap: 60px;
-    padding-top: 20px;
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  justify-content: center;
+  gap: 60px;
+  padding-top: 20px;
 }
 
-        
-        /* Linkerhelft: Antwoorden (960x1080) */
-        #opendeur-vraag-grid .left-half {
-            grid-column: 1;
-            grid-row: 1 / span 2;
-            background: #bd321d;
-            padding: 40px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-around;
-        }
 
-        .od-answer-line {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin: 20px 0;
-            padding: 15px 30px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-        }
-        
-        .od-answer-text {
-            font-size: 3.5em;
-            font-weight: bold;
-            color: white;
-            text-transform: uppercase; /* <-- Deze regel toevoegen */
-        }
+#opendeur-vraag-grid .left-half {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  background: #bd321d;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+}
 
-        .od-answer-points {
-            width: 100px;
-            height: 60px;
-            border-radius: 30px;
-            background-color: #ffd17a;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2.2em;
-            font-weight: bold;
-            color: #071021;
-        }
+.od-answer-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 20px 0;
+  padding: 15px 30px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
 
-        /* Visueel effect voor niet-geraden antwoorden (Blur/Vage weergave) */
-        .od-answer-text.blurred {
-             /* De lengte van het woord is nog leesbaar */
-            -webkit-filter: blur(8px);
-            filter: blur(8px);
-            opacity: 0.7;
-            transition: filter 0.5s ease, opacity 0.5s ease;
-        }
+.od-answer-text {
+  font-size: 3.5em;
+  font-weight: bold;
+  color: white;
+  text-transform: uppercase;
+}
 
-        /* Rechtsboven: Mini Lobby */
-        #opendeur-vraag-grid .part2-mini-lobby {
-            grid-column: 2;
-            grid-row: 1;
-            position: relative;
-            overflow: hidden;
-            background: #bd321d;
-        }
-        /* Gebruik bestaande mini-lobby stijlen, enkel de achtergrondkleur of een simpele achtergrond is nodig */
+.od-answer-points {
+  width: 100px;
+  height: 60px;
+  border-radius: 30px;
+  background-color: #ffd17a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2em;
+  font-weight: bold;
+  color: #071021;
+}
 
-        /* Rechtsonder: Vragensteller Naam + Beurtinformatie */
-        #opendeur-vraag-grid .part4-status {
-            grid-column: 2;
-            grid-row: 2;
-            background: #bd321d;
-    border-radius: 30px;
-    padding: 50px 40px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 15px; /* ruimte tussen beurt, vraag en teller */
-    box-shadow: 0 0 40px rgba(0,0,0,0.5);
-        }
+.od-answer-text.blurred {
+  -webkit-filter: blur(8px);
+  filter: blur(8px);
+  opacity: 0.7;
+  transition: filter 0.5s ease, opacity 0.5s ease;
+}
 
-/* Vragensteller Naam */
+#opendeur-vraag-grid .part2-mini-lobby {
+  grid-column: 2;
+  grid-row: 1;
+  position: relative;
+  overflow: hidden;
+  background: #bd321d;
+}
+
+#opendeur-vraag-grid .part4-status {
+  grid-column: 2;
+  grid-row: 2;
+  background: #bd321d;
+  border-radius: 30px;
+  padding: 50px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+}
+
 #od-vragensteller-naam {
-    font-size: 4.0em; /* iets groter en opvallender */
-    font-weight: 900;
-    color: #ffd17a;
-    margin-bottom: 20px;
-    text-transform: uppercase; /* optioneel: naam meer benadrukken */
-    text-shadow: 2px 2px 8px rgba(0,0,0,0.6); /* subtiele schaduw voor leesbaarheid */
-    letter-spacing: 1px;
+  font-size: 4.0em;
+  font-weight: 900;
+  color: #ffd17a;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.6);
+  letter-spacing: 1px;
 }
 
-/* Vragensteller / Beurt informatie */
 #od-beurt-info {
-    font-size: 2.0em; /* gelijk houden */
-    color: white;
-    font-weight: 700;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  font-size: 2.0em;
+  color: white;
+  font-weight: 700;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
-/* Vraagtekst zelf groter en visueel opvallender */
 #od-vragensteller-vraag {
-    font-size: 3.5em; /* flink groter dan beurt-info */
-    font-weight: 800;
-    color: white;
-    text-align: center;
-    line-height: 1.2;
-    max-width: 90%; /* voorkomt overflow bij langere vragen */
-    text-shadow: 3px 3px 8px rgba(0,0,0,0.6);
+  font-size: 3.5em;
+  font-weight: 800;
+  color: white;
+  text-align: center;
+  line-height: 1.2;
+  max-width: 90%;
+  text-shadow: 3px 3px 8px rgba(0, 0, 0, 0.6);
 }
 
-/* Antwoordteller klein en subtiel */
 #od-antwoord-teller {
-    font-size: 1.8em; 
-    color: #eee;
-    font-weight: 600;
-    margin-top: 15px;
-    text-shadow: 1px 1px 3px rgba(0,0,0,0.4);
+  font-size: 1.8em;
+  color: #eee;
+  font-weight: 600;
+  margin-top: 15px;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4);
 }
 
-/* Vraagtekst: veel groter en duidelijk zichtbaar */
 #od-vraag-tekst {
-    font-size: 3.5em;     /* iets kleiner dan vragensteller naam */
-    font-weight: 600;
-    line-height: 1.3;
-    color: white;
-    text-align: center;
-    text-shadow: 3px 3px 6px rgba(0,0,0,0.6);
-    max-width: 90%;        /* voorkomt overflow */
+  font-size: 3.5em;
+  font-weight: 600;
+  line-height: 1.3;
+  color: white;
+  text-align: center;
+  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.6);
+  max-width: 90%;
 }
 
-        .players-bar-compact {
-    display: flex;
-    justify-content: center;
-    gap: 30px; /* kleinere afstand tussen spelers */
-    margin-top: 20px;
-    flex-wrap: wrap;
+.players-bar-compact {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-top: 20px;
+  flex-wrap: wrap;
 }
 
 .players-bar-compact .player-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: white;
 }
 
 .players-bar-compact .player-name {
-    font-weight: 700;
-    font-size: 1.6em;
-    margin-bottom: 10px;
-    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+  font-weight: 700;
+  font-size: 1.6em;
+  margin-bottom: 10px;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 .players-bar-compact .player-seconds {
-    width: 80px;
-    height: 40px;
-    border-radius: 20px;
-    background-color: #eee;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 1.6em;
-    color: #bd321d;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
-    transition: all 0.3s ease;
+  width: 80px;
+  height: 40px;
+  border-radius: 20px;
+  background-color: #eee;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.6em;
+  color: #bd321d;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  transition: all 0.3s ease;
 }
 
 .players-bar-compact .player-card.active-player .player-seconds {
-    background-color: #ffd17a;
-    color: #071021;
-    box-shadow: 0 0 15px #ffd17a;
-    transform: scale(1.05);
+  background-color: #ffd17a;
+  color: #071021;
+  box-shadow: 0 0 15px #ffd17a;
+  transform: scale(1.05);
 }
-
-/* === 🎯 PUZZELRONDE — Visueel in lijn met Opendeur === */
 
 .scene#scene-round-puzzel {
   background-color: #bd321d;
@@ -732,13 +727,12 @@
 
 #puzzel-grid {
   display: grid;
-  grid-template-columns: 640px 640px 640px; /* drie kolommen */
+  grid-template-columns: 640px 640px 640px;
   grid-template-rows: 1080px;
   width: 1920px;
   height: 1080px;
 }
 
-/* === 🧩 Linkerdeel: puzzelbord === */
 #puzzel-grid .part1 {
   background: #bd321d;
   padding: 40px;
@@ -762,9 +756,9 @@
 }
 
 .puzzel-word {
-  background: rgba(0,0,0,0.35);
+  background: rgba(0, 0, 0, 0.35);
   color: #fff;
-  border: 2px solid rgba(255,255,255,0.15);
+  border: 2px solid rgba(255, 255, 255, 0.15);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -776,29 +770,29 @@
 }
 
 .puzzel-word.found {
-    text-decoration: none; 
-    transform: scale(1.03);
-    box-shadow: 0 0 15px rgba(255,255,255,0.2);
+  text-decoration: none;
+  transform: scale(1.03);
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
 }
 
-/* Unieke kleuren per gevonden link (index 0, 1, 2) */
 .puzzel-word.found-link-0 {
-    background: #0b2e0b; /* Origineel groen */
-    color: #9aff9a;
-    border-color: #9aff9a;
-}
-.puzzel-word.found-link-1 {
-    background: #0b202e; /* Donkerblauw */
-    color: #9acfff;
-    border-color: #9acfff;
-}
-.puzzel-word.found-link-2 {
-    background: #2e2a0b; /* Donker oker/goud */
-    color: #fffb9a;
-    border-color: #fffb9a;
+  background: #0b2e0b;
+  color: #9aff9a;
+  border-color: #9aff9a;
 }
 
-/* === 👥 Middendeel: spelersinfo compact === */
+.puzzel-word.found-link-1 {
+  background: #0b202e;
+  color: #9acfff;
+  border-color: #9acfff;
+}
+
+.puzzel-word.found-link-2 {
+  background: #2e2a0b;
+  color: #fffb9a;
+  border-color: #fffb9a;
+}
+
 #puzzel-grid .part2 {
   background-color: #bd321d;
   display: flex;
@@ -813,7 +807,7 @@
   font-size: 2.6em;
   font-weight: 800;
   color: white;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
   margin-top: 40px;
 }
 
@@ -836,7 +830,7 @@
   font-weight: 700;
   font-size: 1.8em;
   margin-bottom: 12px;
-  text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 .players-bar-compact .player-seconds {
@@ -850,7 +844,7 @@
   font-weight: bold;
   font-size: 2.0em;
   color: #bd321d;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
   transition: all 0.3s ease;
 }
 
@@ -862,81 +856,82 @@
 }
 
 #scene-round-puzzel-waiting .round-grid {
-    display: grid;
-    grid-template-columns: 960px 960px;
-    grid-template-rows: 540px 540px; /* hetzelfde als active */
-    width: 1920px;
-    height: 1080px;
-    gap: 0;
+  display: grid;
+  grid-template-columns: 960px 960px;
+  grid-template-rows: 540px 540px;
+  width: 1920px;
+  height: 1080px;
+  gap: 0;
 }
 
 #scene-round-puzzel-waiting .grid-part.part1 {
-    grid-column: 1;
-    grid-row: 1 / span 2;
-    padding: 40px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    background: #bd321d;
-    border-radius: 20px;
-    box-shadow: 0 0 40px rgba(0,0,0,0.4);
-    gap: 20px;
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: #bd321d;
+  border-radius: 20px;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.4);
+  gap: 20px;
 }
 
 #scene-round-puzzel-waiting .grid-part.part2 {
-    grid-column: 2;
-    grid-row: 1;
-    position: relative;
-    overflow: hidden;
-    padding: 0;
-    background: none;
+  grid-column: 2;
+  grid-row: 1;
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+  background: none;
 }
 
 #scene-round-puzzel-waiting .grid-part.part2 .mini-lobby {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%;
-    height: 100%;
-    background: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: none;
 }
 
 #scene-round-puzzel-waiting .grid-part.part2 .mini-bg {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    opacity: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 1;
 }
 
 #scene-round-puzzel-waiting .grid-part.part3 {
-    padding: 20px 25px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
+  padding: 20px 25px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
 }
 
 
 #scene-round-puzzel-active .round-grid {
-    display: grid;
-    grid-template-columns: 960px 960px;
-    grid-template-rows: 540px 540px; /*zelfde als 3-6-9*/
-    width: 1920px;
-    height: 1080px;
-    gap: 0;
+  display: grid;
+  grid-template-columns: 960px 960px;
+  grid-template-rows: 540px 540px;
+  width: 1920px;
+  height: 1080px;
+  gap: 0;
 }
 
 #scene-round-puzzel-active .grid-part.part1 {
-    grid-column: 1;
-    grid-row: 1 / span 2;
-    padding: 40px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    background: #bd321d;
-    border-radius: 20px;
-    box-shadow: 0 0 40px rgba(0,0,0,0.4);
-    gap: 20px; /* Ruimte tussen tabel en links */
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: #bd321d;
+  border-radius: 20px;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.4);
+  gap: 20px;
 }
 
 #scene-round-puzzel-active .grid-part.part2 {
@@ -945,15 +940,16 @@
   position: relative;
   overflow: hidden;
   padding: 0;
-  background: none; /* geen rode achtergrond meer */
+  background: none;
 }
 
 #scene-round-puzzel-active .grid-part.part2 .mini-lobby {
   position: absolute;
-  top: 0; left: 0;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  background: none; /* geen transparantie over rood */
+  background: none;
   overflow: hidden;
 }
 
@@ -961,141 +957,141 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 1; /* volledig zichtbaar */
+  opacity: 1;
 }
 
 #scene-round-puzzel-active .grid-part.part2 #puzzelActiveMiniLobby {
   position: absolute;
-  top: 0; left: 0;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
 }
 
 .puzzel-table-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(4, 1fr);
-    gap: 6px;
-    width: 100%;
-    height: 600px; /* Pas evt. aan */
-    max-height: 60vh;
-    flex-shrink: 0; /* Voorkom dat de tabel krimpt */
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 6px;
+  width: 100%;
+  height: 600px;
+  max-height: 60vh;
+  flex-shrink: 0;
 }
 
 .puzzel-word {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2em;
-    font-weight: 700;
-    background: #222;
-    border: 2px solid #444;
-    color: #eee;
-    text-align: center;
-    border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2em;
+  font-weight: 700;
+  background: #222;
+  border: 2px solid #444;
+  color: #eee;
+  text-align: center;
+  border-radius: 10px;
 }
 
 .puzzel-word.found {
-    background: #0b2e0b;
-    color: #9aff9a;
-    text-decoration: line-through;
+  background: #0b2e0b;
+  color: #9aff9a;
+  text-decoration: line-through;
 }
 
 #scene-round-puzzel-active .grid-part.part3 {
-    padding: 20px 25px;      /* minder padding */
-    gap: 12px;               /* minder ruimte tussen items */
-}
-.puzzel-round-info {
-    font-size: 1.6em;        /* iets kleiner */
-    margin-bottom: 12px;
+  padding: 20px 25px;
+  gap: 12px;
 }
 
-/* Nieuwe container voor de puzzellinks (onder de tabel) */
+.puzzel-round-info {
+  font-size: 1.6em;
+  margin-bottom: 12px;
+}
+
 #puzzelLinksContainer {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around; /* behoudt dezelfde verticale ruimte */
-    width: 100%;
-    padding: 20px; 
-    gap: 20px; /* ruimte tussen de regels */
-    flex-grow: 1;
-    background: none; /* geen extra achtergrond */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  width: 100%;
+  padding: 20px;
+  gap: 20px;
+  flex-grow: 1;
+  background: none;
 }
 
 .puzzel-round-info {
-    font-size: 1.6em;
-    font-weight: bold;
-    color: #ffd17a;
-    text-shadow: 2px 2px 6px rgba(0,0,0,0.5);
-    margin-bottom: 12px;
+  font-size: 1.6em;
+  font-weight: bold;
+  color: #ffd17a;
+  text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.5);
+  margin-bottom: 12px;
 }
 
 .puzzel-link-line {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 15px 30px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 30px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
 }
 
 .puzzel-link-text {
-    font-size: 3.5em;  /* gelijk aan OD */
-    font-weight: bold;
-    color: white;
-    text-transform: uppercase;
+  font-size: 3.5em;
+  font-weight: bold;
+  color: white;
+  text-transform: uppercase;
 }
 
 .puzzel-link-points {
-    width: 100px;
-    height: 60px;
-    border-radius: 30px;
-    background-color: #ffd17a;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2.2em;
-    font-weight: bold;
-    color: #071021;
+  width: 100px;
+  height: 60px;
+  border-radius: 30px;
+  background-color: #ffd17a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2em;
+  font-weight: bold;
+  color: #071021;
 }
 
-/* Niet-geraden/blurred */
 .puzzel-link-text.blurred {
-    -webkit-filter: blur(8px);
-    filter: blur(8px);
-    opacity: 0.7;
-    transition: filter 0.5s ease, opacity 0.5s ease;
+  -webkit-filter: blur(8px);
+  filter: blur(8px);
+  opacity: 0.7;
+  transition: filter 0.5s ease, opacity 0.5s ease;
 }
 
 #puzzelActivePlayersBar .player-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    font-size: 1.8em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 1.8em;
 }
 
 #puzzelActivePlayersBar {
-    display: flex;
-    justify-content: center;
-    gap: 25px;
-    flex-wrap: nowrap;      /* alles op één regel */
+  display: flex;
+  justify-content: center;
+  gap: 25px;
+  flex-wrap: nowrap;
 }
 
 #puzzelActivePlayersBar .player-name {
-    font-size: 1.4em;
+  font-size: 1.4em;
 }
 
 #puzzelActivePlayersBar .player-seconds {
-    width: 90px;
-    height: 55px;
-    font-size: 1.4em;
-    border-radius: 18px;
+  width: 90px;
+  height: 55px;
+  font-size: 1.4em;
+  border-radius: 18px;
 }
 
 
 #puzzelActivePlayersBar .player-card.active-player .player-seconds {
-    background-color: #ffd17a;
-    color: #071021;
-    transform: scale(1.0);
-    box-shadow: 0 0 30px #ffd17a;
+  background-color: #ffd17a;
+  color: #071021;
+  transform: scale(1.0);
+  box-shadow: 0 0 30px #ffd17a;
 }

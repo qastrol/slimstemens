@@ -1,8 +1,3 @@
-/* ===== GALERIJ RONDE (HOST DASHBOARD UI) =====
-   Dynamische fases:
-   pre → main → aanvul → slideshow → done
-*/
-
 let currentGallery = null;
 let galleryImages = [];
 let galleryIndex = 0;
@@ -21,8 +16,6 @@ let galleryTimerRunning = false;
 
 let galerijRoundOrder = []; 
 
-
-// Helper functie om display updates te sturen met actuele player data
 function sendGalerijDisplayUpdate() {
   const baseData = {
     type: 'update',
@@ -31,7 +24,6 @@ function sendGalerijDisplayUpdate() {
     activeIndex: galleryPlayerIndex
   };
 
-  // Bepaal de juiste scene en extra data op basis van de huidige fase
   if (galleryPhase === 'pre') {
     sendDisplayUpdate({
       ...baseData,
@@ -49,7 +41,6 @@ function sendGalerijDisplayUpdate() {
       totalImages: galleryImages.length
     });
   } else if (galleryPhase === 'aanvul') {
-    // 🔧 Vind de index van de aanvullende speler op basis van naam (betrouwbaarder)
     const aanvulPlayerIndex = currentAanvulPlayer ? players.findIndex(p => p.name === currentAanvulPlayer.name) : -1;
     sendDisplayUpdate({
       ...baseData,
@@ -61,7 +52,7 @@ function sendGalerijDisplayUpdate() {
         points: 15
       })),
       activePlayer: currentAanvulPlayer,
-      activeIndex: aanvulPlayerIndex // 🔧 Gebruik de correcte index
+      activeIndex: aanvulPlayerIndex
     });
   } else if (galleryPhase === 'slideshow') {
     const img = galleryImages[galleryIndex];
@@ -91,7 +82,6 @@ function setupGalerijRound() {
   renderGalerijHostUI();
   flash('Galerijronde klaar om te starten.');
   
-  // Stuur initiële display update voor pre-scene
   sendDisplayUpdate({
     type: 'update',
     key: 'galerij',
@@ -120,7 +110,6 @@ function startGalerijTimer() {
 
   
   if (typeof playSFX === 'function') {
-    // Stuur display aan om te loopen (geen lokaal geluid op host)
     try { sendDisplayUpdate({ type: 'audio', action: 'loopStart', src: 'SFX/klok2.mp3' }); } catch(e) {}
   }
 
@@ -131,7 +120,6 @@ function startGalerijTimer() {
     activePlayer.seconds = Math.max(0, activePlayer.seconds - 1);
     renderPlayers();
     
-    // 🔄 Stuur real-time update naar display voor secondeweergave
     sendGalerijDisplayUpdate();
     
     if (activePlayer.seconds <= 0) {
@@ -145,7 +133,6 @@ function startGalerijTimer() {
 }
 
 function stopGalerijTimerSound() {
-  // Geen lokale audio meer op host, roep gewoon de generieke stopfunctie aan
   if (typeof stopLoopTimerSFX === 'function') stopLoopTimerSFX();
   if (typeof playSFX === 'function') playSFX('SFX/klokeind.mp3');
 }
@@ -293,7 +280,7 @@ function forceSlideshowPhaseOnDisplay() {
         scene: 'scene-round-galerij-slideshow',
         galleryTheme: currentGallery.theme,
         imageSrc: img?.src,
-        imageAnswer: img?.answer, // ✅ Voeg antwoord toe
+        imageAnswer: img?.answer, 
         answers: galleryImages.map(p => ({
             text: p.answer,
             found: p.found || false,
@@ -302,8 +289,8 @@ function forceSlideshowPhaseOnDisplay() {
         players: players,
         activePlayer: players[galleryPlayerIndex],
         activeIndex: galleryPlayerIndex,
-        imageIndex: galleryIndex, // ✅ Voeg huidige index toe
-        totalImages: galleryImages.length // ✅ Voeg totaal aantal toe
+        imageIndex: galleryIndex, 
+        totalImages: galleryImages.length 
     });
 
     flash('Display handmatig naar bespreekfase gestuurd.');
@@ -316,7 +303,7 @@ function startGalerijForPlayer(playerIndex) {
   galleryPlayerIndex = playerIndex;
   const selectedGallery = galerijRoundOrder[playerIndex % galerijRoundOrder.length];
   currentGallery = { theme: selectedGallery.theme, folder: selectedGallery.folder };
-  // Gebruik het aantal uit de globale galerijPhotoCount (default 10)
+  
   let count = 10;
   if (typeof galerijPhotoCount !== 'undefined' && !isNaN(galerijPhotoCount)) {
     count = galerijPhotoCount;
@@ -365,8 +352,8 @@ function nextGalerijQuestion() {
             players: players,
             activePlayer: players[galleryPlayerIndex],
             activeIndex: galleryPlayerIndex,
-            imageIndex: galleryIndex, // ✅ Voeg huidige index toe
-            totalImages: galleryImages.length // ✅ Voeg totaal aantal toe
+            imageIndex: galleryIndex, 
+            totalImages: galleryImages.length 
         });
     }
 }
@@ -381,7 +368,7 @@ function markGalerijAnswer(isRight, answer) {
     currentPlayer.seconds += 15;
     flash(`Goed! ${answer} levert +15s op voor ${currentPlayer.name}`);
     playSFX('SFX/goed.mp3');
-    currentImage.found = true; // ✅ markeer als gevonden
+    currentImage.found = true; 
   } else {
     flash(`Pas op ${answer}`);
     if (!passedImages.some(img => img.answer === currentImage.answer)) {
@@ -391,10 +378,10 @@ function markGalerijAnswer(isRight, answer) {
 
   renderPlayers();
   
-  // 🔄 Stuur direct een update zodat de nieuwe seconds zichtbaar zijn
+  
   sendGalerijDisplayUpdate();
   
-  // Dan pas naar volgende vraag
+  
   nextGalerijQuestion();
 }
 
@@ -417,10 +404,10 @@ function nextAanvulTurn() {
     currentAanvulPlayer = aanvulQueue.shift();
     renderGalerijHostUI();
 
-    // 🔧 Vind de index van de aanvullende speler op basis van naam (betrouwbaarder)
+    
     const aanvulPlayerIndex = currentAanvulPlayer ? players.findIndex(p => p.name === currentAanvulPlayer.name) : -1;
 
-    // ✅ In plaats van alleen passedImages, stuur alle galleryImages met hun found-status
+    
     sendDisplayUpdate({
         type: 'update',
         key: 'galerij',
@@ -433,7 +420,7 @@ function nextAanvulTurn() {
         })),
         players: players,
         activePlayer: currentAanvulPlayer,
-        activeIndex: aanvulPlayerIndex // 🔧 Gebruik de correcte index
+        activeIndex: aanvulPlayerIndex 
     });
 }
 
@@ -444,23 +431,23 @@ function markAanvulAnswer(img) {
     flash(`${currentAanvulPlayer.name} correct: ${img.answer} (+15s)`);
     playSFX('SFX/goed.mp3');
 
-    // ✅ Markeer afbeelding als gevonden
+    
     img.found = true;
 
-    // ✅ Verwijder het item uit passedImages zodat de host-knop verdwijnt
+    
     passedImages = passedImages.filter(p => p !== img);
 
     renderPlayers();
 
-    // ✅ Als alles opgelost is → bespreekfase
+    
     if (galleryImages.every(p => p.found)) {
         stopGalerijTimer(false);
         startSlideshowPhase();
     } else {
-        renderGalerijHostUI(); // herbouwt de knoppen op host
+        renderGalerijHostUI(); 
     }
 
-    // ✅ Stuur update met bijgewerkte seconds naar display
+    
     sendGalerijDisplayUpdate();
 }
 
@@ -476,12 +463,12 @@ function startSlideshowPhase() {
         scene: 'scene-round-galerij-slideshow',
         galleryTheme: currentGallery.theme,
         imageSrc: galleryImages[galleryIndex]?.src,
-        imageAnswer: galleryImages[galleryIndex]?.answer, // ✅ Voeg antwoord toe
+        imageAnswer: galleryImages[galleryIndex]?.answer, 
         players: players,
         activePlayer: players[galleryPlayerIndex],
         activeIndex: galleryPlayerIndex,
-        imageIndex: galleryIndex, // ✅ Voeg huidige index toe
-        totalImages: galleryImages.length // ✅ Voeg totaal aantal toe
+        imageIndex: galleryIndex, 
+        totalImages: galleryImages.length 
     });
 }
 
@@ -499,7 +486,7 @@ function showNextSlideshow() {
             flash(`Galerij van ${players[galleryPlayerIndex].name} besproken. Start volgende.`);
         }
   } else {
-        const currentImage = galleryImages[galleryIndex]; // Haal het object op
+        const currentImage = galleryImages[galleryIndex]; 
 
         sendDisplayUpdate({
             type: 'update',
@@ -507,12 +494,12 @@ function showNextSlideshow() {
             scene: 'scene-round-galerij-slideshow',
             galleryTheme: currentGallery.theme,
             imageSrc: currentImage?.src,
-            imageAnswer: currentImage?.answer, // <-- Voeg het antwoord toe
+            imageAnswer: currentImage?.answer, 
             players: players,
             activePlayer: players[galleryPlayerIndex],
             activeIndex: galleryPlayerIndex,
-            imageIndex: galleryIndex, // ✅ Voeg huidige index toe
-            totalImages: galleryImages.length // ✅ Voeg totaal aantal toe
+            imageIndex: galleryIndex, 
+            totalImages: galleryImages.length 
         });
     }
 
