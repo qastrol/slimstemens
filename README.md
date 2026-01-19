@@ -1,6 +1,6 @@
 Hoe speel je het zelf?
 1. Download de nieuwste versie van Node.js van https://nodejs.org/en/download
-2. Download de .zip met alle code ([ownloadlink](<https://github.com/qastrol/slimstemens/archive/refs/heads/main.zip>)), en pak de .zip uit in een nieuwe map
+2. Download de .zip met alle code ([downloadlink](<https://github.com/qastrol/slimstemens/archive/refs/heads/main.zip>)), en pak de .zip uit in een nieuwe map
 3. Open start_server.bat
 4. Als het goed is start dit bestand een lokale server op. Bij De Slimste Mens open je de lokale bestanden display.html en index.html (waarschijnlijk worden die standaard al geopend)
 5. Via de dashboardpagina of index.html bedien je als "presentator" het scherm dat voor de toeschouwers te zien is via display.html
