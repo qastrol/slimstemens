@@ -3,7 +3,7 @@ SETLOCAL
 title De Slimste Mens
 
 echo ========================================
-echo       DE SLIMSTE MENS - STARTUP
+echo       DE SLIMSTE MENS
 echo ========================================
 echo.
 
