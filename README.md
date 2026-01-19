@@ -4,5 +4,5 @@ Hoe speel je het zelf?
 3. Open start_server.bat
 4. Als het goed is start dit bestand een lokale server op. Bij De Slimste Mens open je de lokale bestanden display.html en index.html (waarschijnlijk worden die standaard al geopend)
 5. Via de dashboardpagina of index.html bedien je als "presentator" het scherm dat voor de toeschouwers te zien is via display.html
-6. Als je OBS gebruikt, maak je een browserbron aan met http://localhost:3000/display (bij De Zwakste Schakel) óf met display.html (bij De Slimste Mens). Als je via Discord speelt kan je gewoon een browser openen en de browser streamen naar Discord. Je kan ook twee beeldschermen gebruiken als je het spel offline op locatie wilt spelen met iedereen in dezelfde kamer.
+6. Als je OBS gebruikt, maak je een browserbron aan met het lokale display.html bestand. Als je via Discord speelt kan je gewoon een browser openen en de browser streamen naar Discord. Je kan ook twee beeldschermen gebruiken als je het spel offline op locatie wilt spelen met iedereen in dezelfde kamer.
 7. Veel speelplezier!
