@@ -7,5 +7,6 @@ Hoe speel je het zelf?
 6. Als je OBS gebruikt, maak je een browserbron aan met het lokale display.html bestand. Als je via Discord speelt kan je gewoon een browser openen en de browser streamen naar Discord. Je kan ook twee beeldschermen gebruiken als je het spel offline op locatie wilt spelen met iedereen in dezelfde kamer.
 7. Veel speelplezier!
 
-De website gebruikt deels de volgende lettertypes: DIN Black, Formula Condensed Bold, Arial (deze zijn benodigd om de pagina volledig te laten werken
+De website gebruikt deels de volgende lettertypes: DIN Black, Formula Condensed Bold, Arial (deze zijn benodigd om de pagina volledig te laten werken)
+
 display.html werkt het beste bij een scherm van 1920 pixels breed en 1080 pixels hoog
