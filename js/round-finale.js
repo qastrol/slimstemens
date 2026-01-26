@@ -560,10 +560,6 @@ function renderFinaleHostUI(phase = 'main', afvallerIndex = -1) {
                 <button onclick="startFinaleTimer()" id="finaleStartTimer" class="primary">Start Klok / Vervolg Beurt</button>
                 <button onclick="passFinale()" class="secondary" ${allFound ? 'disabled' : ''}>Pas (${activePlayer.name})</button>
             </div>
-            <div style="margin-top:10px; font-style:italic;">
-                Kloktijd wordt van ${activePlayer.name}'s score afgetrokken bij pas/goed antwoord.
-                Bij een goed antwoord wordt ook ${FINALE_POINTS_DEDUCTION}s van ${opponent.name}'s score afgetrokken.
-            </div>
         `;
     } 
     else if (phase === 'answered') {
