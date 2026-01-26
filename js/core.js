@@ -10,6 +10,7 @@ let globalTimerInterval = null;
 let thinkingTimerInterval = null;
 let activePlayerIndex = 0;
 let loopTimerAudio = null;
+let loopTimerSeconds = 0;       
 
 
 let galerijPhotoCount = 10;
@@ -356,7 +357,6 @@ document.getElementById('collectiefEndOption').addEventListener('change', (e)=>{
 });
 
 let loopTimerInterval = null;   
-let loopTimerSeconds = 0;       
 
 function startLoopTimer() {
     
