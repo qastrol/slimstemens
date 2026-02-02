@@ -1,0 +1,34 @@
+{
+  "metadata": {
+    "name": "Mijn Quiz Config",
+    "description": "Aangepaste vragen configuratie voor De Slimste Mens",
+    "created": "2026-02-01",
+    "note": "Vul hier je aangepaste vragen in per ronde. Rondes die leeg zijn of ontbreken gebruiken de standaard vragen. Kijk in CONFIG_MANAGER_README.md of QUICK_START_CONFIG.md voor voorbeelden."
+  },
+  "settings": {
+    "threeSixNine": {
+      "shuffle": true
+    },
+    "opendeur": {
+      "shuffle": true
+    },
+    "puzzel": {
+      "shuffle": true
+    },
+    "galerij": {
+      "shuffle": true
+    },
+    "collectief": {
+      "shuffle": true
+    },
+    "finale": {
+      "shuffle": true
+    }
+  },
+  "threeSixNine": [],
+  "opendeur": [],
+  "puzzel": [],
+  "galerij": [],
+  "collectief": [],
+  "finale": []
+}

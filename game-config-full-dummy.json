@@ -1,0 +1,360 @@
+{
+  "metadata": {
+    "name": "Volledig Dummy Voorbeeld Config",
+    "description": "Compleet ingevuld met dummy-data voor alle rondes",
+    "created": "2026-02-01",
+    "author": "Quiz Master",
+    "note": "Dit bestand bevat dummy-data voor demonstratie. Vervang met echte quizvragen."
+  },
+  "settings": {
+    "threeSixNine": {
+      "shuffle": false,
+      "description": "Als shuffle false is, worden vragen in volgorde gebruikt zoals hieronder staat"
+    },
+    "opendeur": {
+      "shuffle": true,
+      "description": "Als shuffle true is (standaard), worden vragen willekeurig gekozen"
+    },
+    "puzzel": {
+      "shuffle": true
+    },
+    "galerij": {
+      "shuffle": true
+    },
+    "collectief": {
+      "shuffle": false,
+      "description": "Sequentiële volgorde voor collectief geheugen"
+    },
+    "finale": {
+      "shuffle": false,
+      "description": "Vragen worden in volgorde gebruikt"
+    }
+  },
+  "threeSixNine": [
+    {"text": "Wat is de hoofdstad van Frankrijk?", "answers": ["Parijs", "Paris"], "type": "classic"},
+    {"type": "multiple-choice", "text": "Hoeveel poten heeft een spin?", "options": {"A": "6", "B": "8", "C": "10", "D": "12"}, "correctAnswer": "B"},
+    {"type": "photo", "text": "Welk museum zie je hier?", "photoUrl": "assets/rijksmuseum.jpg", "answers": ["Rijksmuseum"]},
+    {"text": "Wie schreef Romeo en Julia?", "answers": ["William Shakespeare", "Shakespeare"], "type": "classic"},
+    {"type": "audio", "text": "Welke film soundtrack hoor je?", "audioUrl": "assets/starwars.mp3", "answers": ["Star Wars"]},
+    {"type": "doe", "text": "Doe een perfecte imitatie van een politicus", "description": "Host kiest beste imitatie"},
+    {"type": "estimation", "text": "Hoeveel kilometer is het van Amsterdam naar Berlijn?", "correctAnswer": "650", "unit": "km"},
+    {"type": "multiple-choice", "text": "Wat is het grootste zoogdier?", "options": {"A": "Olifant", "B": "Giraf", "C": "Blauwe vinvis", "D": "Nijlpaard"}, "correctAnswer": "C"},
+    {"text": "Hoeveel continenten zijn er op aarde?", "answers": ["Zeven", "7"], "type": "classic"},
+    {"type": "photo", "text": "Welk kunstwerk zie je?", "photoUrl": "assets/nachtwacht.jpg", "answers": ["De Nachtwacht", "Nachtwacht"]},
+    {"type": "estimation", "text": "In welk jaar landde de eerste mens op de maan?", "correctAnswer": "1969"},
+    {"text": "Wat is de snelheid van het licht?", "answers": ["300.000 km/s", "Driehonderdduizend kilometer per seconde"], "type": "classic"},
+    {"type": "doe", "text": "Zing het refrein van het Wilhelmus", "description": "Host kiest beste uitvoering"},
+    {"type": "audio", "text": "Welke artiest hoor je?", "audioUrl": "assets/beatles.mp3", "answers": ["The Beatles", "Beatles"]},
+    {"type": "multiple-choice", "text": "Wat is het chemisch symbool voor goud?", "options": {"A": "Go", "B": "Au", "C": "Gd", "D": "Ag"}, "correctAnswer": "B"}
+  ],
+  "opendeur": [
+    {
+      "from": "Emma",
+      "question": "Wat zijn vier dingen die je in een keuken vindt?",
+      "answers": ["Koelkast", "Fornuis", "Oven", "Gootsteen"]
+    },
+    {
+      "from": "Lucas",
+      "question": "Wat zijn vier Nederlandse voetbalclubs?",
+      "answers": ["Ajax", "Feyenoord", "PSV", "AZ"]
+    },
+    {
+      "from": "Sophie",
+      "question": "Wat zijn vier social media platformen?",
+      "answers": ["Facebook", "Instagram", "Twitter", "TikTok"]
+    },
+    {
+      "from": "Daan",
+      "question": "Wat zijn vier bekende auto merken?",
+      "answers": ["Volkswagen", "Toyota", "Ford", "BMW"]
+    },
+    {
+      "from": "Lisa",
+      "question": "Wat zijn vier seizoenen van het jaar?",
+      "answers": ["Lente", "Zomer", "Herfst", "Winter"]
+    },
+    {
+      "from": "Tim",
+      "question": "Wat zijn vier muziekinstrumenten?",
+      "answers": ["Piano", "Gitaar", "Viool", "Drums"]
+    },
+    {
+      "from": "Nina",
+      "question": "Wat zijn vier kleuren van de regenboog?",
+      "answers": ["Rood", "Oranje", "Geel", "Groen"]
+    },
+    {
+      "from": "Max",
+      "question": "Wat zijn vier Europese hoofdsteden?",
+      "answers": ["Parijs", "Berlijn", "Rome", "Madrid"]
+    }
+  ],
+  "puzzel": [
+    {"link": "Bank", "answers": ["Zitmeubel", "Geld bewaren", "Zandbank", "Bankje in park"]},
+    {"link": "Lamp", "answers": ["Gloeilamp", "Schemerlamp", "Lampje brandt", "Staande lamp"]},
+    {"link": "Kaas", "answers": ["Gouda", "Edammer", "Mozzarella", "Parmezaan"]},
+    {"link": "Water", "answers": ["Drinkwater", "Waterval", "Zwemwater", "Kraanwater"]},
+    {"link": "Deur", "answers": ["Voordeur", "Achterdeur", "Open deur", "Deurknop"]},
+    {"link": "Bal", "answers": ["Voetbal", "Basketbal", "Dansgala", "Ballon"]},
+    {"link": "Pot", "answers": ["Bloempot", "Koffiepot", "Potten en pannen", "Jackpot"]},
+    {"link": "Bril", "answers": ["Leesbril", "Zonnebril", "Veiligheidsbril", "Duikbril"]},
+    {"link": "Muis", "answers": ["Computermuis", "Klein knaagdier", "Mickey Mouse", "Muizenval"]},
+    {"link": "Pad", "answers": ["Wandelpad", "Fietspad", "Kikker", "Toetsenbord"]},
+    {"link": "Ring", "answers": ["Trouwring", "Boksring", "Ring om vinger", "Ringen werpen"]},
+    {"link": "Slot", "answers": ["Deurslot", "Kasteel", "Op slot", "Cijferslot"]},
+    {"link": "Kraan", "answers": ["Waterkraan", "Hijskraan", "Kraanvogel", "Kraanwater"]},
+    {"link": "Blad", "answers": ["Boomblad", "Papierblad", "Nieuwsblad", "Bladmuziek"]},
+    {"link": "Bos", "answers": ["Woud", "Bloemen bos", "Sleutelbos", "Bosbes"]},
+    {"link": "Ton", "answers": ["Vuilniston", "Gewichtseenheid", "Regenton", "Ton geld"]},
+    {"link": "Glas", "answers": ["Drinkglas", "Raam glas", "Wijnglas", "Bierglas"]},
+    {"link": "Riem", "answers": ["Broekriem", "Veiligheidsriem", "Tuigriem", "Tandenriem"]},
+    {"link": "Kast", "answers": ["Boekenkast", "Kledingkast", "Keukenkast", "Archiefkast"]},
+    {"link": "Ster", "answers": ["Filmster", "Hemellichaam", "Zeester", "Vijfpuntige ster"]},
+    {"link": "Pen", "answers": ["Balpen", "Vulpen", "Dierenpen", "Pennenbak"]},
+    {"link": "Jas", "answers": ["Winterjas", "Regenjas", "Leren jas", "Windjack"]},
+    {"link": "Stoel", "answers": ["Bureaustoel", "Keukenstoel", "Schommelstoel", "Krukje"]},
+    {"link": "Bed", "answers": ["Ledikant", "Stapelbed", "Waterbed", "Logeerbed"]},
+    {"link": "Tas", "answers": ["Handtas", "Schooltas", "Rugtas", "Boodschappentas"]},
+    {"link": "Krant", "answers": ["Dagblad", "Ochtendkrant", "Nieuwskrant", "Weekend krant"]},
+    {"link": "Hoed", "answers": ["Zonnehoed", "Cowboyhoed", "Bolhoed", "Petje"]},
+    {"link": "Vork", "answers": ["Eetvork", "Tuinvork", "Visvork", "Dessert vork"]},
+    {"link": "Boek", "answers": ["Roman", "Studieboek", "Handboek", "Kookboek"]},
+    {"link": "Stok", "answers": ["Wandelstok", "Hockeystick", "Drumstok", "Bezem stok"]}
+  ],
+  "galerij": [
+    {
+      "theme": "Bekende Gebouwen",
+      "images": [
+        {"src": "galerij/Gebouwen/gebouw1.jpg", "answer": "Eiffeltoren"},
+        {"src": "galerij/Gebouwen/gebouw2.jpg", "answer": "Big Ben"},
+        {"src": "galerij/Gebouwen/gebouw3.jpg", "answer": "Colosseum"},
+        {"src": "galerij/Gebouwen/gebouw4.jpg", "answer": "Taj Mahal"},
+        {"src": "galerij/Gebouwen/gebouw5.jpg", "answer": "Burj Khalifa"},
+        {"src": "galerij/Gebouwen/gebouw6.jpg", "answer": "Sydney Opera House"},
+        {"src": "galerij/Gebouwen/gebouw7.jpg", "answer": "Empire State Building"},
+        {"src": "galerij/Gebouwen/gebouw8.jpg", "answer": "Sagrada Familia"},
+        {"src": "galerij/Gebouwen/gebouw9.jpg", "answer": "Atomium"},
+        {"src": "galerij/Gebouwen/gebouw10.jpg", "answer": "Golden Gate Bridge"}
+      ]
+    },
+    {
+      "theme": "Beroemde Personen",
+      "images": [
+        {"src": "galerij/Personen/persoon1.jpg", "answer": "Albert Einstein"},
+        {"src": "galerij/Personen/persoon2.jpg", "answer": "Nelson Mandela"},
+        {"src": "galerij/Personen/persoon3.jpg", "answer": "Marie Curie"},
+        {"src": "galerij/Personen/persoon4.jpg", "answer": "Leonardo da Vinci"},
+        {"src": "galerij/Personen/persoon5.jpg", "answer": "Cleopatra"},
+        {"src": "galerij/Personen/persoon6.jpg", "answer": "Winston Churchill"},
+        {"src": "galerij/Personen/persoon7.jpg", "answer": "Gandhi"},
+        {"src": "galerij/Personen/persoon8.jpg", "answer": "Mozart"},
+        {"src": "galerij/Personen/persoon9.jpg", "answer": "Shakespeare"},
+        {"src": "galerij/Personen/persoon10.jpg", "answer": "Beethoven"}
+      ]
+    },
+    {
+      "theme": "Filmposters",
+      "images": [
+        {"src": "galerij/Films/film1.jpg", "answer": "Titanic"},
+        {"src": "galerij/Films/film2.jpg", "answer": "Star Wars"},
+        {"src": "galerij/Films/film3.jpg", "answer": "The Godfather"},
+        {"src": "galerij/Films/film4.jpg", "answer": "Jurassic Park"},
+        {"src": "galerij/Films/film5.jpg", "answer": "Pulp Fiction"},
+        {"src": "galerij/Films/film6.jpg", "answer": "The Matrix"},
+        {"src": "galerij/Films/film7.jpg", "answer": "Forrest Gump"},
+        {"src": "galerij/Films/film8.jpg", "answer": "Avatar"},
+        {"src": "galerij/Films/film9.jpg", "answer": "Inception"},
+        {"src": "galerij/Films/film10.jpg", "answer": "The Dark Knight"}
+      ]
+    },
+    {
+      "theme": "Dierensoorten",
+      "images": [
+        {"src": "galerij/Dieren/dier1.jpg", "answer": "Leeuw"},
+        {"src": "galerij/Dieren/dier2.jpg", "answer": "Olifant"},
+        {"src": "galerij/Dieren/dier3.jpg", "answer": "Giraffe"},
+        {"src": "galerij/Dieren/dier4.jpg", "answer": "Panda"},
+        {"src": "galerij/Dieren/dier5.jpg", "answer": "Kangoeroe"},
+        {"src": "galerij/Dieren/dier6.jpg", "answer": "Dolfijn"},
+        {"src": "galerij/Dieren/dier7.jpg", "answer": "Adelaar"},
+        {"src": "galerij/Dieren/dier8.jpg", "answer": "Tijger"},
+        {"src": "galerij/Dieren/dier9.jpg", "answer": "Pinguïn"},
+        {"src": "galerij/Dieren/dier10.jpg", "answer": "Koala"}
+      ]
+    }
+  ],
+  "collectief": [
+    {
+      "video": "collectief_geheugen/video1.mp4",
+      "answers": [
+        "Voetbal",
+        "Wereldkampioenschap",
+        "Brazilië",
+        "Pelé",
+        "Oranje"
+      ]
+    },
+    {
+      "video": "collectief_geheugen/video2.mp4",
+      "answers": [
+        "Ruimtevaart",
+        "NASA",
+        "Maan",
+        "Neil Armstrong",
+        "Apollo 11"
+      ]
+    },
+    {
+      "video": "collectief_geheugen/video3.mp4",
+      "answers": [
+        "Muziek",
+        "The Beatles",
+        "Liverpool",
+        "John Lennon",
+        "Abbey Road"
+      ]
+    },
+    {
+      "video": "collectief_geheugen/video4.mp4",
+      "answers": [
+        "Olympische Spelen",
+        "Atletiek",
+        "Usain Bolt",
+        "Goud",
+        "Snelste man"
+      ]
+    },
+    {
+      "video": "collectief_geheugen/video5.mp4",
+      "answers": [
+        "Film",
+        "Oscar",
+        "Hollywood",
+        "Rode loper",
+        "Academy Awards"
+      ]
+    }
+  ],
+  "finale": [
+    {
+      "question": "Wat is de hoogste berg ter wereld?",
+      "answers": ["Mount Everest", "Everest", "Chomolungma", "8849 meter", "Himalaya"]
+    },
+    {
+      "question": "Hoeveel botten heeft een volwassen mens?",
+      "answers": ["206", "Tweehonderdzes", "Skelet", "Calcium", "Beenderen"]
+    },
+    {
+      "question": "Wat is het grootste land ter wereld?",
+      "answers": ["Rusland", "Sovjet-Unie", "Moskou", "17 miljoen km²", "Azië"]
+    },
+    {
+      "question": "Wie schreef De Gruffalo?",
+      "answers": ["Julia Donaldson", "Donaldson", "Kinderboek", "Axel Scheffler", "Muis"]
+    },
+    {
+      "question": "Wat is de hoofdstad van Spanje?",
+      "answers": ["Madrid", "Castilië", "Prado", "Real Madrid", "Plaza Mayor"]
+    },
+    {
+      "question": "Hoeveel seconden zitten er in een uur?",
+      "answers": ["3600", "Drieduizend zeshonderd", "60 minuten", "Tijd", "Zestig keer zestig"]
+    },
+    {
+      "question": "Welke planeet staat bekend als de rode planeet?",
+      "answers": ["Mars", "Rode kleur", "IJzeroxide", "Vierde planeet", "Olympus Mons"]
+    },
+    {
+      "question": "Wie componeerde de Vijfde Symfonie?",
+      "answers": ["Beethoven", "Ludwig van Beethoven", "Duitse componist", "Schicksalssinfonie", "1808"]
+    },
+    {
+      "question": "Wat is het grootste zoogdier ter wereld?",
+      "answers": ["Blauwe vinvis", "Vinvis", "Walvis", "200 ton", "Oceaan"]
+    },
+    {
+      "question": "In welk jaar begon de Tweede Wereldoorlog?",
+      "answers": ["1939", "Negentienhonderdnegenendertig", "Polen", "Hitler", "September"]
+    },
+    {
+      "question": "Wat is de hoofdstad van Japan?",
+      "answers": ["Tokio", "Tokyo", "Edo", "Keizerlijke stad", "Shibuya"]
+    },
+    {
+      "question": "Hoeveel letters heeft het Griekse alfabet?",
+      "answers": ["24", "Vierentwintig", "Alpha tot Omega", "Oude taal", "Helleens"]
+    },
+    {
+      "question": "Wie schreef 1984?",
+      "answers": ["George Orwell", "Orwell", "Eric Blair", "Big Brother", "Dystopie"]
+    },
+    {
+      "question": "Wat is het kleinste land ter wereld?",
+      "answers": ["Vaticaanstad", "Vaticaan", "Paus", "0,44 km²", "Rome"]
+    },
+    {
+      "question": "Hoeveel tandjes heeft een volwassen mens?",
+      "answers": ["32", "Tweeëndertig", "Verstandskiezen", "Gebit", "Molaren"]
+    },
+    {
+      "question": "Wat is de snelste landdier?",
+      "answers": ["Jachtluipaard", "Cheeta", "120 km/u", "Afrika", "Grote kat"]
+    },
+    {
+      "question": "Wie schilderde De Sterrennacht?",
+      "answers": ["Vincent van Gogh", "Van Gogh", "Post-impressionisme", "1889", "Saint-Rémy"]
+    },
+    {
+      "question": "Wat is het zwaarste orgaan in het menselijk lichaam?",
+      "answers": ["Huid", "Epidermis", "2 kilo", "Bescherming", "Grootste orgaan"]
+    },
+    {
+      "question": "Hoeveel ogen heeft een spin?",
+      "answers": ["Acht", "8", "Vier paar", "Arachniden", "Geleedpotigen"]
+    },
+    {
+      "question": "Wat is de hoofdstad van Canada?",
+      "answers": ["Ottawa", "Ontario", "Rideau Canal", "Parlement", "Bilinguaal"]
+    },
+    {
+      "question": "Wie vond de telefoon uit?",
+      "answers": ["Alexander Graham Bell", "Bell", "1876", "Schotland", "Amerika"]
+    },
+    {
+      "question": "Wat is het grootste eiland ter wereld?",
+      "answers": ["Groenland", "Kalaallit Nunaat", "Denemarken", "IJskap", "2,1 miljoen km²"]
+    },
+    {
+      "question": "Hoeveel snaren heeft een standaard gitaar?",
+      "answers": ["Zes", "6", "E-A-D-G-B-E", "Snaarinstrument", "Staal of nylon"]
+    },
+    {
+      "question": "Wie schreef Harry Potter?",
+      "answers": ["J.K. Rowling", "Rowling", "Joanne Rowling", "Britse auteur", "Toverschool"]
+    },
+    {
+      "question": "Wat is de diepste oceaan ter wereld?",
+      "answers": ["Stille Oceaan", "Pacific", "Mariana Trog", "11 kilometer", "Grootste oceaan"]
+    },
+    {
+      "question": "Hoeveel toetsen heeft een standaard piano?",
+      "answers": ["88", "Achtenachtig", "52 wit + 36 zwart", "Toetsenboard", "7 octaven"]
+    },
+    {
+      "question": "Wat is het enige zoogdier dat kan vliegen?",
+      "answers": ["Vleermuis", "Bat", "Chiroptera", "Echolocatie", "Nachtdier"]
+    },
+    {
+      "question": "Wie ontdekte penicilline?",
+      "answers": ["Alexander Fleming", "Fleming", "1928", "Antibioticum", "Schimmel"]
+    },
+    {
+      "question": "Wat is de hoofdstad van Egypte?",
+      "answers": ["Caïro", "Cairo", "Al-Qahira", "Nijl", "Piramides"]
+    },
+    {
+      "question": "Hoeveel zintuigen heeft een mens?",
+      "answers": ["Vijf", "5", "Zien", "Horen", "Ruiken"]
+    }
+  ]
+}

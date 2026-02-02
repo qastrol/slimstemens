@@ -323,9 +323,66 @@ function renderThreeSixNine(data){
         
         const qText = data.currentQuestionDisplay || "—";
         const activePlayerName = data.activePlayer || '-';
+        const qType = data.questionType || 'classic';
 
         roundStatusEl.textContent = `Beurt: ${activePlayerName} | Vraag ${data.currentQuestionIndex} van ${data.maxQuestions}`;
-        roundQuestionEl.innerHTML = `<div>${qText}</div>`;
+        
+        // Render vraag op basis van type
+        let questionHTML = '';
+        
+        // Type badge voor speciale vraag types
+        if (qType !== 'classic' && qType !== 'multiple-choice') {
+            const typeLabels = {
+                'photo': '📷 FOTOVRAAG',
+                'audio': '🔊 AUDIOVRAAG',
+                'doe': '🎭 DOE-VRAAG',
+                'estimation': '🔢 INSCHATTING'
+            };
+            questionHTML += `<div class="question-type-badge">${typeLabels[qType] || qType.toUpperCase()}</div>`;
+        }
+        
+        // Vraag tekst
+        questionHTML += `<div>${qText}</div>`;
+        
+        // Multiple choice opties
+        if (qType === 'multiple-choice' && data.options) {
+            questionHTML += '<div class="multiple-choice-options">';
+            for (const [key, value] of Object.entries(data.options)) {
+                questionHTML += `<div><strong>${key}:</strong> ${value}</div>`;
+            }
+            questionHTML += '</div>';
+        }
+        
+        // Foto weergave - toon indicator in vraag, foto zelf in linkervlak
+        if (qType === 'photo') {
+            if (data.photoVisible) {
+                questionHTML += '<div class="audio-indicator">📷 (Foto wordt getoond linksboven)</div>';
+                // Toon foto in linkervlak
+                setTimeout(() => {
+                    const photoContainer = document.getElementById('threeSixNinePhotoContainer');
+                    if (photoContainer && data.photoUrl) {
+                        photoContainer.innerHTML = `<img src="${data.photoUrl}" alt="Vraagfoto" />`;
+                        photoContainer.style.display = 'block';
+                    }
+                }, 0);
+            } else {
+                questionHTML += '<div class="audio-indicator">📷 (Foto verborgen)</div>';
+                // Verberg foto
+                setTimeout(() => {
+                    const photoContainer = document.getElementById('threeSixNinePhotoContainer');
+                    if (photoContainer) {
+                        photoContainer.style.display = 'none';
+                    }
+                }, 0);
+            }
+        }
+        
+        // Audio indicator
+        if (qType === 'audio' && data.audioUrl) {
+            questionHTML += '<div class="audio-indicator">🎵 (Audio wordt afgespeeld)</div>';
+        }
+        
+        roundQuestionEl.innerHTML = questionHTML;
 
         
         renderPlayersBarUniversal(data.currentQuestionIndex - 1, data.activeIndex);
@@ -333,6 +390,25 @@ function renderThreeSixNine(data){
 
     
     renderMiniLobby(data.players, 'miniLobbyPlayers');
+    
+    // Toggle photo action - toon foto in linkerbovenvlak
+    if (data.action === 'togglePhoto' && data.photoUrl) {
+        const photoContainer = document.getElementById('threeSixNinePhotoContainer');
+        
+        if (data.photoVisible) {
+            photoContainer.innerHTML = `<img src="${data.photoUrl}" alt="Vraagfoto" />`;
+            photoContainer.style.display = 'block';
+        } else {
+            photoContainer.style.display = 'none';
+            photoContainer.innerHTML = '';
+        }
+    }
+    
+    // Play audio action
+    if (data.action === 'playAudio' && data.audioUrl) {
+        const audio = new Audio(data.audioUrl);
+        audio.play();
+    }
 }
 
 

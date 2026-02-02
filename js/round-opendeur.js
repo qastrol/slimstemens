@@ -3,14 +3,24 @@ function shuffle(arr) {
 }
 
 function setupOpenDeurRound() {
+  // Stop klok als deze loopt (exclusief voor 3-6-9)
+  if (typeof klok369_stopLoop === 'function') {
+    klok369_stopLoop();
+    klok369_resetTimer();
+  }
   
-  if (typeof openDeurQuestions === 'undefined' || openDeurQuestions.length < 3) {
+  // Haal vragen op met fallback naar standaard vragen
+  const questionsToUse = getQuestionsForRound('opendeur', openDeurQuestions);
+  
+  if (typeof questionsToUse === 'undefined' || questionsToUse.length < 3) {
       flash('Fout: Onvoldoende Open Deur-vragen beschikbaar (minstens 3 nodig).');
       return;
   }
 
-  
-  perRoundState.questions = shuffle(openDeurQuestions).slice(0, 3).map((q, index) => ({
+  // Check of shuffle aan of uit staat
+  const shouldShuffle = shouldShuffleRound('opendeur');
+  const orderedQuestions = shouldShuffle ? shuffle(questionsToUse) : questionsToUse;
+  perRoundState.questions = orderedQuestions.slice(0, 3).map((q, index) => ({
       ...q,
       
       fromPlayerIndex: index, 

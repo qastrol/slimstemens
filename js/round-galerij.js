@@ -68,6 +68,12 @@ function sendGalerijDisplayUpdate() {
 
 
 function setupGalerijRound() {
+  // Stop klok als deze loopt (exclusief voor 3-6-9)
+  if (typeof klok369_stopLoop === 'function') {
+    klok369_stopLoop();
+    klok369_resetTimer();
+  }
+  
   galleryPhase = 'pre';
   galleryPlayerIndex = 0;
   currentGallery = null;
@@ -77,7 +83,12 @@ function setupGalerijRound() {
   aanvulQueue = [];
   currentAanvulPlayer = null;
   stopGalerijTimer(false); 
-  galerijRoundOrder = shuffleArray(galerijQuestions).slice(0, 3);
+  
+  // Haal vragen op met fallback naar standaard vragen
+  const questionsToUse = getQuestionsForRound('galerij', galerijQuestions);
+  // Check of shuffle aan of uit staat
+  const shouldShuffle = shouldShuffleRound('galerij');
+  galerijRoundOrder = shouldShuffle ? shuffleArray(questionsToUse).slice(0, 3) : questionsToUse.slice(0, 3);
 
   renderGalerijHostUI();
   flash('Galerijronde klaar om te starten.');

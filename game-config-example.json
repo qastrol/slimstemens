@@ -1,0 +1,154 @@
+{
+  "metadata": {
+    "name": "Voorbeeld Quiz Config",
+    "description": "Voorbeeld van aangepaste vragen voor De Slimste Mens",
+    "created": "2026-02-01",
+    "note": "Vul hier je vragen in per ronde. Lege rondes gebruiken standaard vragen."
+  },
+  "settings": {
+    "threeSixNine": {
+      "shuffle": false,
+      "description": "Vragen in sequentiële volgorde (zoals hieronder)"
+    },
+    "opendeur": {
+      "shuffle": true,
+      "description": "Vragen willekeurig (standaard)"
+    },
+    "puzzel": {
+      "shuffle": true
+    },
+    "galerij": {
+      "shuffle": true
+    },
+    "collectief": {
+      "shuffle": true
+    },
+    "finale": {
+      "shuffle": true
+    }
+  },
+  "threeSixNine": [
+    {
+      "text": "Wat is de hoofdstad van Italië?",
+      "answers": ["Rome", "Roma"],
+      "type": "classic"
+    },
+    {
+      "text": "Welke planeet staat het dichtst bij de zon?",
+      "answers": ["Mercurius", "Mercury"],
+      "type": "classic"
+    },
+    {
+      "text": "Wie schilderde de Mona Lisa?",
+      "answers": ["Leonardo da Vinci", "Da Vinci", "Leonardo"],
+      "type": "classic"
+    },
+    {
+      "type": "multiple-choice",
+      "text": "Wat is de hoofdstad van Frankrijk?",
+      "options": {
+        "A": "Berlijn",
+        "B": "Parijs",
+        "C": "Rome",
+        "D": "Madrid"
+      },
+      "correctAnswer": "B"
+    },
+    {
+      "type": "photo",
+      "text": "Welk gebouw zie je op deze foto?",
+      "photoUrl": "assets/eiffeltoren.jpg",
+      "answers": ["Eiffeltoren"]
+    },
+    {
+      "type": "audio",
+      "text": "Welke artiest hoor je?",
+      "audioUrl": "assets/beatles.mp3",
+      "answers": ["The Beatles", "Beatles"]
+    },
+    {
+      "type": "doe",
+      "text": "Doe een perfecte imitatie van een beroemdheid",
+      "description": "De host kiest de winnaar"
+    },
+    {
+      "type": "estimation",
+      "text": "Hoeveel kilometer is het van Amsterdam naar Berlijn?",
+      "correctAnswer": "650",
+      "unit": "km"
+    }
+  ],
+  "opendeur": [
+    {
+      "text": "Wat is de kleinste eenheid van het leven?",
+      "answers": ["Cel"]
+    },
+    {
+      "text": "Hoeveel continenten zijn er?",
+      "answers": ["Zeven"]
+    },
+    {
+      "text": "Wat is het chemische symbool van goud?",
+      "answers": ["Au"]
+    }
+  ],
+  "puzzel": [
+    {
+      "link": "Kaas",
+      "answers": ["Mozzarella", "Edammer", "Parmezaan", "Gouda"]
+    },
+    {
+      "link": "Noten",
+      "answers": ["Piano", "Doktersgeheim", "Moeilijke", "Banknoter"]
+    },
+    {
+      "link": "Bank",
+      "answers": ["Geld", "Zitmeubel", "Zandbank", "Graslaken"]
+    }
+  ],
+  "galerij": [
+    {
+      "theme": "Beroemde architecten",
+      "images": [
+        { "src": "galerij/Architecten/architect1.jpg", "answer": "Frank Lloyd Wright" },
+        { "src": "galerij/Architecten/architect2.jpg", "answer": "Le Corbusier" },
+        { "src": "galerij/Architecten/architect3.jpg", "answer": "I.M. Pei" },
+        { "src": "galerij/Architecten/architect4.jpg", "answer": "Zaha Hadid" },
+        { "src": "galerij/Architecten/architect5.jpg", "answer": "Norman Foster" },
+        { "src": "galerij/Architecten/architect6.jpg", "answer": "Rem Koolhaas" },
+        { "src": "galerij/Architecten/architect7.jpg", "answer": "Santiago Calatrava" },
+        { "src": "galerij/Architecten/architect8.jpg", "answer": "Richard Meier" },
+        { "src": "galerij/Architecten/architect9.jpg", "answer": "Tadao Ando" },
+        { "src": "galerij/Architecten/architect10.jpg", "answer": "Peter Zumthor" }
+      ]
+    }
+  ],
+  "collectief": [
+    {
+      "question": "Noem twee dieren die beginnen met 'A'",
+      "answers": ["Aap", "Aal", "Adder", "Antilope", "Arend", "Albatros"]
+    },
+    {
+      "question": "Noem drie landen in Afrika",
+      "answers": ["Egypte", "Nigeria", "Zuid-Afrika", "Kenia", "Marokko", "Ethiopië", "Ghana", "Tanzania"]
+    },
+    {
+      "question": "Noem twee Europese hoofdsteden",
+      "answers": ["Amsterdam", "Parijs", "Berlijn", "Londen", "Madrid", "Rome", "Athene", "Warschau"]
+    }
+  ],
+  "finale": [
+    {
+      "question": "Wat is het grootste oceaan ter wereld?",
+      "answers": ["Stille Oceaan", "Stille Zee", "Groot Oceaan", "Pacific", "Grootste wateroppervlak"]
+    },
+    {
+      "question": "Hoeveel zintuigen heeft een mens?",
+      "answers": ["Vijf", "5", "Zien", "Horen", "Ruiken"]
+    },
+    {
+      "question": "Wat is het langste been van het menselijk lichaam?",
+      "answers": ["Dijbeen", "Femur", "Bovenbeen", "Bovenbeenbot", "Langste bot"]
+    }
+  ]
+}

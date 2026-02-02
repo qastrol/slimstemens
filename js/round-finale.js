@@ -108,12 +108,32 @@ function startFinaleGame() {
 
 
 function setupFinaleRound() {
+    // Stop klok als deze loopt (exclusief voor 3-6-9)
+    if (typeof klok369_stopLoop === 'function') {
+      klok369_stopLoop();
+      klok369_resetTimer();
+    }
     
     perRoundState.finale = perRoundState.finale || {};
 
+    // Haal vragen op met fallback naar standaard vragen
+    const questionsToUse = getQuestionsForRound('finale', finaleVragen);
+    
+    if (typeof questionsToUse === 'undefined' || !Array.isArray(questionsToUse) || questionsToUse.length === 0) {
+        flash('Fout: Kon geen finaleVragen vinden of de array is leeg. Controleer vragen-finale.js en de HTML laadvolgorde.');
+        console.error('FINALE FOUT: finaleVragen niet gedefinieerd of leeg.');
+        return; 
+    }
     
     perRoundState.finale.currentQuestionIndex = 0;
-perRoundState.finale.questions = shuffleArray(finaleVragen.slice());
+    // Check of shuffle aan of uit staat
+    const shouldShuffle = shouldShuffleRound('finale');
+    const orderedQuestions = shouldShuffle ? shuffleArray(questionsToUse.slice()) : questionsToUse.slice();
+    perRoundState.finale.questions = orderedQuestions.slice(0, 10).map(q => ({
+        ...q,
+        foundAnswers: [],
+        playersWhoPassed: []
+    }));
     perRoundState.finale.finalists = [];
     
     
@@ -124,19 +144,6 @@ perRoundState.finale.questions = shuffleArray(finaleVragen.slice());
         roundRunning = false;
         return;
     }
-    
-    
-if (typeof finaleVragen === 'undefined' || !Array.isArray(finaleVragen) || finaleVragen.length === 0) {
-        flash('Fout: Kon geen finaleVragen vinden of de array is leeg. Controleer vragen-finale.js en de HTML laadvolgorde.');
-        console.error('FINALE FOUT: finaleVragen niet gedefinieerd of leeg.');
-        return; 
-    }
-    
-    perRoundState.finale.questions = shuffleArray(finaleVragen.slice()).slice(0, 10).map(q => ({
-        ...q,
-        foundAnswers: [],
-        playersWhoPassed: []
-    }));
     
     perRoundState.finale.currentQuestionIndex = -1; 
 

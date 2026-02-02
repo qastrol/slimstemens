@@ -69,8 +69,17 @@
   </select>
 </div>
 
-
-
+<hr class="divider" />
+<div>
+  <h4>Configuratie</h4>
+  <label>Upload aangepast game config bestand:</label>
+  <input id="configUpload" type="file" accept=".json" />
+  <div class="controls">
+    <button id="uploadConfigBtn" class="secondary">Configuratie laden</button>
+    <button id="downloadConfigBtn" class="secondary">Huidige config downloaden</button>
+  </div>
+  <div id="configStatus" style="font-size:0.85em;color:#666;margin-top:5px;"></div>
+</div>
 
         <hr class="divider" />
         <div>
@@ -115,6 +124,7 @@
 
     </div>
   </div>
+<script src="js/config-manager.js"></script>
 <script src="js/369vragen.js"></script>
 <script src="js/round-3-6-9.js"></script>
 <script src="js/vragen-opendeur.js"></script>
@@ -128,5 +138,31 @@
 <script src="js/round-collectiefgeheugen.js"></script>
 <script src="js/vragen-finale.js"></script>
 <script src="js/round-finale.js"></script>
+<script>
+// Config Upload/Download Event Listeners
+document.getElementById('uploadConfigBtn').addEventListener('click', async () => {
+  const fileInput = document.getElementById('configUpload');
+  if (!fileInput.files.length) {
+    alert('Selecteer eerst een JSON bestand');
+    return;
+  }
+  
+  try {
+    const file = fileInput.files[0];
+    await uploadConfigFile(file);
+    document.getElementById('configStatus').textContent = 
+      `✓ Configuratie geladen: "${gameConfig.metadata?.name || 'Onbekend'}"`;
+    flash('Configuratie succesvol geladen!', 'good');
+  } catch (error) {
+    document.getElementById('configStatus').textContent = `✗ Fout: ${error.message}`;
+    flash(`Fout bij laden: ${error.message}`, 'wrong');
+  }
+});
+
+document.getElementById('downloadConfigBtn').addEventListener('click', () => {
+  downloadConfigFile();
+  flash('Configuratie gedownload!', 'good');
+});
+</script>
 </body>
 </html>

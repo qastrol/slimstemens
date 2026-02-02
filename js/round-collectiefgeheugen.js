@@ -71,15 +71,27 @@ function shuffleArray(array) {
 perRoundState.collectief = perRoundState.collectief || {};
 
 function setupCollectiefRound() {
+    // Stop klok als deze loopt (exclusief voor 3-6-9)
+    if (typeof klok369_stopLoop === 'function') {
+      klok369_stopLoop();
+      klok369_resetTimer();
+    }
+    
     perRoundState.collectief = perRoundState.collectief || {};
     
-    if (typeof collectiefVragen === 'undefined' || collectiefVragen.length < 3) {
+    // Haal vragen op met fallback naar standaard vragen
+    const questionsToUse = getQuestionsForRound('collectief', collectiefVragen);
+    
+    if (typeof questionsToUse === 'undefined' || questionsToUse.length < 3) {
         flash('Fout: Onvoldoende Collectief Geheugen-vragen beschikbaar (minstens 3 nodig).', 'error');
         return;
     }
     
     
-    perRoundState.collectief.questions = shuffleArray(collectiefVragen.slice()).slice(0, 3).map(q => ({
+    // Check of shuffle aan of uit staat
+    const shouldShuffle = shouldShuffleRound('collectief');
+    const orderedQuestions = shouldShuffle ? shuffleArray(questionsToUse.slice()) : questionsToUse.slice();
+    perRoundState.collectief.questions = orderedQuestions.slice(0, 3).map(q => ({
         ...q,
         foundAnswers: [],        
         playersWhoAnswered: []   

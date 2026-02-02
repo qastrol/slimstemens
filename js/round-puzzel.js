@@ -39,13 +39,23 @@ function sendPuzzelDisplayUpdate(scene, extraData = {}) {
 
 
 function setupPuzzelRound() {
-  if (typeof puzzelQuestions === 'undefined' || puzzelQuestions.length < 9) {
+  // Stop klok als deze loopt (exclusief voor 3-6-9)
+  if (typeof klok369_stopLoop === 'function') {
+    klok369_stopLoop();
+    klok369_resetTimer();
+  }
+  
+  // Haal vragen op met fallback naar standaard vragen
+  const questionsToUse = getQuestionsForRound('puzzel', puzzelQuestions);
+  
+  if (typeof questionsToUse === 'undefined' || questionsToUse.length < 9) {
     flash('Fout: Onvoldoende puzzelvragen beschikbaar. Zorg voor minstens 9 unieke links.');
     return;
   }
   
-  
-  const pool = shuffle(puzzelQuestions.slice());
+  // Check of shuffle aan of uit staat
+  const shouldShuffle = shouldShuffleRound('puzzel');
+  const pool = shouldShuffle ? shuffle(questionsToUse.slice()) : questionsToUse.slice();
   const puzzles = [];
 
   
@@ -94,7 +104,7 @@ function setupPuzzelRound() {
 
   
   if (puzzles.length !== 3) {
-    const fallback = shuffle(puzzelQuestions.slice()).slice(0, 9);
+    const fallback = shuffle(questionsToUse.slice()).slice(0, 9);
     perRoundState.puzzles = [
       { links: fallback.slice(0, 3), played: false, currentWords: [] },
       { links: fallback.slice(3, 6), played: false, currentWords: [] },
