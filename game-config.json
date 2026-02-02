@@ -7,7 +7,9 @@
   },
   "settings": {
     "threeSixNine": {
-      "shuffle": true
+      "shuffle": true,
+      "maxQuestions": null,
+      "_comment": "Zet maxQuestions op een getal (bijv. 15) om het aantal vragen te forceren"
     },
     "opendeur": {
       "shuffle": true
@@ -16,7 +18,9 @@
       "shuffle": true
     },
     "galerij": {
-      "shuffle": true
+      "shuffle": true,
+      "photoCount": null,
+      "_comment": "Zet photoCount op een getal (bijv. 8) om het aantal foto's per galerij te forceren"
     },
     "collectief": {
       "shuffle": true

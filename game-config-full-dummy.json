@@ -9,6 +9,7 @@
   "settings": {
     "threeSixNine": {
       "shuffle": false,
+      "maxQuestions": 15,
       "description": "Als shuffle false is, worden vragen in volgorde gebruikt zoals hieronder staat"
     },
     "opendeur": {

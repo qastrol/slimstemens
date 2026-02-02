@@ -48,6 +48,57 @@
 
 ---
 
+## Game-instellingen Forceren
+
+**Nieuw!** Je kan nu ook spel-instellingen forceren via de config, zoals het aantal vragen of foto's:
+
+```json
+"settings": {
+  "threeSixNine": {
+    "shuffle": true,
+    "maxQuestions": 15
+  },
+  "galerij": {
+    "shuffle": true,
+    "photoCount": 8
+  }
+}
+```
+
+### Beschikbare instellingen per ronde:
+
+**3-6-9 Ronde:**
+- `maxQuestions` - Forceert aantal vragen (bijv. 15 in plaats van standaard 12)
+
+**Galerij Ronde:**
+- `photoCount` - Forceert aantal foto's per galerij (bijv. 8 in plaats van standaard 10)
+
+**Voordelen:**
+- ✓ Geen handmatige aanpassing meer nodig per spel
+- ✓ Consistente setup voor herhaalde events
+- ✓ Kortere of langere rondes voor verschillende doelgroepen
+
+**Voorbeeld:**
+```json
+{
+  "settings": {
+    "threeSixNine": {
+      "shuffle": false,
+      "maxQuestions": 20,
+      "_comment": "20 vragen in vaste volgorde"
+    },
+    "galerij": {
+      "photoCount": 5,
+      "_comment": "Snellere galerij met slechts 5 foto's"
+    }
+  }
+}
+```
+
+Zie `game-config-with-settings-example.json` voor een volledig voorbeeld!
+
+---
+
 ## Meest gestelde vragen
 
 ### ❓ Waar plak ik mijn eigen vragen?

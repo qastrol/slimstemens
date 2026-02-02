@@ -1,0 +1,152 @@
+{
+  "metadata": {
+    "name": "Quiz Config met Game Settings",
+    "description": "Volledig voorbeeld met game-instellingen geforceerd via config",
+    "created": "2026-02-02",
+    "note": "Dit voorbeeld toont hoe je game-instellingen zoals aantal vragen kunt forceren via de config"
+  },
+  "settings": {
+    "threeSixNine": {
+      "shuffle": true,
+      "maxQuestions": 15,
+      "_description": "Deze ronde krijgt precies 15 vragen, ook al zijn er meer beschikbaar. Als maxQuestions niet is ingesteld, gebruikt het spel de standaard waarde (12) of de waarde die handmatig is ingesteld."
+    },
+    "opendeur": {
+      "shuffle": false,
+      "_description": "Vragen komen in de volgorde zoals hieronder gedefinieerd"
+    },
+    "puzzel": {
+      "shuffle": true,
+      "_description": "Puzzellinks worden willekeurig gekozen"
+    },
+    "galerij": {
+      "shuffle": true,
+      "photoCount": 8,
+      "_description": "Elke galerij toont 8 foto's in plaats van de standaard 10. Handig voor kortere rondes."
+    },
+    "collectief": {
+      "shuffle": false,
+      "_description": "Videofragmenten in vaste volgorde"
+    },
+    "finale": {
+      "shuffle": true,
+      "_description": "Finalevragen willekeurig"
+    }
+  },
+  "threeSixNine": [
+    {
+      "text": "Wat is de hoofdstad van Nederland?",
+      "answers": ["Amsterdam"],
+      "type": "classic"
+    },
+    {
+      "text": "Hoeveel provincies heeft Nederland?",
+      "answers": ["12", "twaalf"],
+      "type": "classic"
+    },
+    {
+      "text": "In welk jaar viel de Berlijnse Muur?",
+      "answers": ["1989"],
+      "type": "classic"
+    },
+    {
+      "type": "multiple-choice",
+      "text": "Welke planeet is het grootst in ons zonnestelsel?",
+      "options": {
+        "A": "Mars",
+        "B": "Jupiter",
+        "C": "Saturnus",
+        "D": "Neptunus"
+      },
+      "correctAnswer": "B"
+    },
+    {
+      "text": "Wie schreef 'Harry Potter'?",
+      "answers": ["J.K. Rowling", "JK Rowling", "Rowling"],
+      "type": "classic"
+    },
+    {
+      "text": "Wat is de hoofdstad van Frankrijk?",
+      "answers": ["Parijs", "Paris"],
+      "type": "classic"
+    },
+    {
+      "text": "Hoeveel dagen heeft een schrikkeljaar?",
+      "answers": ["366"],
+      "type": "classic"
+    },
+    {
+      "type": "multiple-choice",
+      "text": "Welke kleur krijg je als je rood en blauw mengt?",
+      "options": {
+        "A": "Groen",
+        "B": "Oranje",
+        "C": "Paars",
+        "D": "Bruin"
+      },
+      "correctAnswer": "C"
+    },
+    {
+      "text": "Wat is de hoogste berg ter wereld?",
+      "answers": ["Mount Everest", "Everest"],
+      "type": "classic"
+    },
+    {
+      "text": "Hoeveel continenten zijn er?",
+      "answers": ["7", "zeven"],
+      "type": "classic"
+    },
+    {
+      "text": "In welk land staat de Eiffeltoren?",
+      "answers": ["Frankrijk", "France"],
+      "type": "classic"
+    },
+    {
+      "type": "multiple-choice",
+      "text": "Welk dier is het snelst op land?",
+      "options": {
+        "A": "Leeuw",
+        "B": "Cheetah",
+        "C": "Paard",
+        "D": "Gazelle"
+      },
+      "correctAnswer": "B"
+    },
+    {
+      "text": "Wie schilderde de Mona Lisa?",
+      "answers": ["Leonardo da Vinci", "Da Vinci"],
+      "type": "classic"
+    },
+    {
+      "text": "Wat is het grootste continent?",
+      "answers": ["Azië", "Asia"],
+      "type": "classic"
+    },
+    {
+      "text": "Hoeveel uren heeft een dag?",
+      "answers": ["24"],
+      "type": "classic"
+    }
+  ],
+  "opendeur": [
+    {
+      "from": "Emma",
+      "question": "Noem landen die grenzen aan Duitsland",
+      "answers": ["Nederland", "België", "Frankrijk", "Zwitserland", "Oostenrijk", "Tsjechië", "Polen", "Denemarken", "Luxemburg"]
+    },
+    {
+      "from": "Lucas",
+      "question": "Noem kleuren in de regenboog",
+      "answers": ["Rood", "Oranje", "Geel", "Groen", "Blauw", "Indigo", "Violet"]
+    },
+    {
+      "from": "Sophie",
+      "question": "Noem de Beatles leden",
+      "answers": ["John Lennon", "Paul McCartney", "George Harrison", "Ringo Starr"]
+    }
+  ],
+  "puzzel": [],
+  "galerij": [],
+  "collectief": [],
+  "finale": []
+}

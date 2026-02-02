@@ -147,6 +147,73 @@ Het systeem is **super slim**:
 
 ---
 
+## 🎛️ Game-instellingen Forceren (NIEUW!)
+
+Je kan nu ook **spel-instellingen** vastleggen in je config bestand, zoals:
+- Aantal vragen per ronde
+- Aantal foto's per galerij
+- Shuffle aan/uit per ronde
+
+### Beschikbare settings:
+
+**3-6-9 Ronde:**
+```json
+"settings": {
+  "threeSixNine": {
+    "shuffle": true,
+    "maxQuestions": 15
+  }
+}
+```
+- `shuffle` - Willekeurige volgorde (true/false)
+- `maxQuestions` - Forceert aantal vragen (bijv. 15 in plaats van standaard 12)
+
+**Galerij Ronde:**
+```json
+"settings": {
+  "galerij": {
+    "shuffle": true,
+    "photoCount": 8
+  }
+}
+```
+- `shuffle` - Willekeurige volgorde galerijen
+- `photoCount` - Aantal foto's per galerij (bijv. 8 in plaats van standaard 10)
+
+### Voordelen:
+✓ **Geen handmatige aanpassing** meer nodig per spel
+✓ **Consistente setup** voor herhaalde events
+✓ **Kortere of langere rondes** voor verschillende doelgroepen
+✓ **Thematische controle** - vaste volgorde voor verhaallijnen
+
+### Volledig Voorbeeld:
+```json
+{
+  "metadata": {
+    "name": "Mijn Quiz met Settings"
+  },
+  "settings": {
+    "threeSixNine": {
+      "shuffle": false,
+      "maxQuestions": 20
+    },
+    "galerij": {
+      "shuffle": true,
+      "photoCount": 5
+    },
+    "opendeur": {
+      "shuffle": false
+    }
+  },
+  "threeSixNine": [...],
+  "opendeur": [...]
+}
+```
+
+Zie `game-config-with-settings-example.json` voor een compleet werkend voorbeeld!
+
+---
+
 ## 🎮 Praktische Scenario's
 
 ### Scenario 1: Kleine Aanpassingen

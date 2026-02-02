@@ -127,6 +127,28 @@ function shouldShuffleRound(roundKey) {
 }
 
 /**
+ * Haalt een specifieke setting op voor een ronde
+ * @param {string} roundKey - Identifier van de ronde
+ * @param {string} settingKey - De naam van de setting (bijv. 'maxQuestions', 'photoCount')
+ * @param {*} defaultValue - Standaardwaarde als setting niet bestaat
+ * @returns {*} - De waarde van de setting of de defaultValue
+ */
+function getRoundSetting(roundKey, settingKey, defaultValue = null) {
+  if (!gameConfig || !gameConfig.settings || !gameConfig.settings[roundKey]) {
+    return defaultValue;
+  }
+  
+  const roundSettings = gameConfig.settings[roundKey];
+  
+  if (roundSettings.hasOwnProperty(settingKey)) {
+    console.log(`${roundKey}.${settingKey}: ${roundSettings[settingKey]}`);
+    return roundSettings[settingKey];
+  }
+  
+  return defaultValue;
+}
+
+/**
  * Stelt vragen voor een ronde in via config
  * Nuttig voor dynamische updates
  * @param {string} roundKey - Identifier van de ronde

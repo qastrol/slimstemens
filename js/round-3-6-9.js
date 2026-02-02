@@ -113,8 +113,14 @@ function setupThreeSixNineRound() {
   const shouldShuffle = shouldShuffleRound('threeSixNine');
   perRoundState.questions = shouldShuffle ? shuffleArray(questionsToUse.slice()) : questionsToUse.slice();
   
-  
-  perRoundState.max = defaultThreeSixNineMax;
+  // Haal maxQuestions uit config, of gebruik standaard waarde
+  const configMaxQuestions = getRoundSetting('threeSixNine', 'maxQuestions', null);
+  if (configMaxQuestions !== null && !isNaN(configMaxQuestions) && configMaxQuestions > 0) {
+    perRoundState.max = Math.min(configMaxQuestions, perRoundState.questions.length);
+    console.log(`3-6-9: Aantal vragen uit config: ${perRoundState.max}`);
+  } else {
+    perRoundState.max = defaultThreeSixNineMax;
+  }
 
   currentQuestionIndex = 0;
   perRoundState.currentQuestion = null;

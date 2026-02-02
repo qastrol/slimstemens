@@ -8,7 +8,8 @@
   "settings": {
     "threeSixNine": {
       "shuffle": false,
-      "description": "Vragen in sequentiële volgorde (zoals hieronder)"
+      "maxQuestions": 15,
+      "description": "Vragen in sequentiële volgorde (zoals hieronder), geforceerd op 15 vragen"
     },
     "opendeur": {
       "shuffle": true,
@@ -18,7 +19,9 @@
       "shuffle": true
     },
     "galerij": {
-      "shuffle": true
+      "shuffle": true,
+      "photoCount": 8,
+      "description": "8 foto's per galerij in plaats van standaard 10"
     },
     "collectief": {
       "shuffle": true

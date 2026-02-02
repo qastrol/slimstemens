@@ -19,7 +19,16 @@ let galerijPhotoCount = 10;
 window.addEventListener('DOMContentLoaded', function() {
   const el = document.getElementById('galerijPhotoCount');
   if (el) {
-    galerijPhotoCount = parseInt(el.value, 10) || 10;
+    // Check eerst of er een config setting is voor photoCount
+    const configPhotoCount = typeof getRoundSetting === 'function' ? getRoundSetting('galerij', 'photoCount', null) : null;
+    if (configPhotoCount !== null && !isNaN(configPhotoCount) && configPhotoCount > 0) {
+      galerijPhotoCount = configPhotoCount;
+      el.value = configPhotoCount;
+      console.log(`Galerij: Aantal foto's uit config: ${configPhotoCount}`);
+    } else {
+      galerijPhotoCount = parseInt(el.value, 10) || 10;
+    }
+    
     el.addEventListener('change', function() {
       galerijPhotoCount = parseInt(el.value, 10) || 10;
     });
