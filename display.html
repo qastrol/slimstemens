@@ -17,7 +17,17 @@
         <div class="status-text">Geen verbinding met de quizserver.</div>
         <div class="hint-text">Controleer of de host-tool geopend is.</div>
     </div>
-
+    <!-- 🎬 SCENE: Ronde Bumper -->
+    <div id="scene-round-bumper" class="scene">
+        <div class="bumper-container">
+            <div class="bumper-title-bar">
+                de slimste mens
+                <img src="assets/slimstemens.png" alt="Het Slimste Mens logo">
+                van twitch
+            </div>
+            <div class="bumper-round-title" id="bumperRoundTitle"></div>
+        </div>
+    </div>
     <!-- 🎬 SCENE 2: Verbonden met server -->
     <div id="scene-waiting-host" class="scene">
         <div class="initial-title-bar">
@@ -65,7 +75,7 @@
         <!-- Rechtsboven: vraag & beurt -->
         <div class="grid-part part2">
           <div class="question-box">
-            <div id="roundName" class="round-name">3-6-9 Ronde</div>
+            <div id="roundName" class="round-name">3-6-9</div>
             <div id="roundStatus" class="round-status">Druk op “Volgende vraag” om te beginnen.</div>
             <div id="roundQuestion" class="round-question">—</div>
           </div>
@@ -158,7 +168,7 @@
 
     <!-- Rechtsonder: ronde-info + spelers -->
     <div class="grid-part part3 puzzel-info">
-      <div id="puzzelWaitingRoundInfo" class="puzzel-round-info">Puzzelronde</div>
+      <div id="puzzelWaitingRoundInfo" class="puzzel-round-info">Puzzel</div>
       <div id="puzzelWaitingPlayersBar" class="players-bar-compact"></div>
     </div>
   </div>
@@ -202,7 +212,7 @@
     <img src="assets/slimstemens.png" alt="logo">
     van twitch
   </div>
-  <div class="status-text">PUZZELRONDE AFGELOPEN</div>
+  <div class="status-text">PUZZEL AFGELOPEN</div>
   <div class="hint-text">Wacht op de host voor de volgende ronde...</div>
 
   <div class="puzzel-layout">
@@ -219,7 +229,7 @@
     <div id="galerij-pre-grid" class="galerij-round-grid">
         <!-- Linkerhelft: Lege ruimte voor intro/wachtscherm -->
         <div class="grid-part part-left-full" id="galerijPreMainContainer">
-            <div class="round-name" style="font-size: 4em; text-align: center; margin-top: 200px;">Galerijronde</div>
+            <div class="round-name" style="font-size: 4em; text-align: center; margin-top: 200px;">Galerij</div>
             <div class="round-status" style="font-size: 2em; text-align: center; margin-top: 30px; color: #ffd17a;">Klaar om te starten</div>
         </div>
         
@@ -311,7 +321,7 @@
     <div id="galerij-done-grid" class="galerij-round-grid">
         <!-- Linkerhelft: Afrondingsscherm -->
         <div class="grid-part part-left-full" id="galerijDoneMainContainer">
-            <div class="round-name" style="font-size: 4em; text-align: center; margin-top: 200px;">Galerijronde Afgerond</div>
+            <div class="round-name" style="font-size: 4em; text-align: center; margin-top: 200px;">Galerij Afgelopen</div>
             <div class="round-status" style="font-size: 2em; text-align: center; margin-top: 30px; color: #ffd17a;">Alle kandidaten hebben hun galerij gehad</div>
         </div>
         
@@ -326,7 +336,7 @@
         <!-- Rechtsonder: Info en spelersbalk -->
         <div class="grid-part part4-status">
             <div id="galerijDoneInfo" class="round-status">
-                <div class="round-name">Einde van de ronde Galerij</div>
+                <div class="round-name">Galerij</div>
             </div>
             <div id="galerijDonePlayersBar" class="players-bar-compact"></div>
         </div>
@@ -338,7 +348,7 @@
     <div id="collectief-pre-grid" class="galerij-round-grid">
       <!-- Linkerhelft: Intro/wachtscherm -->
       <div class="grid-part part-left-full" id="collectiefPreMainContainer">
-        <div class="round-name" style="font-size: 4em; text-align: center; margin-top: 200px;">Het Collectieve Geheugen</div>
+        <div class="round-name" style="font-size: 4em; text-align: center; margin-top: 200px;">Het Collectief Geheugen</div>
         <div class="round-status" style="font-size: 2em; text-align: center; margin-top: 30px; color: #ffd17a;">Klaar om te starten</div>
       </div>
         
@@ -426,7 +436,7 @@
     <div id="collectief-done-grid" class="galerij-round-grid">
       <!-- Linkerhelft: Eindresultaat -->
       <div class="grid-part part-left-full" id="collectiefDoneMainContainer">
-        <div class="round-name" style="font-size: 4em; text-align: center; margin-top: 200px;">Het Collectieve Geheugen Afgerond</div>
+        <div class="round-name" style="font-size: 4em; text-align: center; margin-top: 200px;">Het Collectief Geheugen Afgelopen</div>
         <div class="round-status" style="font-size: 2em; text-align: center; margin-top: 30px; color: #ffd17a;">
           <span id="collectiefSlimsteVanDeDag"></span>
         </div>
@@ -458,7 +468,7 @@
     <div id="finale-pre-grid" class="galerij-round-grid">
       <!-- Linkerhelft: Finalisten bekendmaking -->
       <div class="grid-part part-left-full" id="finalePreMainContainer">
-        <div class="round-name" style="font-size: 4em; text-align: center; margin-top: 150px;">DE FINALE</div>
+        <div class="round-name" style="font-size: 4em; text-align: center; margin-top: 150px;">Finale</div>
         <div class="round-status" style="font-size: 2.5em; text-align: center; margin-top: 40px; color: #ffd17a;">
           <span id="finaleFinalistenText"></span>
         </div>
@@ -539,6 +549,40 @@
           <div class="round-name">Finale Afgelopen</div>
         </div>
         <div id="finaleEndPlayersBar" class="players-bar-compact"></div>
+      </div>
+    </div>
+</div>
+
+  <!-- 🎬 SCENE: Solo Game End (1 Speler Eindstand) -->
+<div id="scene-solo-game-end" class="scene">
+    <div id="solo-end-grid" class="galerij-round-grid">
+      <!-- Linkerhelft: Eindstand -->
+      <div class="grid-part part-left-full" id="soloEndMainContainer">
+        <div class="round-name" style="font-size: 5em; text-align: center; margin-top: 180px; color: #ffd17a;">
+          <span id="soloPlayerName"></span>
+        </div>
+        <div class="round-status" style="font-size: 3em; text-align: center; margin-top: 40px;">
+          SPEL AFGELOPEN
+        </div>
+        <div class="round-status" style="font-size: 2.5em; text-align: center; margin-top: 30px; color: #c084fc;">
+          Eindstand: <span id="soloFinalSeconds"></span> seconden
+        </div>
+      </div>
+        
+      <!-- Rechterboven: Mini-lobby -->
+      <div class="grid-part part2">
+        <div class="mini-lobby">
+          <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
+          <div id="soloEndMiniLobby"></div>
+        </div>
+      </div>
+        
+      <!-- Rechtsonder: Status -->
+      <div class="grid-part part4-status">
+        <div id="soloEndInfo" class="round-status">
+          <div class="round-name">Solo Modus</div>
+        </div>
+        <div id="soloEndPlayersBar" class="players-bar-compact"></div>
       </div>
     </div>
 </div>

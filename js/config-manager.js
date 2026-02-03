@@ -149,6 +149,52 @@ function getRoundSetting(roundKey, settingKey, defaultValue = null) {
 }
 
 /**
+ * Haalt player mode instellingen op
+ * @returns {object} - Object met playerCount en questionsPerRound
+ */
+function getPlayerModeSettings() {
+  const defaults = {
+    playerCount: 3,
+    questionsPerRound: 1
+  };
+  
+  if (!gameConfig || !gameConfig.settings || !gameConfig.settings.playerMode) {
+    return defaults;
+  }
+  
+  const playerMode = gameConfig.settings.playerMode;
+  return {
+    playerCount: playerMode.playerCount || defaults.playerCount,
+    questionsPerRound: playerMode.questionsPerRound || defaults.questionsPerRound
+  };
+}
+
+/**
+ * Stelt player mode instellingen in
+ * @param {number} playerCount - Aantal spelers (1, 2, of 3)
+ * @param {number} questionsPerRound - Vragen per ronde voor 1-speler modus (1 of 3)
+ */
+function setPlayerModeSettings(playerCount, questionsPerRound = 1) {
+  if (!gameConfig) {
+    gameConfig = getDefaultConfig();
+  }
+  
+  if (!gameConfig.settings) {
+    gameConfig.settings = {};
+  }
+  
+  if (!gameConfig.settings.playerMode) {
+    gameConfig.settings.playerMode = {};
+  }
+  
+  gameConfig.settings.playerMode.playerCount = playerCount;
+  gameConfig.settings.playerMode.questionsPerRound = questionsPerRound;
+  
+  console.log(`Player mode ingesteld: ${playerCount} speler(s), ${questionsPerRound} vraag/vragen per ronde`);
+}
+
+
+/**
  * Stelt vragen voor een ronde in via config
  * Nuttig voor dynamische updates
  * @param {string} roundKey - Identifier van de ronde
@@ -230,9 +276,33 @@ function exportRoundToConfig(roundKey, currentQuestions) {
   console.log(`Ronde '${roundKey}' geëxporteerd naar configuratie`);
 }
 
+/**
+ * Haalt bumpers instelling op uit configuratie
+ * @returns {boolean} - true als bumpers enabled zijn, false anders
+ */
+function getBumpersEnabled() {
+  if (!gameConfig || !gameConfig.settings || !gameConfig.settings.bumpers) {
+    return true; // Standaard aan
+  }
+  return gameConfig.settings.bumpers.enabled !== false;
+}
+
 // Laadt configuratie bij het laden van het script
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', loadGameConfig);
+  document.addEventListener('DOMContentLoaded', () => {
+    loadGameConfig().then(() => {
+      // Zet bumpers checkbox op basis van config
+      const checkbox = document.getElementById('bumpersEnabledCheckbox');
+      if (checkbox) {
+        checkbox.checked = getBumpersEnabled();
+      }
+    });
+  });
 } else {
-  loadGameConfig();
+  loadGameConfig().then(() => {
+    const checkbox = document.getElementById('bumpersEnabledCheckbox');
+    if (checkbox) {
+      checkbox.checked = getBumpersEnabled();
+    }
+  });
 }

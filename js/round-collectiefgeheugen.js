@@ -82,8 +82,13 @@ function setupCollectiefRound() {
     // Haal vragen op met fallback naar standaard vragen
     const questionsToUse = getQuestionsForRound('collectief', collectiefVragen);
     
-    if (typeof questionsToUse === 'undefined' || questionsToUse.length < 3) {
-        flash('Fout: Onvoldoende Collectief Geheugen-vragen beschikbaar (minstens 3 nodig).', 'error');
+    // Bepaal aantal vragen op basis van player mode
+    const questionsCount = (typeof playerModeSettings !== 'undefined' && playerModeSettings.playerCount === 1) 
+        ? playerModeSettings.questionsPerRound 
+        : Math.min(players.length, 3);
+    
+    if (typeof questionsToUse === 'undefined' || questionsToUse.length < questionsCount) {
+        flash(`Fout: Onvoldoende Collectief Geheugen-vragen beschikbaar (minstens ${questionsCount} nodig).`, 'error');
         return;
     }
     
@@ -91,7 +96,7 @@ function setupCollectiefRound() {
     // Check of shuffle aan of uit staat
     const shouldShuffle = shouldShuffleRound('collectief');
     const orderedQuestions = shouldShuffle ? shuffleArray(questionsToUse.slice()) : questionsToUse.slice();
-    perRoundState.collectief.questions = orderedQuestions.slice(0, 3).map(q => ({
+    perRoundState.collectief.questions = orderedQuestions.slice(0, questionsCount).map(q => ({
         ...q,
         foundAnswers: [],        
         playersWhoAnswered: []   
@@ -317,8 +322,65 @@ function endCollectiefRound() {
 
     let slimsteVanDeDag = null;
     let afvaller = null;
-    let finalistNames = []; 
+    let finalistNames = [];
+    
+    // Check voor 1 speler: toon eindstand, geen finale
+    if (players.length === 1) {
+        const player = players[0];
+        
+        document.getElementById('roundControls').innerHTML = `
+            <div style="margin-bottom: 10px;">
+                <p><strong>Het Collectief Geheugen - Solo Modus</strong></p>
+                <p><strong>Kandidaat:</strong> ${player.name}</p>
+                <p><strong>Eindstand:</strong> ${Math.floor(player.seconds)} seconden</p>
+            </div>
+        `;
+        
+        currentQuestionEl.innerHTML = `
+            <em>Spel afgelopen! ${player.name} heeft ${Math.floor(player.seconds)} seconden behaald.</em>
+        `;
+        
+        // Speel finale geluid af
+        if (typeof playSFX === 'function') playSFX('SFX/finale.mp3');
+        
+        sendDisplayUpdate({
+            type: 'game_end',
+            key: 'solo_end',
+            scene: 'solo-game-end',
+            player: player,
+            finalSeconds: Math.floor(player.seconds)
+        });
+        return;
+    }
 
+    // Check voor 2 spelers: niemand valt af
+    if (players.length === 2) {
+        finalistNames = sortedPlayers.map(p => p.name);
+        
+        document.getElementById('roundControls').innerHTML = `
+            <div style="margin-bottom: 10px;">
+                <p><strong>Het Collectief Geheugen</strong></p>
+                <p><strong>Bij 2 spelers:</strong> Beide spelers gaan door naar de finale!</p>
+                <p><strong>Finalisten:</strong> ${finalistNames.join(' en ')}.</p>
+            </div>
+            <button onclick="document.getElementById('nextRound').click()" class="primary">Start Finale</button>
+        `;
+        
+        currentQuestionEl.innerHTML = `
+            <em>Het Collectief Geheugen afgelopen. Bij 2 spelers valt er niemand af! Beide spelers spelen de finale.</em>
+        `;
+        
+        sendDisplayUpdate({
+            type: 'round_end',
+            key: 'collectief',
+            scene: 'scene-round-collectief-done',
+            slimsteVanDeDag: null,
+            afvaller: null,
+            finalists: finalistNames, 
+            players: players 
+        });
+        return;
+    }
     
     const collectiefEndOption = document.getElementById('collectiefEndOption')?.value || 'lowestOut';
 
@@ -340,16 +402,16 @@ function endCollectiefRound() {
     
     document.getElementById('roundControls').innerHTML = `
         <div style="margin-bottom: 10px;">
-            <p><strong>Einde Collectief Geheugen</strong></p>
+            <p><strong>Het Collectief Geheugen</strong></p>
             ${afvaller ? `<p><strong>Afvaller:</strong> ${afvaller.name}</p>` : ''}
             ${slimsteVanDeDag ? `<p><strong>Slimste van de Dag:</strong> ${slimsteVanDeDag.name}</p>` : ''}
             <p><strong>Finalisten:</strong> ${finalistNames.join(' en ')}.</p>
         </div>
-        <button onclick="nextRound()" class="primary">Start Finale</button>
+        <button onclick="document.getElementById('nextRound').click()" class="primary">Start Finale</button>
     `;
 
     currentQuestionEl.innerHTML = `
-        <em>Collectief Geheugen afgerond. Druk op 'Start Finale' om de Finalisten vast te stellen.</em>
+        <em>Het Collectief Geheugen afgelopen. Druk op 'Start Finale' om de Finalisten vast te stellen.</em>
     `;
 
     

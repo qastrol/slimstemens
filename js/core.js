@@ -3,6 +3,8 @@ let players = [];
 let startSeconds = 60;
 let currentRoundIndex = 0;
 let roundsSequence = ["threeSixNine","opendeur","puzzel","galerij","collectief","finale"];
+let playerModeSettings = { playerCount: 3, questionsPerRound: 1 };
+let bumpersEnabled = true;
 let roundRunning = false;
 let currentQuestionIndex = 0;
 let perRoundState = {};
@@ -197,6 +199,19 @@ function stopAllTimers(){
   stopLoopTimerSFX();
 }
 
+function updateRoundsSequence() {
+  const playerCount = playerModeSettings.playerCount;
+  
+  if (playerCount === 1) {
+    // Bij 1 speler: finale overslaan
+    roundsSequence = ["threeSixNine","opendeur","puzzel","galerij","collectief"];
+    console.log(`Rounds aangepast voor ${playerCount} speler: Finale overgeslagen`);
+  } else {
+    // Bij 2-3 spelers: inclusief finale
+    roundsSequence = ["threeSixNine","opendeur","puzzel","galerij","collectief","finale"];
+  }
+}
+
 
 
 
@@ -213,6 +228,17 @@ function niceRoundName(key){
 }
 
 function startRound(roundKey) {
+  // Als bumpers enabled zijn, toon eerst de bumper
+  if (bumpersEnabled) {
+    showRoundBumper(roundKey, () => {
+      startRoundAfterBumper(roundKey);
+    });
+  } else {
+    startRoundAfterBumper(roundKey);
+  }
+}
+
+function startRoundAfterBumper(roundKey) {
   roundRunning = true;
   perRoundState = { round: roundKey };
   currentQuestionIndex = 0;
@@ -241,6 +267,21 @@ function startRound(roundKey) {
   });
 }
 
+function showRoundBumper(roundKey, callback) {
+  const roundTitle = niceRoundName(roundKey);
+  
+  // Stuur bumper naar display
+  sendDisplayUpdate({
+    type: 'show_bumper',
+    roundTitle: roundTitle
+  });
+  
+  // Wacht 3 seconden en ga dan verder
+  setTimeout(() => {
+    if (callback) callback();
+  }, 3000);
+}
+
 function nextQuestion() {
   if (!roundRunning) { flash('Start eerst een ronde'); return; }
   const r = perRoundState.round;
@@ -265,8 +306,28 @@ function markAnswer(isRight) {
 }
 
 document.getElementById('applyBtn').addEventListener('click', async ()=>{
-  const nameInputs = Array.from(document.querySelectorAll('.playerName'));
-  const photoInputs = Array.from(document.querySelectorAll('.playerPhoto'));
+  const playerCountSelect = parseInt(document.getElementById('playerCountSelect').value) || 3;
+  const questionsPerRound = parseInt(document.getElementById('questionsPerRoundSelect').value) || 1;
+  
+  // Lees bumpers setting
+  bumpersEnabled = document.getElementById('bumpersEnabledCheckbox').checked;
+  
+  // Sla player mode settings op
+  playerModeSettings = {
+    playerCount: playerCountSelect,
+    questionsPerRound: questionsPerRound
+  };
+  
+  // Sla ook op in config manager
+  if (typeof setPlayerModeSettings === 'function') {
+    setPlayerModeSettings(playerCountSelect, questionsPerRound);
+  }
+  
+  // Update rounds sequence op basis van player count
+  updateRoundsSequence();
+  
+  const nameInputs = Array.from(document.querySelectorAll('.playerName')).filter((_, i) => i < playerCountSelect);
+  const photoInputs = Array.from(document.querySelectorAll('.playerPhoto')).filter((_, i) => i < playerCountSelect);
   
   startSeconds = parseInt(document.getElementById('startSeconds').value)||60;
 
@@ -293,7 +354,8 @@ document.getElementById('applyBtn').addEventListener('click', async ()=>{
       players: players 
   });
   
-  flash('Spel aangemaakt — klaar om te starten');
+  const modeText = playerCountSelect === 1 ? `${questionsPerRound} vraag/vragen per ronde` : '';
+  flash(`Spel aangemaakt met ${playerCountSelect} speler(s) ${modeText} — klaar om te starten`);
 });
 
 
@@ -309,12 +371,37 @@ document.getElementById('resetBtn').addEventListener('click', ()=>{
 
 
 document.getElementById('startRound').addEventListener('click', ()=>{
-  if(players.length!==3){ flash('Maak eerst het spel aan met 3 kandidaten'); return; }
+  const expectedCount = playerModeSettings.playerCount;
+  if(players.length !== expectedCount){ 
+    flash(`Maak eerst het spel aan met ${expectedCount} kandidaat/kandidaten`); 
+    return; 
+  }
   currentRoundIndex = currentRoundIndex % roundsSequence.length;
   startRound(roundsSequence[currentRoundIndex]);
 });
 
 document.getElementById('nextRound').addEventListener('click', ()=>{
+  // Bij 1 speler en einde van collectief: toon eindstand
+  if (playerModeSettings.playerCount === 1 && 
+      currentRoundIndex < roundsSequence.length && 
+      roundsSequence[currentRoundIndex] === 'collectief') {
+    // Toon solo eindscherm op display
+    const player = players[0];
+    
+    // Speel finale geluid af
+    if (typeof playSFX === 'function') playSFX('SFX/finale.mp3');
+    
+    sendDisplayUpdate({
+      type: 'game_end',
+      key: 'solo_end',
+      scene: 'solo-game-end',
+      player: player,
+      finalSeconds: Math.floor(player.seconds)
+    });
+    flash('Solo spel afgelopen! Eindstand wordt getoond op display.');
+    return;
+  }
+  
   currentRoundIndex++;
   if(currentRoundIndex>=roundsSequence.length) currentRoundIndex = roundsSequence.length-1;
   startRound(roundsSequence[currentRoundIndex]);

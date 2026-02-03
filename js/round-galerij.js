@@ -86,9 +86,15 @@ function setupGalerijRound() {
   
   // Haal vragen op met fallback naar standaard vragen
   const questionsToUse = getQuestionsForRound('galerij', galerijQuestions);
+  
+  // Bepaal aantal gallerijen op basis van player mode
+  const galerieCount = (typeof playerModeSettings !== 'undefined' && playerModeSettings.playerCount === 1) 
+    ? playerModeSettings.questionsPerRound 
+    : Math.min(3, players.length);
+  
   // Check of shuffle aan of uit staat
   const shouldShuffle = shouldShuffleRound('galerij');
-  galerijRoundOrder = shouldShuffle ? shuffleArray(questionsToUse).slice(0, 3) : questionsToUse.slice(0, 3);
+  galerijRoundOrder = shouldShuffle ? shuffleArray(questionsToUse).slice(0, galerieCount) : questionsToUse.slice(0, galerieCount);
 
   renderGalerijHostUI();
   flash('Galerijronde klaar om te starten.');

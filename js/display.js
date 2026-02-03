@@ -254,6 +254,32 @@ function handleAudioMessage(data) {
           updateScene('waiting-game');
         }
         break;
+
+      case 'game_end':
+        
+        if (data.scene === 'solo-game-end') {
+          updateScene('solo-game-end');
+          renderSoloGameEnd(data);
+        }
+        break;
+
+      case 'show_bumper':
+        // Toon bumper met rondetitel
+        updateScene('round-bumper');
+        const bumperTitle = document.getElementById('bumperRoundTitle');
+        if (bumperTitle) {
+          bumperTitle.textContent = data.roundTitle || 'RONDE';
+        }
+        
+        // Speel bumper geluid af
+        try {
+          const bumperAudio = new Audio('SFX/snd_bumper.mp3');
+          bumperAudio.volume = 0.7;
+          bumperAudio.play().catch(e => console.warn('Bumper audio kon niet worden afgespeeld:', e));
+        } catch (e) {
+          console.warn('Bumper audio error:', e);
+        }
+        break;
     }
   };
 
@@ -543,7 +569,7 @@ function handlePuzzelDisplayUpdate(data) {
         const puzzelRoundInfoEl = document.getElementById('puzzelRoundInfo');
         if (data.statusText) {
             puzzelRoundInfoEl.innerHTML = `
-                <div class="round-name">Puzzelronde</div>
+                <div class="round-name">Puzzel</div>
                 <div class="round-status" style="color: #ffd17a; font-size: 1.2em;">${data.statusText}</div>
             `;
         } else {
@@ -1056,5 +1082,25 @@ function handleGalerijDisplayUpdate(data) {
       }
     }
   }
+
+function renderSoloGameEnd(data) {
+    
+    const playerNameEl = document.getElementById('soloPlayerName');
+    if (playerNameEl && data.player) {
+        playerNameEl.textContent = data.player.name;
+    }
+
+    
+    const finalSecondsEl = document.getElementById('soloFinalSeconds');
+    if (finalSecondsEl && data.finalSeconds !== undefined) {
+        finalSecondsEl.textContent = data.finalSeconds;
+    }
+
+    
+    if (data.player) {
+        renderMiniLobby([data.player], 'soloEndMiniLobby');
+        renderPlayersBarCompact([data.player], -1, 'soloEndPlayersBar');
+    }
+}
 
 connectWebSocket();

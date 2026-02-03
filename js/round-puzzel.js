@@ -48,8 +48,14 @@ function setupPuzzelRound() {
   // Haal vragen op met fallback naar standaard vragen
   const questionsToUse = getQuestionsForRound('puzzel', puzzelQuestions);
   
-  if (typeof questionsToUse === 'undefined' || questionsToUse.length < 9) {
-    flash('Fout: Onvoldoende puzzelvragen beschikbaar. Zorg voor minstens 9 unieke links.');
+  // Bepaal aantal puzzels op basis van player mode
+  const puzzelCount = (typeof playerModeSettings !== 'undefined' && playerModeSettings.playerCount === 1) 
+    ? playerModeSettings.questionsPerRound 
+    : Math.min(3, players.length);
+  const linksNeeded = puzzelCount * 3;
+  
+  if (typeof questionsToUse === 'undefined' || questionsToUse.length < linksNeeded) {
+    flash(`Fout: Onvoldoende puzzelvragen beschikbaar. Zorg voor minstens ${linksNeeded} unieke links.`);
     return;
   }
   
@@ -85,7 +91,7 @@ function setupPuzzelRound() {
   }
 
   let available = pool.slice();
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < puzzelCount; i++) {
     if (available.length < 3) break;
     const group = pickUniqueGroup(available);
     if (!group || group.length < 3) break;
@@ -95,21 +101,25 @@ function setupPuzzelRound() {
   }
 
   
-  if (puzzles.length < 3) {
+  if (puzzles.length < puzzelCount) {
     const remaining = pool.filter(l => !puzzles.flatMap(p => p.links).includes(l));
-    while (puzzles.length < 3 && remaining.length >= 3) {
+    while (puzzles.length < puzzelCount && remaining.length >= 3) {
       puzzles.push({ links: remaining.splice(0, 3), played: false, currentWords: [] });
     }
   }
 
   
-  if (puzzles.length !== 3) {
-    const fallback = shuffle(questionsToUse.slice()).slice(0, 9);
-    perRoundState.puzzles = [
-      { links: fallback.slice(0, 3), played: false, currentWords: [] },
-      { links: fallback.slice(3, 6), played: false, currentWords: [] },
-      { links: fallback.slice(6, 9), played: false, currentWords: [] },
-    ];
+  if (puzzles.length !== puzzelCount) {
+    const fallback = shuffle(questionsToUse.slice()).slice(0, puzzelCount * 3);
+    perRoundState.puzzles = [];
+    for (let i = 0; i < puzzelCount; i++) {
+      perRoundState.puzzles.push({ 
+        links: fallback.slice(i * 3, (i + 1) * 3), 
+        played: false, 
+        currentWords: [] 
+      });
+    }
+    flash(`Fallback puzzels gebruikt (${puzzelCount} puzzels).`);
   } else {
     perRoundState.puzzles = puzzles;
   }
@@ -144,7 +154,7 @@ function setupPuzzelRound() {
   activePlayerIndex = sortedPlayers[0].index;
 
   currentQuestionEl.innerHTML = `
-    <em>Puzzelronde: 3 puzzels. De kandidaat met de **laagste tijd** start de eerste puzzel.</em><br>
+    <em>Puzzel: 3 puzzels. De kandidaat met de **laagste tijd** start de eerste puzzel.</em><br>
     <div class="muted small">Startspeler: <strong>${players[activePlayerIndex].name}</strong></div>
     <div class="muted small">Puntentelling: **30 seconden** per gevonden verband.</div>
   `;
@@ -158,7 +168,7 @@ function nextPuzzelQuestion() {
   perRoundState.timerRunning = false;
 
   if (perRoundState.currentPuzzelIndex >= perRoundState.puzzles.length) {
-    flash('Einde van de Puzzelronde!');
+    flash('Einde van Puzzel!');
     currentQuestionEl.innerHTML = '<em>Ronde afgelopen.</em>';
     document.getElementById('nextRound').disabled = false;
     document.getElementById('roundControls').innerHTML = '';
@@ -625,7 +635,7 @@ function showPuzzelSolution(puzzel) {
   } else {
     
     document.getElementById('roundControls').innerHTML = '';
-    flash('Einde van de Puzzelronde! Druk op "Volgende ronde" om verder te gaan.');
+    flash('Einde van Puzzel! Druk op "Volgende ronde" om verder te gaan.');
     document.getElementById('nextRound').disabled = false;
   }
 }

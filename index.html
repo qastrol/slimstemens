@@ -15,6 +15,33 @@
       <!-- Links: instellingen / controls -->
       <div class="card">
         <div style="height:8px"></div>
+        
+        <div>
+          <label>Aantal spelers</label>
+          <select id="playerCountSelect">
+            <option value="1">1 speler (solo)</option>
+            <option value="2">2 spelers</option>
+            <option value="3" selected>3 spelers (standaard)</option>
+          </select>
+        </div>
+        
+        <div id="singlePlayerOptions" style="display:none;margin-top:10px;">
+          <label>Vragen per ronde (alleen 1 speler)</label>
+          <select id="questionsPerRoundSelect">
+            <option value="1" selected>1 vraag per ronde</option>
+            <option value="3">3 vragen per ronde</option>
+          </select>
+        </div>
+        
+        <div style="margin-top:10px;">
+          <label>
+            <input type="checkbox" id="bumpersEnabledCheckbox" checked />
+            Rondebumpers tonen
+          </label>
+        </div>
+        
+        <hr class="divider" />
+        
         <label>Voer kandidaatnamen in</label>
 <div id="playersInputs" class="players-list">
   <div class="player-entry">
@@ -162,6 +189,29 @@ document.getElementById('uploadConfigBtn').addEventListener('click', async () =>
 document.getElementById('downloadConfigBtn').addEventListener('click', () => {
   downloadConfigFile();
   flash('Configuratie gedownload!', 'good');
+});
+
+// Player count selector logic
+document.getElementById('playerCountSelect').addEventListener('change', function() {
+  const count = parseInt(this.value);
+  const playerEntries = document.querySelectorAll('.player-entry');
+  const singlePlayerOptions = document.getElementById('singlePlayerOptions');
+  
+  // Toon/verberg solo opties
+  if (count === 1) {
+    singlePlayerOptions.style.display = 'block';
+  } else {
+    singlePlayerOptions.style.display = 'none';
+  }
+  
+  // Toon/verberg speler inputs
+  playerEntries.forEach((entry, i) => {
+    if (i < count) {
+      entry.style.display = 'flex';
+    } else {
+      entry.style.display = 'none';
+    }
+  });
 });
 </script>
 </body>

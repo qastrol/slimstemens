@@ -6,6 +6,15 @@
     "note": "Vul hier je aangepaste vragen in per ronde. Rondes die leeg zijn of ontbreken gebruiken de standaard vragen. Kijk in CONFIG_MANAGER_README.md of QUICK_START_CONFIG.md voor voorbeelden."
   },
   "settings": {
+    "playerMode": {
+      "playerCount": 3,
+      "questionsPerRound": 1,
+      "_comment": "playerCount: 1, 2 of 3. Bij 1 speler: questionsPerRound kan 1 of 3 zijn. Bij 1-2 spelers: Finale wordt overgeslagen"
+    },
+    "bumpers": {
+      "enabled": true,
+      "_comment": "Zet op false om rondebumpers uit te schakelen"
+    },
     "threeSixNine": {
       "shuffle": true,
       "maxQuestions": null,

@@ -12,15 +12,20 @@ function setupOpenDeurRound() {
   // Haal vragen op met fallback naar standaard vragen
   const questionsToUse = getQuestionsForRound('opendeur', openDeurQuestions);
   
-  if (typeof questionsToUse === 'undefined' || questionsToUse.length < 3) {
-      flash('Fout: Onvoldoende Open Deur-vragen beschikbaar (minstens 3 nodig).');
+  // Bepaal aantal vragen op basis van player mode
+  const questionsCount = (typeof playerModeSettings !== 'undefined' && playerModeSettings.playerCount === 1) 
+    ? playerModeSettings.questionsPerRound 
+    : Math.min(3, players.length);
+  
+  if (typeof questionsToUse === 'undefined' || questionsToUse.length < questionsCount) {
+      flash(`Fout: Onvoldoende Open Deur-vragen beschikbaar (minstens ${questionsCount} nodig).`);
       return;
   }
 
   // Check of shuffle aan of uit staat
   const shouldShuffle = shouldShuffleRound('opendeur');
   const orderedQuestions = shouldShuffle ? shuffle(questionsToUse) : questionsToUse;
-  perRoundState.questions = orderedQuestions.slice(0, 3).map((q, index) => ({
+  perRoundState.questions = orderedQuestions.slice(0, questionsCount).map((q, index) => ({
       ...q,
       
       fromPlayerIndex: index, 

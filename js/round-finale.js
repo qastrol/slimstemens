@@ -38,11 +38,37 @@ function getOpponentIndex(currentPlayerOriginalIndex) {
 
 function determineFinalistsAndSetupPreRound() {
     
-    if (players.length !== 3) {
-        flash(`Fout: Finale moet starten met 3 spelers. Huidig aantal: ${players.length}.`, 'error');
+    if (players.length !== 3 && players.length !== 2) {
+        flash(`Fout: Finale moet starten met 2 of 3 spelers. Huidig aantal: ${players.length}.`, 'error');
         return false;
     }
 
+    // Bij 2 spelers valt niemand af - beide zijn al finalisten
+    if (players.length === 2) {
+        const sortedPlayers = [...players].sort((a, b) => a.seconds - b.seconds);
+        players = [...sortedPlayers]; // Zorg dat spelers gesorteerd zijn op tijd
+        activePlayerIndex = players[0].index; // Laagste tijd begint
+        
+        perRoundState.finale.lastActivePlayerIndex = activePlayerIndex;
+        perRoundState.finale.afvallerOriginalIndex = -1; // Geen afvaller
+        perRoundState.finale.afvallerName = null;
+        
+        flash(`Finale start met 2 spelers: ${players[0].name} en ${players[1].name}. ${players[0].name} begint (laagste tijd).`);
+        renderPlayers();
+        
+        // Render de pre-start UI met de knop "Start Eerste Vraag"
+        renderFinaleHostUI('pre_start', -1);
+        
+        // Stuur display update
+        sendFinaleDisplayUpdate('round_start', 'scene-round-finale-pre', {
+            afvallerIndex: -1,
+            allPlayers: players,
+            collectiefEndOption: null
+        });
+        
+        return true;
+    }
+    
     
     const collectiefEndOption = document.getElementById('collectiefEndOption')?.value || 'lowestOut';
     
@@ -524,15 +550,25 @@ function renderFinaleHostUI(phase = 'main', afvallerIndex = -1) {
         const afvaller = afvallerIndex !== -1 ? 
             players.find(p => p.index === afvallerIndex) || {name: 'Onbekend', index: afvallerIndex} : 
             null;
-            
-        currentQuestionEl.innerHTML = `
-            <h3>Kandidaten voor de Finale</h3>
-            ${afvaller ? 
-                `<p><strong>Afvaller:</strong> ${afvaller.name}.</p>` : 
-                `<p><strong>Slimste van de dag:</strong> ${players.find(p => !players.map(f => f.index).includes(p.index))?.name}.</p>`}
-            <p><strong>Finalisten:</strong> ${players.map(p => p.name).join(' en ')}.</p>
-            <p><strong>Startspeler:</strong> ${players.find(p => p.index === activePlayerIndex).name} (laagste tijd).</p>
-        `;
+        
+        // Bij 2 spelers is er geen afvaller    
+        if (afvallerIndex === -1) {
+            currentQuestionEl.innerHTML = `
+                <h3>Finale met 2 Spelers</h3>
+                <p><strong>Finalisten:</strong> ${players.map(p => p.name).join(' en ')}.</p>
+                <p><em>Bij 2 spelers valt er niemand af - beide spelers spelen de finale.</em></p>
+                <p><strong>Startspeler:</strong> ${players.find(p => p.index === activePlayerIndex)?.name || players[0].name} (laagste tijd).</p>
+            `;
+        } else {
+            currentQuestionEl.innerHTML = `
+                <h3>Kandidaten voor de Finale</h3>
+                ${afvaller ? 
+                    `<p><strong>Afvaller:</strong> ${afvaller.name}.</p>` : 
+                    `<p><strong>Slimste van de dag:</strong> ${players.find(p => !players.map(f => f.index).includes(p.index))?.name}.</p>`}
+                <p><strong>Finalisten:</strong> ${players.map(p => p.name).join(' en ')}.</p>
+                <p><strong>Startspeler:</strong> ${players.find(p => p.index === activePlayerIndex)?.name || players[0].name} (laagste tijd).</p>
+            `;
+        }
 
         controlsEl.innerHTML = `
             <button onclick="startFinaleGame()" class="primary">Start Eerste Vraag</button>
