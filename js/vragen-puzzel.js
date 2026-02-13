@@ -1,7 +1,7 @@
 // Vragen voor de Puzzel ronde
 // Vier kernantwoorden horen bij één verband
 const puzzelQuestions = [
-  { link: "Plaag", answers: ["Onheil", "Muizen", "Straf van God", "Stoot"] },
+  { link: "Plaag", answers: ["Onheil", "Muizen", "Straf van God", "Stoot"], remarks: "Dit verband draait om het woord 'plaag'. Vraag kandidaten of zij de 10 plagen van Egypte kennen." },
   { link: "Lof", answers: ["Der zotheid", "Bladgewas", "Brussels", "Slagen met"] },
   { link: "Pruimen", answers: ["Jam", "Tabak kauwen", "Gedroogde", "Dat is niet te"] },
   { link: "Koers", answers: ["Vast", "Prijs van een aandeel", "Route", "Wielrenwedstrijd"] },

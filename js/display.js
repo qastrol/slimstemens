@@ -280,6 +280,76 @@ function handleAudioMessage(data) {
           console.warn('Bumper audio error:', e);
         }
         break;
+
+      case 'presenter_toggle':
+        // Toon of verberg presentator overlay
+        const presenterOverlay = document.getElementById('presenterOverlay');
+        const presenterPhoto = document.getElementById('presenterPhoto');
+        
+        if (data.showing && data.photoData) {
+          // Bepaal of we in fullscreen of mini-lobby mode zijn
+          const isLobbyScene = currentScene === 'lobby' || 
+                              currentScene === 'waiting-game' || 
+                              currentScene === 'round-opendeur-lobby';
+          
+          // 3-6-9 heeft kleinere mini-lobby (520px i.p.v. 540px)
+          const is369Scene = currentScene === 'round-369';
+          
+          // Scenes waar mini-lobby rechtsboven staat (grid-column: 2)
+          const rightSideScenes = [
+            'round-opendeur-vraag',
+            'round-puzzel-waiting',
+            'round-puzzel-active',
+            'scene-round-puzzel-done',
+            'scene-round-galerij-pre',
+            'scene-round-galerij-main',
+            'scene-round-galerij-aanvul',
+            'scene-round-galerij-slideshow',
+            'scene-round-galerij-done',
+            'scene-round-collectief-pre',
+            'scene-round-collectief-main',
+            'scene-round-collectief-tussenstand',
+            'scene-round-collectief-done',
+            'scene-round-finale-pre',
+            'scene-round-finale-main',
+            'scene-round-finale-end',
+            'solo-game-end'
+          ];
+          
+          const isRightSide = rightSideScenes.includes(currentScene);
+          
+          if (isLobbyScene) {
+            // Fullscreen modus voor lobby
+            presenterOverlay.classList.add('fullscreen');
+            presenterOverlay.classList.remove('mini-lobby-mode', 'mini-right', 'mini-369');
+          } else {
+            // Mini-lobby modus voor rondes
+            presenterOverlay.classList.add('mini-lobby-mode');
+            presenterOverlay.classList.remove('fullscreen');
+            
+            // 3-6-9 heeft andere hoogte
+            if (is369Scene) {
+              presenterOverlay.classList.add('mini-369');
+            } else {
+              presenterOverlay.classList.remove('mini-369');
+            }
+            
+            // Bepaal of mini-lobby links of rechts staat
+            if (isRightSide) {
+              presenterOverlay.classList.add('mini-right');
+            } else {
+              presenterOverlay.classList.remove('mini-right');
+            }
+          }
+          
+          // Toon presentator
+          presenterPhoto.src = data.photoData;
+          presenterOverlay.style.display = 'flex';
+        } else {
+          // Verberg presentator, toon kandidaten
+          presenterOverlay.style.display = 'none';
+        }
+        break;
     }
   };
 
@@ -332,6 +402,27 @@ function renderPlayersBarUniversal(currentQuestionIndex = null, activeIndex = nu
 }
 
 
+function adjustQuestionFontSize(questionElement, text) {
+    // Dynamische font-size aanpassing gebaseerd op tekstlengte
+    // Basisgrootte: 3.0em voor korte vragen
+    const textLength = text.length;
+    let fontSize;
+    
+    if (textLength <= 80) {
+        fontSize = 3.0; // Korte vragen
+    } else if (textLength <= 120) {
+        fontSize = 2.6; // Middellange vragen
+    } else if (textLength <= 170) {
+        fontSize = 2.2; // Lange vragen
+    } else if (textLength <= 230) {
+        fontSize = 1.9; // Zeer lange vragen
+    } else {
+        fontSize = 1.6; // Extreem lange vragen
+    }
+    
+    questionElement.style.fontSize = `${fontSize}em`;
+}
+
 function renderThreeSixNine(data){
     const roundStatusEl = document.getElementById('roundStatus');
     const roundQuestionEl = document.getElementById('roundQuestion');
@@ -355,17 +446,6 @@ function renderThreeSixNine(data){
         
         // Render vraag op basis van type
         let questionHTML = '';
-        
-        // Type badge voor speciale vraag types
-        if (qType !== 'classic' && qType !== 'multiple-choice') {
-            const typeLabels = {
-                'photo': '📷 FOTOVRAAG',
-                'audio': '🔊 AUDIOVRAAG',
-                'doe': '🎭 DOE-VRAAG',
-                'estimation': '🔢 INSCHATTING'
-            };
-            questionHTML += `<div class="question-type-badge">${typeLabels[qType] || qType.toUpperCase()}</div>`;
-        }
         
         // Vraag tekst
         questionHTML += `<div>${qText}</div>`;
@@ -409,6 +489,9 @@ function renderThreeSixNine(data){
         }
         
         roundQuestionEl.innerHTML = questionHTML;
+        
+        // Pas font-size aan op basis van vraaglengte
+        adjustQuestionFontSize(roundQuestionEl, qText);
 
         
         renderPlayersBarUniversal(data.currentQuestionIndex - 1, data.activeIndex);

@@ -579,6 +579,7 @@ function renderFinaleHostUI(phase = 'main', afvallerIndex = -1) {
     
     currentQuestionEl.innerHTML = `
         <em>Vraag ${qIndex + 1}/${perRoundState.finale.questions.length}: ${currentQuestion.question}</em>
+        ${currentQuestion.remarks ? `<div class="host-remarks">💬 ${currentQuestion.remarks}</div>` : ''}
         
         <div id="finaleAnswerList" style="margin-top:10px; display:flex; flex-wrap:wrap; gap:10px; flex-direction: column;">
             ${answers.map((ans, i) => {

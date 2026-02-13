@@ -356,7 +356,7 @@ function renderPuzzelDisplay(puzzel) {
   }
 
   const foundLinksDisplay = puzzel.foundLinks.map(link =>
-    `<div class="found-link">${link.link} (${link.answers.join(', ')})</div>`
+    `<div class="found-link">${link.link} (${link.answers.join(', ')})${link.remarks ? `<div class="host-remarks" style="font-size:0.85em;margin-top:4px;">💬 ${link.remarks}</div>` : ''}</div>`
   ).join('');
 
   currentQuestionEl.innerHTML = `
@@ -588,6 +588,7 @@ function showPuzzelSolution(puzzel) {
     return `
       <div style="margin-bottom: 0.5em;">
         <strong>${link.link}</strong> (${status}): ${link.answers.join(', ')}
+        ${link.remarks ? `<div class="host-remarks" style="font-size:0.85em;margin-top:4px;">💬 ${link.remarks}</div>` : ''}
       </div>
     `;
   }).join('');

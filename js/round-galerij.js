@@ -204,6 +204,7 @@ function renderGalerijHostUI() {
           : `<img src="${img.src}" style="max-width:100%;max-height:100%;object-fit:contain;">`}
       </div>
       <div style="margin-top:4px;"><strong>Antwoord:</strong> ${img.answer}</div>
+      ${img.remarks ? `<div class="host-remarks">💬 ${img.remarks}</div>` : ''}
       <div>Afbeelding ${galleryIndex + 1} / ${galleryImages.length}</div>
       <div style="margin-top:8px;">
         <button class="good" onclick="markGalerijAnswer(true, '${img.answer}')">✅ Goed</button>
@@ -243,6 +244,7 @@ else if (galleryPhase === 'slideshow') {
           : `<img src="${img.src}" style="max-width:100%;max-height:100%;object-fit:contain;">`}
       </div>
       <div style="margin-top:4px;"><strong>Antwoord:</strong> ${img.answer}</div>
+      ${img.remarks ? `<div class="host-remarks">💬 ${img.remarks}</div>` : ''}
       <div>Afbeelding ${galleryIndex + 1} / ${galleryImages.length}</div>
       <div style="margin-top:8px;">
         <button class="secondary" onclick="showNextSlideshow()">Volgende afbeelding</button>

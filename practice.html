@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>De Slimste Mens - Training</title>
+    <link rel="stylesheet" href="practice.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Menu Screen -->
+        <div id="menuScreen" class="screen active">
+            <div class="menu-content">
+                <h1>De Slimste Mens - Training</h1>
+                <p class="subtitle">Oefen met vragen uit de verschillende rondes</p>
+                
+                <div class="rounds-grid">
+                    <button class="round-btn" data-round="369">
+                        <span class="round-title">3-6-9</span>
+                        <span class="round-description">Open vragen</span>
+                    </button>
+                    <button class="round-btn" data-round="opendeur">
+                        <span class="round-title">Open Deur</span>
+                        <span class="round-description">Vind alle 4 antwoorden</span>
+                    </button>
+                    <button class="round-btn" data-round="puzzel">
+                        <span class="round-title">Puzzel</span>
+                        <span class="round-description">Zoek de 3 kernwoorden</span>
+                    </button>
+                    <button class="round-btn" data-round="finale">
+                        <span class="round-title">Finale</span>
+                        <span class="round-description">Vind alle 5 antwoorden</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="gameScreen" class="screen">
+            <div class="game-header">
+                <h2 id="roundTitle"></h2>
+                <button id="backBtn" class="back-btn">← Terug</button>
+            </div>
+
+            <div class="game-content">
+                <div id="questionContainer" class="question-container">
+                    <div id="question" class="question"></div>
+                    <div id="questionInfo" class="question-info"></div>
+                </div>
+
+                <div id="answersDisplay" class="answers-display"></div>
+
+                <div class="input-section">
+                    <input 
+                        type="text" 
+                        id="answerInput" 
+                        class="answer-input" 
+                        placeholder="Typ je antwoord..."
+                        autocomplete="off"
+                    />
+                    <button id="submitBtn" class="submit-btn">Verzend</button>
+                    <button id="passBtn" class="pass-btn">Pas</button>
+                </div>
+
+                <div id="feedbackMessage" class="feedback-message"></div>
+
+                <div id="nextContainer" class="next-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="practice.js"></script>
+</body>
+</html>

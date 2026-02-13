@@ -454,6 +454,7 @@ currentQuestionEl.innerHTML = `
             <button id="toggleAudioBtn">Audio Aan/Uit</button>
         </div>
     </div>
+    ${currentQuestion.remarks ? `<div class="host-remarks">💬 ${currentQuestion.remarks}</div>` : ''}
     <div id="collectiefAnswerList" style="margin-top:10px; display:flex; flex-wrap:wrap; gap:10px;">
         ${answers.map((ans, i) => {
             const found = foundAnswers.find(fa => fa.answer === ans);

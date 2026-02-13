@@ -1,5 +1,5 @@
 const openDeurQuestions = [
-  { from: "Trijntje", question: "Wat zijn vier objecten die mensen vaak verliezen in de trein?", answers: ["mobiel", "kleding", "computer", "geld"] },
+  { from: "Trijntje", question: "Wat zijn vier objecten die mensen vaak verliezen in de trein?", answers: ["mobiel", "kleding", "computer", "geld"], remarks: "Volgens NS-statistieken worden jaarlijks duizenden voorwerpen gevonden in treinen. Vraag de kandidaten of zij zelf wel eens iets verloren hebben." },
   { from: "Ray", question: "Wat weet u over The Kinks?", answers: ["rockgroep", "Davies", "Lola", "You really got me"] },
   { from: "Jackie", question: "Wat weet u over Jackie Kennedy?", answers: ["John F.", "Onassis", "Stijlicoon", "Bouvier"] },
   { from: "Jan", question: "Wat zijn de vier meest verkochte motormerken?", answers: ["BMW", "Yamaha", "Suzuki", "Honda"] },

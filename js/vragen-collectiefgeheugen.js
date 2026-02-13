@@ -11,6 +11,7 @@
 const collectiefVragen = [
     {
         video: 'collectief_geheugen/Paus.mp4',
+        remarks: 'Dit fragment gaat over de historische verkiezing van de eerste Amerikaanse paus. Vraag kandidaten naar hun kennis over het Vaticaan of eerdere bijzondere pauselijke verkiezingen.',
         answers: [
             'Paus',
             'Leo XIV',

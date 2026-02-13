@@ -196,12 +196,18 @@ function nextThreeSixNineQuestion() {
           </div>
           <div class="small">(Druk op Goed of Fout. Elke derde vraag: +10s bonus)</div>
           <div class="muted small">Juiste antwoord: ${q.correctAnswer || 'Onbekend'}</div>`;
+        if (q.remarks) {
+          questionHTML += `<div class="host-remarks">💬 ${q.remarks}</div>`;
+        }
       } else {
         // Fallback als options ontbreken
         questionHTML += `
           <div>${q.text}</div>
           <div class="small">(Multiple-choice opties ontbreken - behandel als klassieke vraag)</div>
           <div class="muted small">Antwoord: ${q.answers ? q.answers.join(', ') : 'Onbekend'}</div>`;
+        if (q.remarks) {
+          questionHTML += `<div class="host-remarks">💬 ${q.remarks}</div>`;
+        }
       }
       break;
       
@@ -211,6 +217,9 @@ function nextThreeSixNineQuestion() {
         <div class="small" style="color:#888">📷 Foto beschikbaar: ${q.photoUrl || 'Geen URL'}</div>
         <div class="small">(Gebruik knop hieronder om foto te tonen/verbergen)</div>
         <div class="muted small">Antwoord: ${q.answers ? q.answers.join(', ') : 'Onbekend'}</div>`;
+      if (q.remarks) {
+        questionHTML += `<div class="host-remarks">💬 ${q.remarks}</div>`;
+      }
       break;
       
     case 'audio':
@@ -219,6 +228,9 @@ function nextThreeSixNineQuestion() {
         <div class="small" style="color:#888">🔊 Audio beschikbaar: ${q.audioUrl || 'Geen URL'}</div>
         <div class="small">(Gebruik knop hieronder om audio af te spelen)</div>
         <div class="muted small">Antwoord: ${q.answers ? q.answers.join(', ') : 'Onbekend'}</div>`;
+      if (q.remarks) {
+        questionHTML += `<div class="host-remarks">💬 ${q.remarks}</div>`;
+      }
       break;
       
     case 'doe':
@@ -226,6 +238,9 @@ function nextThreeSixNineQuestion() {
         <div>${q.text}</div>
         <div class="small" style="color:#f90">⚡ DOE-VRAAG: Kies welke kandidaat wint</div>
         <div class="muted small">${q.description || ''}</div>`;
+      if (q.remarks) {
+        questionHTML += `<div class="host-remarks">💬 ${q.remarks}</div>`;
+      }
       break;
       
     case 'estimation':
@@ -233,6 +248,9 @@ function nextThreeSixNineQuestion() {
         <div>${q.text}</div>
         <div class="small" style="color:#09f">📊 INSCHATTINGSVRAAG: Elke kandidaat geeft een antwoord</div>
         <div class="muted small">Juiste antwoord: ${q.correctAnswer || 'Onbekend'} ${q.unit || ''}</div>`;
+      if (q.remarks) {
+        questionHTML += `<div class="host-remarks">💬 ${q.remarks}</div>`;
+      }
       break;
       
     case 'classic':
@@ -241,6 +259,9 @@ function nextThreeSixNineQuestion() {
         <div>${q.text}</div>
         <div class="small">(Druk op Goed of Fout. Elke derde vraag: +10s bonus)</div>
         <div class="muted small">Antwoord: ${q.answers ? q.answers.join(', ') : 'Onbekend'}</div>`;
+      if (q.remarks) {
+        questionHTML += `<div class="host-remarks">💬 ${q.remarks}</div>`;
+      }
       break;
   }
 

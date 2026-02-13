@@ -153,6 +153,7 @@ function chooseOpenDeurQuestion(index){
     <div class="small">"${q.question}"</div>
     <div id="openDeurAnswerArea" style="margin-top:1em"></div>
     <div class="muted small">Antwoorden: ${q.answersDisplay.join(', ')}</div>
+    ${q.remarks ? `<div class="host-remarks">💬 ${q.remarks}</div>` : ''}
   `;
 
   showOpenDeurAnswerControls();

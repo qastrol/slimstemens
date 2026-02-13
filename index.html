@@ -42,6 +42,20 @@
         
         <hr class="divider" />
         
+        <div>
+          <label>
+            <input type="checkbox" id="presenterEnabledCheckbox" />
+            Presentator tonen (optioneel)
+          </label>
+          <div id="presenterOptions" style="display:none;margin-top:10px;">
+            <label>Upload presentatorfoto (verplicht):</label>
+            <input id="presenterPhoto" type="file" accept="image/*" />
+            <div id="presenterPhotoStatus" style="font-size:0.85em;color:#666;margin-top:5px;"></div>
+          </div>
+        </div>
+        
+        <hr class="divider" />
+        
         <label>Voer kandidaatnamen in</label>
 <div id="playersInputs" class="players-list">
   <div class="player-entry">
@@ -140,6 +154,10 @@
           <button id="nextRound" class="secondary">Volgende ronde</button>
         </div>
 
+        <div id="presenterControlArea" class="button-row" style="display:none;margin-top:10px;">
+          <button id="togglePresenterView" class="secondary">Wissel naar Presentator</button>
+        </div>
+
         <div class="question-area" id="currentQuestion">
           <em>Hier verschijnt de vraag en media — (nog geen vragen geladen)</em>
         </div>
@@ -212,6 +230,75 @@ document.getElementById('playerCountSelect').addEventListener('change', function
       entry.style.display = 'none';
     }
   });
+});
+
+// Presentator functie event listeners
+let presenterEnabled = false;
+let presenterPhotoData = null;
+let showingPresenter = false;
+
+document.getElementById('presenterEnabledCheckbox').addEventListener('change', function() {
+  presenterEnabled = this.checked;
+  const presenterOptions = document.getElementById('presenterOptions');
+  const presenterControlArea = document.getElementById('presenterControlArea');
+  
+  if (presenterEnabled) {
+    presenterOptions.style.display = 'block';
+  } else {
+    presenterOptions.style.display = 'none';
+    presenterControlArea.style.display = 'none';
+    presenterPhotoData = null;
+    document.getElementById('presenterPhotoStatus').textContent = '';
+  }
+});
+
+document.getElementById('presenterPhoto').addEventListener('change', function() {
+  const file = this.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    presenterPhotoData = e.target.result;
+    document.getElementById('presenterPhotoStatus').textContent = '✓ Foto geladen: ' + file.name;
+    document.getElementById('presenterPhotoStatus').style.color = '#4ade80';
+  };
+  reader.readAsDataURL(file);
+});
+
+// Helper functie om presentator controls te tonen/verbergen
+function updatePresenterControls() {
+  const presenterControlArea = document.getElementById('presenterControlArea');
+  if (presenterEnabled && presenterPhotoData) {
+    presenterControlArea.style.display = 'flex';
+  } else {
+    presenterControlArea.style.display = 'none';
+  }
+}
+
+// Listener om presentator controls te updaten na het maken van een spel
+document.getElementById('applyBtn').addEventListener('click', function() {
+  // Wacht even zodat het spel eerst gemaakt wordt
+  setTimeout(updatePresenterControls, 100);
+});
+
+document.getElementById('togglePresenterView').addEventListener('click', function() {
+  if (!presenterEnabled || !presenterPhotoData) {
+    alert('Upload eerst een presentatorfoto!');
+    return;
+  }
+  
+  showingPresenter = !showingPresenter;
+  const btn = document.getElementById('togglePresenterView');
+  btn.textContent = showingPresenter ? 'Wissel naar Kandidaten' : 'Wissel naar Presentator';
+  
+  // Stuur WebSocket bericht naar display
+  if (typeof sendDisplayUpdate !== 'undefined') {
+    sendDisplayUpdate({
+      type: 'presenter_toggle',
+      showing: showingPresenter,
+      photoData: presenterPhotoData
+    });
+  }
 });
 </script>
 </body>

@@ -7,7 +7,7 @@ const galerijQuestions = [
     theme: "Bordspellen",
     folder: "Bordspellen",
     images: [
-      { src: "galerij/Bordspellen/1_Monopoly.png", answer: "Monopoly" },
+      { src: "galerij/Bordspellen/1_Monopoly.png", answer: "Monopoly", remarks: "Het klassieke vastgoedspel dat sinds 1935 families verdeeld houdt. Vraag de kandidaten naar hun favoriete bordspel of meest memorabele Monopoly-moment." },
       { src: "galerij/Bordspellen/2_Catan.png", answer: "Catan" },
       { src: "galerij/Bordspellen/3_Twister.png", answer: "Twister" },
       { src: "galerij/Bordspellen/4_Ticket To Ride.png", answer: "Ticket To Ride" },

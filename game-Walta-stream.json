@@ -1,0 +1,234 @@
+{
+  "metadata": {
+    "name": "Quiz Config met Game Settings",
+    "description": "Volledig voorbeeld met game-instellingen geforceerd via config",
+    "created": "2026-02-02",
+    "note": "Dit voorbeeld toont hoe je game-instellingen zoals aantal vragen kunt forceren via de config"
+  },
+  "settings": {
+    "threeSixNine": {
+      "shuffle": false,
+      "maxQuestions": 15,
+      "_description": "Deze ronde krijgt precies 15 vragen, ook al zijn er meer beschikbaar. Als maxQuestions niet is ingesteld, gebruikt het spel de standaard waarde (12) of de waarde die handmatig is ingesteld."
+    },
+    "opendeur": {
+      "shuffle": false,
+      "_description": "Vragen komen in de volgorde zoals hieronder gedefinieerd"
+    },
+    "puzzel": {
+      "shuffle": true,
+      "_description": "Puzzellinks worden willekeurig gekozen"
+    },
+    "galerij": {
+      "shuffle": true,
+      "photoCount": 8,
+      "_description": "Elke galerij toont 8 foto's in plaats van de standaard 10. Handig voor kortere rondes."
+    },
+    "collectief": {
+      "shuffle": false,
+      "_description": "Videofragmenten in vaste volgorde"
+    },
+    "finale": {
+      "shuffle": true,
+      "_description": "Finalevragen willekeurig"
+    }
+  },
+  "threeSixNine": [
+    {
+      "text": "Welk spel heeft Game of the Year gewonnen bij The Game Awards 2025?",
+      "answers": ["Clair Obscur: Expedition 33"],
+      "type": "classic",
+      "remarks": "Dit is een turn-based RPG game geïnspireerd door Franse fantasy kunst. Je kunt de kandidaten vragen of zij dit spel kennen, of andere GOTY nominees kunnen noemen."
+    },
+    {
+      "text": "In juni 2025 was de NAVO-top in Den Haag. Donald Trump sprak van iets uit Nederland dat hij graag mee wou nemen naar de Verenigde Staten. Welk object was dit?",
+      "answers": ["De Nederlandse bomen"],
+      "type": "classic",
+      "remarks": "Trump was onder de indruk van de grote, gezonde bomen in Nederland. Vraag kandidaten wat zij denken van deze uitspraak."
+    },
+    {
+      "text": "Hoeveel games heeft OrdinaryVicious uitgespeeld op stream, volgens haar kanaalbeschrijving?",
+      "correctAnswer": "15",
+      "remarks": "STRAY, Tell Me Why, Rusty Lake: Hotel, Kena: Bridge of Spirits, Little Nightmares I, Pajama Sam: De Helse Jacht Op De Duistere Nacht, GRIS, Zelda: Echoes of Wisdom, Split Fiction, The Last Campfire, Lost in Random, Inside, JOTUN, Little Nightmares II, Little Misfortune",
+      "type": "estimation"
+    },
+    {
+      "type": "multiple-choice",
+      "text": "Welke streamer heeft de snelste PB in Super Mario 64?",
+      "options": {
+        "A": "Mars",
+        "B": "Jupiter",
+        "C": "Saturnus",
+        "D": "Neptunus"
+      },
+      "correctAnswer": "B"
+    },
+    {
+      "text": "Wie is de zanger van dit audiofragment?",
+      "answers": ["Piebe-Guido van den Berg"],
+      "audioUrl": "assets/frikandel.mp3",
+      "type": "audio"
+    },
+    {
+      "text": "Wie is de streamer met de meeste deelnames aan KerstKnallers?",
+      "answers": ["LimitsGG"],
+      "type": "classic"
+    },
+    {
+      "text": "In welke Nederlandse plaats was de eerste Walta-meetup?",
+      "answers": ["Apeldoorn"],
+      "type": "classic",
+      "remarks": "27 januari 2024, Apeldoorn - Lunch bij Stadscafé, gebowled bij Bowlmore, burgers gegeten bij Finnegan's, drankjes voor de liefhebber bij Het Stadscafé."
+    },
+    {
+      "type": "multiple-choice",
+      "text": "Welke kleur krijg je als je rood en blauw mengt?",
+      "options": {
+        "A": "Groen",
+        "B": "Oranje",
+        "C": "Paars",
+        "D": "Bruin"
+      },
+      "correctAnswer": "C"
+    },
+    {
+      "text": "Wat is de hoogste berg ter wereld?",
+      "answers": ["Mount Everest", "Everest"],
+      "type": "classic"
+    },
+    {
+      "text": "Hoeveel continenten zijn er?",
+      "answers": ["7", "zeven"],
+      "type": "classic"
+    },
+    {
+      "text": "In welk land staat de Eiffeltoren?",
+      "answers": ["Frankrijk", "France"],
+      "type": "classic"
+    },
+    {
+      "type": "multiple-choice",
+      "text": "Welk dier is het snelst op land?",
+      "options": {
+        "A": "Leeuw",
+        "B": "Cheetah",
+        "C": "Paard",
+        "D": "Gazelle"
+      },
+      "correctAnswer": "B"
+    },
+    {
+      "text": "Wie schilderde de Mona Lisa?",
+      "answers": ["Leonardo da Vinci", "Da Vinci"],
+      "type": "classic"
+    },
+    {
+      "text": "Wat is het grootste continent?",
+      "answers": ["Azië", "Asia"],
+      "type": "classic"
+    },
+    {
+      "text": "Hoeveel uren heeft een dag?",
+      "answers": ["24"],
+      "type": "classic"
+    }
+  ],
+  "opendeur": [
+    {
+      "from": "Gert",
+      "question": "Wat zijn de vier meest gestreamde games op twitch.tv/nielswalta?",
+      "answers": ["Pokémon Scarlet/Violet", "The Legend of Zelda: Tears of the Kingdom", "Mario Kart 8 Deluxe", "Pokémon Legends: Z-A"]
+    },
+    {
+      "from": "Lucas",
+      "question": "Wat zijn de vier films met de hoogste opbrengst van 2025?",
+      "answers": ["Ne Zha 2", "Zootopia 2", "Avatar: Fire and Ash", "Lilo & Stitch"]
+    },
+    {
+      "from": "Sophie",
+      "question": "Noem de Beatles leden",
+      "answers": ["John Lennon", "Paul McCartney", "George Harrison", "Ringo Starr"]
+    }
+  ],
+    "puzzel": [
+    {"link": "Kondmapjes", "answers": ["Streamweek", "Knutselt ook soms", "Tekent soms", "Capibara"]},
+    {"link": "Flaflippie", "answers": ["Eend", "Streammaand", "Hoedjes", "Aju Paraplu"]},
+    {"link": "Muntjesman", "answers": ["N64 Toernooi", "Mario Speedrunner", "... vs LizardKing", "Skateboarder"]},
+    {"link": "CearienPurple", "answers": ["Zelda-fan", "Streamde als duo", "Streamt nu alleen", "Final Fantasy XIV"]},
+    {"link": "Deur", "answers": ["Voordeur", "Achterdeur", "Open deur", "Deurknop"]},
+    {"link": "Bal", "answers": ["Voetbal", "Basketbal", "Dansgala", "Ballon"]},
+    {"link": "Pot", "answers": ["Bloempot", "Koffiepot", "Potten en pannen", "Jackpot"]},
+    {"link": "Bril", "answers": ["Leesbril", "Zonnebril", "Veiligheidsbril", "Duikbril"]},
+    {"link": "Muis", "answers": ["Computermuis", "Klein knaagdier", "Mickey Mouse", "Muizenval"]}
+  ],
+  "galerij": [
+    {
+      "theme": "Bekende Gebouwen",
+      "images": [
+        {"src": "galerij/Gebouwen/gebouw1.jpg", "answer": "Eiffeltoren"},
+        {"src": "galerij/Gebouwen/gebouw2.jpg", "answer": "Big Ben"},
+        {"src": "galerij/Gebouwen/gebouw3.jpg", "answer": "Colosseum"},
+        {"src": "galerij/Gebouwen/gebouw4.jpg", "answer": "Taj Mahal"},
+        {"src": "galerij/Gebouwen/gebouw5.jpg", "answer": "Burj Khalifa"},
+        {"src": "galerij/Gebouwen/gebouw6.jpg", "answer": "Sydney Opera House"},
+        {"src": "galerij/Gebouwen/gebouw7.jpg", "answer": "Empire State Building"},
+        {"src": "galerij/Gebouwen/gebouw8.jpg", "answer": "Sagrada Familia"},
+        {"src": "galerij/Gebouwen/gebouw9.jpg", "answer": "Atomium"},
+        {"src": "galerij/Gebouwen/gebouw10.jpg", "answer": "Golden Gate Bridge"}
+      ]
+    },
+    {
+      "theme": "Beroemde Personen",
+      "images": [
+        {"src": "galerij/Personen/persoon1.jpg", "answer": "Albert Einstein"},
+        {"src": "galerij/Personen/persoon2.jpg", "answer": "Nelson Mandela"},
+        {"src": "galerij/Personen/persoon3.jpg", "answer": "Marie Curie"},
+        {"src": "galerij/Personen/persoon4.jpg", "answer": "Leonardo da Vinci"},
+        {"src": "galerij/Personen/persoon5.jpg", "answer": "Cleopatra"},
+        {"src": "galerij/Personen/persoon6.jpg", "answer": "Winston Churchill"},
+        {"src": "galerij/Personen/persoon7.jpg", "answer": "Gandhi"},
+        {"src": "galerij/Personen/persoon8.jpg", "answer": "Mozart"},
+        {"src": "galerij/Personen/persoon9.jpg", "answer": "Shakespeare"},
+        {"src": "galerij/Personen/persoon10.jpg", "answer": "Beethoven"}
+      ]
+    },
+    {
+      "theme": "Filmposters",
+      "images": [
+        {"src": "galerij/Films/film1.jpg", "answer": "Titanic"},
+        {"src": "galerij/Films/film2.jpg", "answer": "Star Wars"},
+        {"src": "galerij/Films/film3.jpg", "answer": "The Godfather"},
+        {"src": "galerij/Films/film4.jpg", "answer": "Jurassic Park"},
+        {"src": "galerij/Films/film5.jpg", "answer": "Pulp Fiction"},
+        {"src": "galerij/Films/film6.jpg", "answer": "The Matrix"},
+        {"src": "galerij/Films/film7.jpg", "answer": "Forrest Gump"},
+        {"src": "galerij/Films/film8.jpg", "answer": "Avatar"},
+        {"src": "galerij/Films/film9.jpg", "answer": "Inception"},
+        {"src": "galerij/Films/film10.jpg", "answer": "The Dark Knight"}
+      ]
+    }
+  ],
+  "collectief": [
+    {
+      "video": "Walta/minecraft.mp4",
+      "answers": [
+        "A Minecraft Movie",
+        "Jason Momoa",
+        "Jack Black",
+        "TikTok",
+        "I am Steve"
+      ]
+    },
+    {
+      "video": "Walta/Hankiegames.mp4",
+      "answers": [
+        "Hankiegames",
+        "KerstKnallers",
+        "Pepermenu",
+        "Just Dance",
+        "Mr. Blue Sky"
+      ]
+    }
+  ],
+  "finale": []
+}
