@@ -22,7 +22,8 @@
     "galerij": {
       "shuffle": true,
       "photoCount": 8,
-      "_description": "Elke galerij toont 8 foto's in plaats van de standaard 10. Handig voor kortere rondes."
+      "manualAssignment": false,
+      "_description": "Elke galerij toont 8 foto's in plaats van de standaard 10. Handig voor kortere rondes. Zet manualAssignment op true om per kandidaat een galerij te kiezen."
     },
     "collectief": {
       "shuffle": false,

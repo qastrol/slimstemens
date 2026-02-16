@@ -715,7 +715,7 @@
 }
 
 .puzzel-word {
-  background: rgba(0,0,0,0.35);
+  background: #c41e3a;
   color: #fff;
   border: 2px solid rgba(255,255,255,0.15);
   border-radius: 12px;
@@ -735,19 +735,21 @@
 }
 
 .puzzel-word.found-link-0 {
-    background: #0b2e0b; 
-    color: #9aff9a;
-    border-color: #9aff9a;
+  background: #004186;
+  color: #e3f1f8;
+  border: 3px solid #333333;
 }
+
 .puzzel-word.found-link-1 {
-    background: #0b202e; 
-    color: #9acfff;
-    border-color: #9acfff;
+  background: #cee5f7;
+  color: #003e7b;
+  border: 3px solid #333333;
 }
+
 .puzzel-word.found-link-2 {
-    background: #2e2a0b; 
-    color: #fffb9a;
-    border-color: #fffb9a;
+  background: #001d3c;
+  color: #e3f1f8;
+  border: 3px solid #333333;
 }
 
 #puzzel-grid .part2 {
@@ -939,7 +941,7 @@
     justify-content: center;
     font-size: 2em;
     font-weight: 700;
-    background: #222;
+    background: #c41e3a;
     border: 2px solid #444;
     color: #eee;
     text-align: center;
@@ -947,9 +949,12 @@
 }
 
 .puzzel-word.found {
+    text-decoration: line-through;
+}
+
+.puzzel-word.found:not(.found-link-0):not(.found-link-1):not(.found-link-2) {
     background: #0b2e0b;
     color: #9aff9a;
-    text-decoration: line-through;
 }
 
 #scene-round-puzzel-active .grid-part.part3 {
@@ -1007,6 +1012,21 @@
     font-size: 2.2em;
     font-weight: bold;
     color: #071021;
+}
+
+.puzzel-link-line.found-link-0 .puzzel-link-points {
+    background: #004186;
+    color: #e3f1f8;
+}
+
+.puzzel-link-line.found-link-1 .puzzel-link-points {
+    background: #cee5f7;
+    color: #003e7b;
+}
+
+.puzzel-link-line.found-link-2 .puzzel-link-points {
+    background: #001d3c;
+    color: #e3f1f8;
 }
 
 .puzzel-link-text.blurred {

@@ -135,6 +135,7 @@ function chooseOpenDeurQuestion(index){
   q.answersDisplay = q.answers.slice(0, 4); 
   q.answered = Array(q.answersDisplay.length).fill(false);
   q.passedPlayers = [];
+  perRoundState.allPlayersHavePassed = false;
 
   
   if(!perRoundState.playersWhoChoseQuestion.includes(activePlayerIndex)){
@@ -169,14 +170,14 @@ function showOpenDeurAnswerControls(){
   rc.innerHTML = '';
 
   const startBtn = document.createElement('button');
-  startBtn.textContent = 'Start tijd';
+  startBtn.textContent = 'Start tijd (T)';
   startBtn.className = 'right';
   startBtn.addEventListener('click', ()=>startOpenDeurTimer());
   rc.appendChild(startBtn);
 
   perRoundState.currentQuestion.answers.forEach((ans,i)=>{
     const ansBtn = document.createElement('button');
-    ansBtn.textContent = `"${ans}" goed`;
+    ansBtn.textContent = `(${i + 1}) "${ans}" goed`;
     ansBtn.className = 'right';
     ansBtn.addEventListener('click', ()=>{
       if(!perRoundState.currentQuestion.answered[i]){
@@ -189,7 +190,7 @@ function showOpenDeurAnswerControls(){
   });
 
   const passBtn = document.createElement('button');
-  passBtn.textContent = 'Pas';
+  passBtn.textContent = 'Pas (P)';
   passBtn.className = 'secondary';
   passBtn.addEventListener('click', ()=>passOpenDeur());
   rc.appendChild(passBtn);
@@ -214,9 +215,10 @@ thinkingTimerInterval = setInterval(()=>{
 
     if (players[activePlayerIndex].seconds <= 0) {
         clearInterval(thinkingTimerInterval);
-        stopLoopTimerSFX();
-        flash(`${players[activePlayerIndex].name} is door zijn tijd heen!`);
-        sendOpenDeurDisplayUpdate('update', 'scene-round-opendeur-vraag'); 
+      flash(`${players[activePlayerIndex].name} is door zijn tijd heen!`);
+      if (typeof showPreFinaleBonusControls === 'function') showPreFinaleBonusControls();
+      if (typeof passOpenDeur === 'function') passOpenDeur();
+      return;
     }
 }, 1000);
 
@@ -349,8 +351,11 @@ function passOpenDeur(){
     sendOpenDeurDisplayUpdate('update', 'scene-round-opendeur-vraag');
   } else {
     
-    perRoundState.currentQuestion = null;
-    nextOpenDeurTurn(); 
+    // Alle kandidaten hebben gepast - toon alle antwoorden en voeg knop toe
+    perRoundState.allPlayersHavePassed = true;
+    flash('Alle kandidaten hebben gepast - alle antwoorden worden zichtbaar.');
+    sendOpenDeurDisplayUpdate('update', 'scene-round-opendeur-vraag');
+    showReturnToQuestionerButton();
   }
 }
 
@@ -406,6 +411,7 @@ if (scene === 'scene-round-opendeur-vragensteller') {
         data.totalAnswers = q.answersDisplay.length;
         data.guessedAnswers = q.answered.filter(a => a).length;
         data.isTimerRunning = !!thinkingTimerInterval;
+        data.isAllAnswersVisible = perRoundState.allPlayersHavePassed || false;
     }
 
     
@@ -434,7 +440,10 @@ function showReturnToQuestionerButton() {
 returnBtn.addEventListener('click', () => {
     flash('Terug naar vragensteller-keuze');
 
+    // Reset de state voor alle kandidaten gepast
+    perRoundState.allPlayersHavePassed = false;
     
+    // Haal volgende beschikbare kandidaat
     const remainingCandidates = perRoundState.remainingPlayers
         .filter(idx => !perRoundState.playersWhoChoseQuestion.includes(idx))
         .sort((a,b) => players[a].seconds - players[b].seconds);

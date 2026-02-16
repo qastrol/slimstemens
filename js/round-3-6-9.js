@@ -221,6 +221,31 @@ function nextThreeSixNineQuestion() {
         questionHTML += `<div class="host-remarks">💬 ${q.remarks}</div>`;
       }
       break;
+
+    case 'photo-multiple-choice':
+      if (q.options && q.options.A && q.options.B && q.options.C && q.options.D) {
+        questionHTML += `
+          <div>${q.text}</div>
+          <div class="small" style="color:#888">📷 Foto beschikbaar: ${q.photoUrl || 'Geen URL'}</div>
+          <div style="margin-top: 10px;"></div>
+          <div class="multiple-choice-options">
+            <div><strong>A:</strong> ${q.options.A}</div>
+            <div><strong>B:</strong> ${q.options.B}</div>
+            <div><strong>C:</strong> ${q.options.C}</div>
+            <div><strong>D:</strong> ${q.options.D}</div>
+          </div>
+          <div class="small">(Druk op Goed of Fout. Foto toont met knop. Elke derde vraag: +10s bonus)</div>
+          <div class="muted small">Juiste antwoord: ${q.correctAnswer || 'Onbekend'}</div>`;
+        if (q.remarks) {
+          questionHTML += `<div class="host-remarks">💬 ${q.remarks}</div>`;
+        }
+      } else {
+        // Fallback
+        questionHTML += `
+          <div>${q.text}</div>
+          <div class="small">(Photo + Multiple-choice: opties of foto ontbreken)</div>`;
+      }
+      break;
       
     case 'audio':
       questionHTML += `
@@ -274,6 +299,11 @@ function nextThreeSixNineQuestion() {
   // Reset error count voor nieuwe vraag
   klok369_resetErrorCount();
   
+  // Reset foto visibility voor vragen met foto's
+  if (q.photoUrl || q.type === 'photo' || q.type === 'photo-multiple-choice') {
+    perRoundState.photoVisible = false;
+  }
+  
   highlightActive();
   
   // Render controls voor dit vraagtype
@@ -289,6 +319,7 @@ function nextThreeSixNineQuestion() {
     activePlayer: activePlayerName,
     activeIndex: activePlayerIndex,
     photoUrl: q.photoUrl,
+    photoVisible: perRoundState.photoVisible || false,
     audioUrl: q.audioUrl,
     options: q.options,
     players
@@ -357,14 +388,14 @@ function renderThreeSixNineControls() {
     const qType = q?.type || 'classic';
     
     let controlsHTML = `
-        <button onclick="nextThreeSixNineQuestion()" id="roundNextQuestionBtn">Volgende vraag</button>
+      <button onclick="nextThreeSixNineQuestion()" id="roundNextQuestionBtn">Volgende vraag (N)</button>
         <button onclick="klok369_toggleLoop()" id="playKlok369" class="secondary" style="background:#E2904A">
             Klok <span id="klok369Timer" style="margin-left:8px;font-weight:bold">${klok369ElapsedSeconds}s</span>
         </button>
     `;
     
     // Type-specifieke knoppen
-    if (qType === 'photo') {
+    if (qType === 'photo' || qType === 'photo-multiple-choice') {
         controlsHTML += `
             <button onclick="toggleThreeSixNinePhoto()" id="togglePhotoBtn" class="secondary" style="background:#4A90E2">
                 📷 Foto Tonen/Verbergen
@@ -383,8 +414,8 @@ function renderThreeSixNineControls() {
     // Goed/Fout knoppen voor alle types behalve doe en estimation
     if (qType !== 'doe' && qType !== 'estimation') {
         controlsHTML += `
-            <button onclick="markThreeSixNineAnswer(true); playSFX('SFX/goed.mp3');" id="roundMarkRightBtn">Goed</button>
-            <button onclick="markThreeSixNineAnswer(false); playSFX('SFX/fout.mp3');" id="roundMarkWrongBtn">Fout</button>
+        <button onclick="markThreeSixNineAnswer(true); playSFX('SFX/goed.mp3');" id="roundMarkRightBtn">Goed (G)</button>
+        <button onclick="markThreeSixNineAnswer(false); playSFX('SFX/fout.mp3');" id="roundMarkWrongBtn">Fout (F)</button>
         `;
     }
     
@@ -447,10 +478,18 @@ function toggleThreeSixNinePhoto() {
 // Audio afspelen
 function playThreeSixNineAudio() {
     const q = perRoundState.currentQuestion;
-    if (!q || !q.audioUrl) return;
+    console.log('🎵 playThreeSixNineAudio aangeroepen met vraag:', q);
+    
+    if (!q || !q.audioUrl) {
+        console.warn('❌ Geen vraag of audioUrl gevonden:', { q, audioUrl: q?.audioUrl });
+        return;
+    }
     
     const activePlayerName = players[activePlayerIndex]?.name || '-';
     
+    console.log('📤 Versturen audio update naar display:', q.audioUrl);
+    
+    // Stuur alleen naar display - audio speelt ALLEEN op display.html
     sendDisplayUpdate({
         type: 'update',
         currentRoundName: 'threeSixNine',
@@ -465,8 +504,8 @@ function playThreeSixNineAudio() {
         players
     });
     
-    flash('Audio afspelen...');
-    playSFX(q.audioUrl);
+    flash('Audio wordt afgespeeld op display...');
+    // NIET op host afspelen: playSFX() verwijderd
 }
 
 // DOE-vraag winnaar selecteren

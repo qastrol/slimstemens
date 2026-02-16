@@ -6,6 +6,19 @@
 let gameConfig = null;
 let configLoaded = false;
 
+function setPendingUiConfig(config) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.pendingUiConfig = config;
+  
+  // Pas config instellingen toe
+  if (typeof window.applyUiSettingsFromConfig === 'function') {
+    window.applyUiSettingsFromConfig(config);
+  }
+}
+
 /**
  * Laadt het configuratiebestand
  */
@@ -22,6 +35,7 @@ async function loadGameConfig() {
     gameConfig = config;
     configLoaded = true;
     console.log('Game configuratie geladen:', config);
+    setPendingUiConfig(config);
   } catch (error) {
     console.warn('Fout bij laden van game-config.json:', error.message);
     gameConfig = getDefaultConfig();
@@ -72,15 +86,55 @@ function getQuestionsForRound(roundKey, defaultQuestions = []) {
         answers: q.answers || [],
         type: q.type || 'classic'
       }));
+
+      // Optioneel: shuffle multiple-choice opties (alleen voor JSON config)
+      const shuffleMcOptions = !!(gameConfig.settings && gameConfig.settings.threeSixNine && gameConfig.settings.threeSixNine.shuffleMultipleChoiceOptions);
+      if (shuffleMcOptions) {
+        normalizedQuestions = normalizedQuestions.map(q => {
+          if ((q.type !== 'multiple-choice' && q.type !== 'photo-multiple-choice') || !q.options) {
+            return q;
+          }
+
+          const shuffled = shuffleMultipleChoiceOptions(q.options, q.correctAnswer);
+          return {
+            ...q,
+            options: shuffled.options,
+            correctAnswer: shuffled.correctAnswer
+          };
+        });
+      }
     }
     
-    // Bepaal minimaal benodigde vragen per ronde
+    // Normaliseer galerij vragen: zorg dat 'images' array bestaat
+    if (roundKey === 'galerij') {
+      normalizedQuestions = configQuestions.map(gallery => {
+        // Valideer dat images array bestaat
+        if (!gallery.images || !Array.isArray(gallery.images)) {
+          console.warn(`⚠️ Galerij "${gallery.theme || 'onbekend'}" heeft geen images array - wordt overgeslagen`);
+          return null;
+        }
+        
+        return {
+          theme: gallery.theme || 'Galerij',
+          folder: gallery.folder || '', // Optioneel veld
+          images: gallery.images.map(img => ({
+            src: img.src,
+            answer: img.answer,
+            remarks: img.remarks || undefined
+          }))
+        };
+      }).filter(g => g !== null); // Verwijder ongeldige galerijen
+      
+      console.log(`✅ Galerij genormaliseerd: ${normalizedQuestions.length} galerijen met images`);
+    }
+    
+    // Bepaal minimaal benodigde vragen per ronde (geen limiet voor finale)
     let minRequired = 0;
     if (roundKey === 'puzzel') minRequired = 9;
     else if (roundKey === 'galerij') minRequired = 3;
     else if (roundKey === 'collectief') minRequired = 3;
-    else if (roundKey === 'finale') minRequired = 10;
     else if (roundKey === 'opendeur') minRequired = 3;
+    // FINALE: geen minRequired limiet meer
     
     // Controleer of config voldoende vragen heeft
     if (minRequired > 0 && normalizedQuestions.length < minRequired) {
@@ -92,13 +146,53 @@ function getQuestionsForRound(roundKey, defaultQuestions = []) {
       return combined;
     }
     
-    // Genoeg vragen: gebruik alleen custom
+    // Voor finale: altijd alle custom vragen + alle standaard vragen
+    if (roundKey === 'finale' && defaultQuestions.length > 0) {
+      console.log(`Finale: ${normalizedQuestions.length} custom vragen + ${defaultQuestions.length} standaard vragen`);
+      // Beide arrays samenvoegen: custom EERST, dan standaard
+      return [...normalizedQuestions, ...defaultQuestions];
+    }
+    
+    // Voor andere rondes: gebruik alleen custom als genoeg
     return normalizedQuestions;
   }
   
   // Geen custom vragen: fallback naar standaard
   console.log(`Fallback naar standaard vragen voor ${roundKey}`);
   return defaultQuestions;
+}
+
+// Shuffle helper for multiple-choice options (A/B/C/D) while keeping correctAnswer aligned.
+function shuffleMultipleChoiceOptions(options, correctAnswerKey) {
+  const entries = Object.entries(options);
+  shuffleArray(entries);
+
+  const optionKeys = ['A', 'B', 'C', 'D', 'E', 'F'];
+  const shuffledOptions = {};
+  let newCorrectKey = null;
+
+  entries.forEach((entry, index) => {
+    const originalKey = entry[0];
+    const label = entry[1];
+    const newKey = optionKeys[index] || originalKey;
+    shuffledOptions[newKey] = label;
+    if (originalKey === correctAnswerKey) {
+      newCorrectKey = newKey;
+    }
+  });
+
+  return {
+    options: shuffledOptions,
+    correctAnswer: newCorrectKey || correctAnswerKey
+  };
+}
+
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
 }
 
 /**
@@ -150,12 +244,13 @@ function getRoundSetting(roundKey, settingKey, defaultValue = null) {
 
 /**
  * Haalt player mode instellingen op
- * @returns {object} - Object met playerCount en questionsPerRound
+ * @returns {object} - Object met playerCount, questionsPerRound en optionele players array
  */
 function getPlayerModeSettings() {
   const defaults = {
     playerCount: 3,
-    questionsPerRound: 1
+    questionsPerRound: 1,
+    players: null
   };
   
   if (!gameConfig || !gameConfig.settings || !gameConfig.settings.playerMode) {
@@ -165,7 +260,8 @@ function getPlayerModeSettings() {
   const playerMode = gameConfig.settings.playerMode;
   return {
     playerCount: playerMode.playerCount || defaults.playerCount,
-    questionsPerRound: playerMode.questionsPerRound || defaults.questionsPerRound
+    questionsPerRound: playerMode.questionsPerRound || defaults.questionsPerRound,
+    players: Array.isArray(playerMode.players) ? playerMode.players : null
   };
 }
 
@@ -225,6 +321,35 @@ async function uploadConfigFile(file) {
         gameConfig = config;
         configLoaded = true;
         console.log('Configuratie succesvol geupload:', config);
+        
+        // Update UI elementen a.d.h.v. config settings
+        if (config.settings?.bumpers?.enabled !== undefined) {
+          const bumperCheckbox = document.getElementById('bumpersEnabledCheckbox');
+          if (bumperCheckbox) {
+            bumperCheckbox.checked = config.settings.bumpers.enabled;
+          }
+        }
+        
+        if (config.settings?.intro?.enabled !== undefined) {
+          const introCheckbox = document.getElementById('introEnabledCheckbox');
+          if (introCheckbox) {
+            introCheckbox.checked = config.settings.intro.enabled;
+            const introOptions = document.getElementById('introOptions');
+            if (introOptions) {
+              introOptions.style.display = config.settings.intro.enabled ? 'block' : 'none';
+            }
+          }
+        }
+        
+        if (config.settings?.intro?.text) {
+          const introText = document.getElementById('introText');
+          if (introText) {
+            introText.value = config.settings.intro.text;
+          }
+        }
+
+        setPendingUiConfig(config);
+        
         resolve(config);
       } catch (error) {
         console.error('Fout bij parsen van config bestand:', error);

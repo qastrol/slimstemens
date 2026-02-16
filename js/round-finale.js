@@ -46,15 +46,14 @@ function determineFinalistsAndSetupPreRound() {
     // Bij 2 spelers valt niemand af - beide zijn al finalisten
     if (players.length === 2) {
         const sortedPlayers = [...players].sort((a, b) => a.seconds - b.seconds);
+        const allOriginalPlayers = [...players]; // Bewaar alle originele spelers voor outro
         players = [...sortedPlayers]; // Zorg dat spelers gesorteerd zijn op tijd
         activePlayerIndex = players[0].index; // Laagste tijd begint
         
         perRoundState.finale.lastActivePlayerIndex = activePlayerIndex;
         perRoundState.finale.afvallerOriginalIndex = -1; // Geen afvaller
         perRoundState.finale.afvallerName = null;
-        
-        flash(`Finale start met 2 spelers: ${players[0].name} en ${players[1].name}. ${players[0].name} begint (laagste tijd).`);
-        renderPlayers();
+
         
         // Render de pre-start UI met de knop "Start Eerste Vraag"
         renderFinaleHostUI('pre_start', -1);
@@ -141,6 +140,10 @@ function setupFinaleRound() {
     }
     
     perRoundState.finale = perRoundState.finale || {};
+    
+    // Bewaar ALLE originele spelers in originele volgorde voor outro
+    perRoundState.finale.allOriginalPlayersForOutro = [...players].map(p => ({...p}));
+    console.log('💾 Originele spelers opgeslagen voor outro:', perRoundState.finale.allOriginalPlayersForOutro.map(p => p.name));
 
     // Haal vragen op met fallback naar standaard vragen
     const questionsToUse = getQuestionsForRound('finale', finaleVragen);
@@ -154,8 +157,26 @@ function setupFinaleRound() {
     perRoundState.finale.currentQuestionIndex = 0;
     // Check of shuffle aan of uit staat
     const shouldShuffle = shouldShuffleRound('finale');
-    const orderedQuestions = shouldShuffle ? shuffleArray(questionsToUse.slice()) : questionsToUse.slice();
-    perRoundState.finale.questions = orderedQuestions.slice(0, 10).map(q => ({
+    
+    // Haal de aantallen custom en standaard vragen op
+    const customQuestions = (gameConfig && gameConfig.finale && Array.isArray(gameConfig.finale)) ? gameConfig.finale : [];
+    const defaultQuestionCount = Math.max(0, questionsToUse.length - customQuestions.length);
+    
+    let orderedQuestions = questionsToUse;
+    
+    if (shouldShuffle && customQuestions.length > 0 && defaultQuestionCount > 0) {
+        // Beide custom en standaard aanwezig: shuffle ze apart, custom eerst
+        const shuffledCustom = shuffleArray(customQuestions.slice());
+        const defaultQuestionsArray = finaleVragen.slice(0, defaultQuestionCount);
+        const shuffledDefault = shuffleArray(defaultQuestionsArray);
+        orderedQuestions = [...shuffledCustom, ...shuffledDefault];
+        console.log(`✅ Finale: ${shuffledCustom.length} custom + ${shuffledDefault.length} standaard vragen gehusseld`);
+    } else if (shouldShuffle) {
+        // Alleen custom of alleen standaard: normale shuffle
+        orderedQuestions = shuffleArray(questionsToUse.slice());
+    }
+    
+    perRoundState.finale.questions = orderedQuestions.map(q => ({
         ...q,
         foundAnswers: [],
         playersWhoPassed: []
@@ -448,14 +469,75 @@ function endFinaleGame(winner) {
 
     
     const controlsEl = document.getElementById('roundControls');
-    controlsEl.innerHTML = `
+    
+    let controlsHTML = `
         <div style="text-align:center;">
             <h1>FINALE VOORBIJ!</h1>
             <h2>De winnaar is: ${winner.name}</h2>
             <p><strong>Gefeliciteerd!</strong></p>
         </div>
     `;
+    
+    // Voeg outro knop toe als outro enabled is
+    if (outroEnabled) {
+        controlsHTML += `
+        <div style="margin-top:20px;">
+            <button id="startOutroBtn" class="secondary">▶️ Start Outro</button>
+        </div>
+        `;
+    }
+    
+    // Voeg finale-post-game knoppen toe
+    controlsHTML += `
+        <div style="margin-top:20px;">
+            <h3>Perspectieven:</h3>
+            <button id="showFinaleWinnerBtn" class="secondary">🏆 Winnaarscherm</button>
+            <button id="showFinaleLastQuestionBtn" class="secondary">❓ Laatste Vraag</button>
+            <button id="showFinaleFullLobbyBtn" class="secondary">👥 Fullscreen Lobby</button>
+        </div>
+        <div style="margin-top:20px;">
+            <button id="restoreFinaleCeelsBtn" class="secondary">🔧 Stoelen Herstellen</button>
+        </div>
+    `;
+    
+    controlsEl.innerHTML = controlsHTML;
+    
+    // Zet event listeners op knoppen
+    if (outroEnabled) {
+        const startOutroBtn = document.getElementById('startOutroBtn');
+        if (startOutroBtn) {
+            startOutroBtn.addEventListener('click', startOutro);
+        }
+    }
+    
+    // Event listeners voor perspectief knoppen
+    const showWinnerBtn = document.getElementById('showFinaleWinnerBtn');
+    if (showWinnerBtn) {
+        showWinnerBtn.addEventListener('click', showFinaleWinner);
+    }
+    
+    const showLastQuestionBtn = document.getElementById('showFinaleLastQuestionBtn');
+    if (showLastQuestionBtn) {
+        showLastQuestionBtn.addEventListener('click', showFinaleLastQuestion);
+    }
+    
+    const showFullLobbyBtn = document.getElementById('showFinaleFullLobbyBtn');
+    if (showFullLobbyBtn) {
+        showFullLobbyBtn.addEventListener('click', showFinaleFullLobby);
+    }
+    
+    const restoreStoelBtn = document.getElementById('restoreFinaleCeelsBtn');
+    if (restoreStoelBtn) {
+        restoreStoelBtn.addEventListener('click', restoreFinaleStoelen);
+    }
 
+    
+    // Initialiseer finale end state
+    perRoundState.finale.endGameState = {
+        showing: 'winner', // 'winner', 'lastquestion' of 'lobby'
+        winner: winner,
+        loser: loser
+    };
     
     sendFinaleDisplayUpdate('round_end', 'scene-round-finale-end', {
         winnerIndex: winner.index,
@@ -469,6 +551,111 @@ function endFinaleGame(winner) {
     
     roundRunning = false;
     currentRoundIndex++;
+}
+
+// ===== FINALE END GAME CONTROLS =====
+function showFinaleWinner() {
+    if (!perRoundState?.finale?.endGameState) {
+        flash('Fout: Finale state niet gevonden.', 'error');
+        return;
+    }
+    
+    perRoundState.finale.endGameState.showing = 'winner';
+    
+    console.log('🏆 showFinaleWinner aangeroepen - stuur finale_view_change');
+    
+    sendDisplayUpdate({
+        type: 'finale_view_change',
+        view: 'winner'
+    });
+    
+    flash('Winnaarscherm weergegeven', 'success');
+}
+
+function showFinaleLastQuestion() {
+    if (!perRoundState?.finale?.endGameState) {
+        flash('Fout: Finale state niet gevonden.', 'error');
+        return;
+    }
+    
+    perRoundState.finale.endGameState.showing = 'lastquestion';
+    
+    console.log('❓ showFinaleLastQuestion aangeroepen');
+    
+    // Haal de laatste vraag op en markeer ALLE antwoorden als gevonden
+    const currentQuestion = perRoundState.finale.currentQuestion;
+    const allAnswersRevealed = currentQuestion ? currentQuestion.answers.map(ans => ({
+        answer: ans,
+        isFound: true,  // Alle antwoorden als gevonden markeren
+        finderName: ''  // Geen finder tonen
+    })) : [];
+    
+    const playersData = players.map(p => ({
+        name: p.name,
+        seconds: p.seconds,
+        photoUrl: p.photoUrl,
+        isActive: p.index === activePlayerIndex,
+        isFinalist: true
+    }));
+    
+    console.log('❓ Verstuur finale_view_change met', allAnswersRevealed.length, 'antwoorden');
+    
+    // Stuur finale_view_change met alle benodigde data
+    sendDisplayUpdate({
+        type: 'finale_view_change',
+        view: 'lastquestion',
+        key: 'finale',
+        currentQuestionIndex: perRoundState.finale.currentQuestionIndex + 1,
+        maxQuestions: perRoundState.finale.questions.length,
+        activePlayer: players.find(p => p.index === activePlayerIndex)?.name || '-',
+        activeIndex: activePlayerIndex,
+        players: playersData,
+        question: currentQuestion?.question || '',
+        answers: allAnswersRevealed,
+        allAnswersFound: true,
+        revealAll: true
+    });
+    
+    flash('Laatste vraag met alle antwoorden weergegeven', 'success');
+}
+
+function showFinaleFullLobby() {
+    if (!perRoundState?.finale?.endGameState) {
+        flash('Fout: Finale state niet gevonden.', 'error');
+        return;
+    }
+    
+    perRoundState.finale.endGameState.showing = 'lobby';
+    
+    // Gebruik alle spelers voor de lobby (inclusief afgevallen kandidaat)
+    const playersToShow = perRoundState?.finale?.allOriginalPlayersForOutro || players;
+    
+    console.log('👥 showFinaleFullLobby aangeroepen met spelers:', playersToShow.map(p => p.name));
+    
+    sendDisplayUpdate({
+        type: 'finale_view_change',
+        view: 'lobby',
+        players: playersToShow
+    });
+    
+    flash('Fullscreen lobby weergegeven', 'success');
+}
+
+function restoreFinaleStoelen() {
+    // Herstel originele speler-volgorde uit perRoundState.finale.allOriginalPlayersForOutro
+    const originalPlayers = perRoundState?.finale?.allOriginalPlayersForOutro;
+    
+    if (originalPlayers && originalPlayers.length > 0) {
+        // Herstel ALLE 3 de originele spelers (inclusief de afgevallen kandidaat)
+        players = JSON.parse(JSON.stringify(originalPlayers));
+        activePlayerIndex = players[0].index;
+        
+        console.log('🔧 Stoelen hersteld! Alle originele spelers:', players.map(p => p.name));
+        
+        flash('Stoelen hersteld naar originele volgorde! Gebruik de perspectiefknoppen om de display bij te werken.', 'success');
+    } else {
+        flash('Kan originele volgorde niet herstellen - niet beschikbaar', 'error');
+    }
 }
 
 function endFinaleRound() {
@@ -533,7 +720,7 @@ function renderFinaleHostUI(phase = 'main', afvallerIndex = -1) {
     const answers = currentQuestion?.answers || [];
     const foundAnswers = currentQuestion?.foundAnswers || []; 
     const allFound = currentQuestion && (currentQuestion.foundAnswers.length === currentQuestion.answers.length);
-    const activePlayer = players[activePlayerIndex];
+    const activePlayer = players.find(p => p.index === activePlayerIndex) || players[0];
     const controlsEl = document.getElementById('roundControls');
     const currentQuestionEl = document.getElementById('currentQuestion');
     const qIndex = perRoundState.finale.currentQuestionIndex;
@@ -586,8 +773,8 @@ function renderFinaleHostUI(phase = 'main', afvallerIndex = -1) {
                 const found = foundAnswers.find(fa => fa.answer === ans);
                 const finderName = found ? players.find(p=>p.index===found.finderIndex).name : '';
                 const display = found ? 
-                    `✅ ${ans} (gevonden door ${finderName})` : 
-                    `${ans}`;
+                    `✅ (${i + 1}) ${ans} (gevonden door ${finderName})` : 
+                    `(${i + 1}) ${ans}`;
                 const className = found ? 'secondary' : 'primary';
                 const disabled = found || phase !== 'main' ? 'disabled' : ''; 
                 return `<button onclick="markFinaleAnswer(${i})" class="${className}" ${disabled}>${display}</button>`;
@@ -601,8 +788,8 @@ function renderFinaleHostUI(phase = 'main', afvallerIndex = -1) {
         html = `
             <h4>Beurt: ${activePlayer.name}</h4>
             <div style="display:flex;gap:10px;margin-top:10px;">
-                <button onclick="startFinaleTimer()" id="finaleStartTimer" class="primary">Start Klok / Vervolg Beurt</button>
-                <button onclick="passFinale()" class="secondary" ${allFound ? 'disabled' : ''}>Pas (${activePlayer.name})</button>
+                <button onclick="startFinaleTimer()" id="finaleStartTimer" class="primary">Start Klok (T) / Vervolg Beurt</button>
+                <button onclick="passFinale()" class="secondary" ${allFound ? 'disabled' : ''}>Pas (P) (${activePlayer.name})</button>
             </div>
         `;
     } 
@@ -615,7 +802,7 @@ function renderFinaleHostUI(phase = 'main', afvallerIndex = -1) {
             <div style="margin-top:10px; padding:10px; border:1px solid #c084fc; font-weight:bold;">
                 Vraag ${qIndex + 1} Afgerond.
             </div>
-            <button onclick="nextFinaleQuestion()">${btnText}</button>
+            <button onclick="nextFinaleQuestion()">${btnText} (N)</button>
         `;
     }
 
@@ -698,6 +885,25 @@ function sendFinaleDisplayUpdate(action, scene, extraData = {}) {
         timerRunning: finaleTimerRunning, 
         ...extraData 
     });
+}
+
+// ===== OUTRO FUNCTIE =====
+function startOutro() {
+    console.log('🎬 Outro start geactiveerd!');
+    
+    // Haal alle originele spelers op (inclusief afvaller) uit perRoundState
+    const allOriginalPlayers = perRoundState.finale?.allOriginalPlayersForOutro || players;
+    
+    console.log('📋 Outro spelers:', allOriginalPlayers.map(p => p.name));
+    
+    // Stuur outro start bericht naar display
+    sendDisplayUpdate({
+        type: 'outro_start',
+        scene: 'scene-outro',
+        allPlayers: allOriginalPlayers // Alle spelers inclusief afvaller in originele volgorde
+    });
+    
+    flash('Outro gestart!', 'success');
 }
 
 console.log('Round-Finale.js geladen met Finale logica.');

@@ -11,45 +11,62 @@ function updateScene(sceneName) {
     currentScene = sceneName;
 }
 
-const WS_ADDRESS = 'ws://127.0.0.1:8081/';
-let ws = null;
-let __displayLoopAudio = null;
-let __audioUnlocked = false;
-let __lastAudioCmd = null;
+function applyOverlayPosition(overlayEl) {
+  if (!overlayEl) return;
 
-function __showAudioUnlockBanner() {
-  if (__audioUnlocked) return;
-  if (document.getElementById('audioUnlockBanner')) return;
-  const el = document.createElement('div');
-  el.id = 'audioUnlockBanner';
-  el.textContent = 'Klik hier of ergens op het scherm om audio te activeren';
-  el.style.position = 'fixed';
-  el.style.left = '50%';
-  el.style.top = '10px';
-  el.style.transform = 'translateX(-50%)';
-  el.style.background = 'rgba(0,0,0,0.7)';
-  el.style.color = '#fff';
-  el.style.padding = '8px 12px';
-  el.style.borderRadius = '6px';
-  el.style.zIndex = '9999';
-  el.style.cursor = 'pointer';
-  el.addEventListener('click', __unlockAudio, { once: true });
-  document.body.appendChild(el);
-}
+  const isLobbyScene = currentScene === 'lobby' ||
+                      currentScene === 'waiting-game' ||
+                      currentScene === 'round-opendeur-lobby';
 
-function __unlockAudio() {
-  __audioUnlocked = true;
-  const el = document.getElementById('audioUnlockBanner');
-  if (el) el.remove();
-  if (__lastAudioCmd) {
-    const cmd = __lastAudioCmd;
-    __lastAudioCmd = null;
-    handleAudioMessage(cmd);
+  const is369Scene = currentScene === 'round-369';
+
+  const rightSideScenes = [
+    'round-opendeur-vraag',
+    'round-puzzel-waiting',
+    'round-puzzel-active',
+    'scene-round-puzzel-done',
+    'scene-round-galerij-pre',
+    'scene-round-galerij-main',
+    'scene-round-galerij-aanvul',
+    'scene-round-galerij-slideshow',
+    'scene-round-galerij-done',
+    'scene-round-collectief-pre',
+    'scene-round-collectief-main',
+    'scene-round-collectief-tussenstand',
+    'scene-round-collectief-done',
+    'scene-round-finale-pre',
+    'scene-round-finale-main',
+    'scene-round-finale-end',
+    'solo-game-end'
+  ];
+
+  const isRightSide = rightSideScenes.includes(currentScene);
+
+  if (isLobbyScene) {
+    overlayEl.classList.add('fullscreen');
+    overlayEl.classList.remove('mini-lobby-mode', 'mini-right', 'mini-369');
+  } else {
+    overlayEl.classList.add('mini-lobby-mode');
+    overlayEl.classList.remove('fullscreen');
+
+    if (is369Scene) {
+      overlayEl.classList.add('mini-369');
+    } else {
+      overlayEl.classList.remove('mini-369');
+    }
+
+    if (isRightSide) {
+      overlayEl.classList.add('mini-right');
+    } else {
+      overlayEl.classList.remove('mini-right');
+    }
   }
 }
 
-document.addEventListener('click', __unlockAudio, { once: true });
-document.addEventListener('keydown', __unlockAudio, { once: true });
+const WS_ADDRESS = 'ws://127.0.0.1:8081/';
+let ws = null;
+let __displayLoopAudio = null;
+// Audio is altijd enabled voor OBS Studio - geen unlock nodig
 
 function connectWebSocket() {
   updateScene('no-connection');
@@ -59,6 +76,7 @@ function connectWebSocket() {
 
   ws.onmessage = (event) => {
     const data = JSON.parse(event.data);
+    console.log('📨 WebSocket bericht ontvangen:', data.type, data);
 
     switch (data.type) {
       case 'audio':
@@ -78,7 +96,10 @@ function connectWebSocket() {
 
       case 'players':
         players = data.players;
-        if (data.round && data.round !== 'lobby') break;
+        if (data.round && data.round !== 'lobby') {
+          updatePlayersBarsFromGeneric(players, data.active ?? data.activeIndex ?? -1);
+          break;
+        }
         updateScene('lobby');
         renderLobby(players);
         break;
@@ -132,8 +153,7 @@ function handleAudioMessage(data) {
       const a = new Audio(data.src);
       a.currentTime = 0;
       a.play().catch((err) => {
-        __lastAudioCmd = data;
-        __showAudioUnlockBanner();
+        console.warn('Audio afspelen mislukt:', err);
       });
       return;
     }
@@ -145,8 +165,7 @@ function handleAudioMessage(data) {
       __displayLoopAudio.loop = true;
       __displayLoopAudio.currentTime = 0;
       __displayLoopAudio.play().catch((err) => {
-        __lastAudioCmd = data;
-        __showAudioUnlockBanner();
+        console.warn('Loop audio afspelen mislukt:', err);
       });
       return;
     }
@@ -285,62 +304,11 @@ function handleAudioMessage(data) {
         // Toon of verberg presentator overlay
         const presenterOverlay = document.getElementById('presenterOverlay');
         const presenterPhoto = document.getElementById('presenterPhoto');
+        const juryOverlay = document.getElementById('juryOverlay');
         
         if (data.showing && data.photoData) {
-          // Bepaal of we in fullscreen of mini-lobby mode zijn
-          const isLobbyScene = currentScene === 'lobby' || 
-                              currentScene === 'waiting-game' || 
-                              currentScene === 'round-opendeur-lobby';
-          
-          // 3-6-9 heeft kleinere mini-lobby (520px i.p.v. 540px)
-          const is369Scene = currentScene === 'round-369';
-          
-          // Scenes waar mini-lobby rechtsboven staat (grid-column: 2)
-          const rightSideScenes = [
-            'round-opendeur-vraag',
-            'round-puzzel-waiting',
-            'round-puzzel-active',
-            'scene-round-puzzel-done',
-            'scene-round-galerij-pre',
-            'scene-round-galerij-main',
-            'scene-round-galerij-aanvul',
-            'scene-round-galerij-slideshow',
-            'scene-round-galerij-done',
-            'scene-round-collectief-pre',
-            'scene-round-collectief-main',
-            'scene-round-collectief-tussenstand',
-            'scene-round-collectief-done',
-            'scene-round-finale-pre',
-            'scene-round-finale-main',
-            'scene-round-finale-end',
-            'solo-game-end'
-          ];
-          
-          const isRightSide = rightSideScenes.includes(currentScene);
-          
-          if (isLobbyScene) {
-            // Fullscreen modus voor lobby
-            presenterOverlay.classList.add('fullscreen');
-            presenterOverlay.classList.remove('mini-lobby-mode', 'mini-right', 'mini-369');
-          } else {
-            // Mini-lobby modus voor rondes
-            presenterOverlay.classList.add('mini-lobby-mode');
-            presenterOverlay.classList.remove('fullscreen');
-            
-            // 3-6-9 heeft andere hoogte
-            if (is369Scene) {
-              presenterOverlay.classList.add('mini-369');
-            } else {
-              presenterOverlay.classList.remove('mini-369');
-            }
-            
-            // Bepaal of mini-lobby links of rechts staat
-            if (isRightSide) {
-              presenterOverlay.classList.add('mini-right');
-            } else {
-              presenterOverlay.classList.remove('mini-right');
-            }
-          }
+          if (juryOverlay) juryOverlay.style.display = 'none';
+          applyOverlayPosition(presenterOverlay);
           
           // Toon presentator
           presenterPhoto.src = data.photoData;
@@ -349,6 +317,47 @@ function handleAudioMessage(data) {
           // Verberg presentator, toon kandidaten
           presenterOverlay.style.display = 'none';
         }
+        break;
+
+      case 'jury_toggle': {
+        const juryOverlay = document.getElementById('juryOverlay');
+        const presenterOverlay = document.getElementById('presenterOverlay');
+        if (data.showing) {
+          if (presenterOverlay) presenterOverlay.style.display = 'none';
+          applyOverlayPosition(juryOverlay);
+          if (juryOverlay) juryOverlay.style.display = 'flex';
+        } else if (juryOverlay) {
+          juryOverlay.style.display = 'none';
+        }
+        break;
+      }
+
+      case 'intro_start':
+        handleIntroStart(data);
+        break;
+
+      case 'intro_play_video':
+        handleIntroPlayVideo();
+        break;
+
+      case 'intro_perspective':
+        handleIntroPerspectiveChange(data.perspective);
+        break;
+
+      case 'intro_stop':
+        handleIntroStop();
+        break;
+
+      case 'outro_start':
+        handleOutroStart(data);
+        break;
+
+      case 'finale_view_change':
+        handleFinaleViewChange(data);
+        break;
+
+      case 'restore_scenery':
+        handleRestoreScenery(data.scene);
         break;
     }
   };
@@ -370,8 +379,8 @@ function renderMiniLobby(players, containerId){
     el.innerHTML = players.map(p => `<div class="player"><img src="${p.photoUrl || 'assets/avatar.png'}"></div>`).join('');
 }
 
-function renderLobby(players){
-    const container = document.getElementById('lobbyPlayerImages');
+function renderLobby(players, containerId = 'lobbyPlayerImages'){
+    const container = document.getElementById(containerId);
     if(!container) return;
     container.innerHTML = players.map(p => `<div class="lobby-photo"><img src="${p.photoUrl || 'assets/avatar.png'}"><div>${p.name}</div></div>`).join('');
 }
@@ -423,7 +432,53 @@ function adjustQuestionFontSize(questionElement, text) {
     questionElement.style.fontSize = `${fontSize}em`;
 }
 
+  function adjustQuestionFontSizeMultipleChoice(questionElement, text) {
+    // Strenger voor multiple-choice: minder ruimte door antwoordopties
+    const textLength = text.length;
+    let fontSize;
+
+    if (textLength <= 60) {
+      fontSize = 2.2;
+    } else if (textLength <= 90) {
+      fontSize = 1.9;
+    } else if (textLength <= 130) {
+      fontSize = 1.6;
+    } else if (textLength <= 170) {
+      fontSize = 1.4;
+    } else {
+      fontSize = 1.2;
+    }
+
+    questionElement.style.fontSize = `${fontSize}em`;
+  }
+
 function renderThreeSixNine(data){
+    console.log('🎵 renderThreeSixNine aangeroepen met data.action:', data.action, 'audioUrl:', data.audioUrl);
+    
+    // Audio afspelen EERST checken voordat we andere dingen doen
+    if (data.action === 'playAudio' && data.audioUrl) {
+        console.log('🔊 Poging audio af te spelen:', data.audioUrl);
+        const audio = new Audio(data.audioUrl);
+        
+        // Event listeners voor betere debugging
+        audio.addEventListener('error', (e) => {
+            console.error('❌ Audio load error voor:', data.audioUrl);
+            console.error('Error details:', e);
+            console.error('Audio error code:', audio.error?.code, 'message:', audio.error?.message);
+        });
+        
+        audio.addEventListener('loadedmetadata', () => {
+            console.log('✅ Audio metadata geladen voor:', data.audioUrl);
+        });
+        
+        audio.play().then(() => {
+            console.log('✅ Audio succesvol gestart:', data.audioUrl);
+        }).catch(err => {
+            console.error('❌ Audio play() mislukt voor:', data.audioUrl);
+            console.error('Error:', err);
+        });
+    }
+    
     const roundStatusEl = document.getElementById('roundStatus');
     const roundQuestionEl = document.getElementById('roundQuestion');
     const questionNumbersContainer = document.getElementById('questionNumbersContainer');
@@ -451,7 +506,7 @@ function renderThreeSixNine(data){
         questionHTML += `<div>${qText}</div>`;
         
         // Multiple choice opties
-        if (qType === 'multiple-choice' && data.options) {
+        if ((qType === 'multiple-choice' || qType === 'photo-multiple-choice') && data.options) {
             questionHTML += '<div class="multiple-choice-options">';
             for (const [key, value] of Object.entries(data.options)) {
                 questionHTML += `<div><strong>${key}:</strong> ${value}</div>`;
@@ -460,7 +515,7 @@ function renderThreeSixNine(data){
         }
         
         // Foto weergave - toon indicator in vraag, foto zelf in linkervlak
-        if (qType === 'photo') {
+        if (qType === 'photo' || qType === 'photo-multiple-choice') {
             if (data.photoVisible) {
                 questionHTML += '<div class="audio-indicator">📷 (Foto wordt getoond linksboven)</div>';
                 // Toon foto in linkervlak
@@ -491,10 +546,21 @@ function renderThreeSixNine(data){
         roundQuestionEl.innerHTML = questionHTML;
         
         // Pas font-size aan op basis van vraaglengte
-        adjustQuestionFontSize(roundQuestionEl, qText);
+        if (qType === 'multiple-choice' || qType === 'photo-multiple-choice') {
+          adjustQuestionFontSizeMultipleChoice(roundQuestionEl, qText);
+        } else {
+          adjustQuestionFontSize(roundQuestionEl, qText);
+        }
 
-        
-        renderPlayersBarUniversal(data.currentQuestionIndex - 1, data.activeIndex);
+        const normalizedActiveIndex = normalizeActiveIndex(players, data.activeIndex);
+        perRoundState.currentQuestionIndex = Number.isFinite(data.currentQuestionIndex)
+          ? Math.max(0, data.currentQuestionIndex - 1)
+          : null;
+        if (Number.isFinite(data.maxQuestions)) {
+          perRoundState.max = data.maxQuestions;
+        }
+
+        renderPlayersBarUniversal(perRoundState.currentQuestionIndex, normalizedActiveIndex);
     }
 
     
@@ -512,12 +578,17 @@ function renderThreeSixNine(data){
             photoContainer.innerHTML = '';
         }
     }
-    
-    // Play audio action
-    if (data.action === 'playAudio' && data.audioUrl) {
-        const audio = new Audio(data.audioUrl);
-        audio.play();
-    }
+}
+
+function normalizeActiveIndex(playersData, activeIndex) {
+  if (!Array.isArray(playersData) || activeIndex === null || activeIndex === undefined) {
+    return activeIndex;
+  }
+  if (activeIndex >= 0 && activeIndex < playersData.length) {
+    return activeIndex;
+  }
+  const resolvedIndex = playersData.findIndex(p => p.index === activeIndex);
+  return resolvedIndex !== -1 ? resolvedIndex : activeIndex;
 }
 
 
@@ -557,7 +628,6 @@ function renderOpenDeurVragensteller(data) {
     container.innerHTML = data.questioners.map(q => `
         <div class="vragensteller-box${q.isChosen ? ' gespeeld' : ' beschikbaar'}">
             <div class="vragensteller-name">${q.name}</div>
-            ${q.isChosen ? '<div class="status-label">GESPEELD</div>' : ''}
         </div>
     `).join('');
 
@@ -575,12 +645,13 @@ function renderOpenDeurVraag(data) {
     
     container.innerHTML = answers.map(a => {
         
-        const displayText = a.isAnswered ? a.text : a.text.replace(/./g, '█');
+        const displayText = (a.isAnswered || data.isAllAnswersVisible) ? a.text : a.text.replace(/./g, '█');
         const points = data.currentQuestion.timeGain || 20;
+        const isBlurred = !a.isAnswered && !data.isAllAnswersVisible;
         
         return `
             <div class="od-answer-line${!a.isAnswered ? ' unguessed' : ''}">
-                <div class="od-answer-text${!a.isAnswered ? ' blurred' : ''}">
+                <div class="od-answer-text${isBlurred ? ' blurred' : ''}">
                     ${displayText}
                 </div>
                 ${a.isAnswered ? `<div class="od-answer-points"><span>${points}</span></div>` : ''}
@@ -590,7 +661,9 @@ function renderOpenDeurVraag(data) {
 
     
 document.getElementById('od-beurt-info').textContent = `Beurt: ${data.activeAnsweringPlayer}`;
-document.getElementById('od-vragensteller-vraag').textContent = `Vraag van ${from}: "${data.currentQuestion.questionText}"`;
+const odVraagEl = document.getElementById('od-vragensteller-vraag');
+odVraagEl.textContent = `Vraag van ${from}: "${data.currentQuestion.questionText}"`;
+adjustQuestionFontSize(odVraagEl, data.currentQuestion.questionText);
 document.getElementById('od-antwoord-teller').textContent = `Geraden Antwoorden: ${data.guessedAnswers} van ${data.totalAnswers}`;
 
     
@@ -626,13 +699,50 @@ function renderPlayersBarCompact(players, activeIndex, containerId) {
     const container = document.getElementById(containerId);
     if (!container || !players) return;
 
+  const normalizedActiveIndex = normalizeActiveIndex(players, activeIndex);
+
     container.innerHTML = players.map((p, i) => `
-        <div class="player-card${i === activeIndex ? ' active-player' : ''}">
+    <div class="player-card${i === normalizedActiveIndex ? ' active-player' : ''}">
             <div class="player-name">${p.name}</div>
             <div class="player-seconds">${p.seconds}</div>
         </div>
     `).join('');
 }
+
+  function updatePlayersBarsFromGeneric(playersData, activeIndex) {
+    if (!playersData || !playersData.length) return;
+
+    const normalizedActiveIndex = normalizeActiveIndex(playersData, activeIndex);
+    const questionIndex = currentScene === 'round-369' ? perRoundState.currentQuestionIndex : null;
+    renderPlayersBarUniversal(questionIndex, normalizedActiveIndex);
+
+    const compactBars = [
+      'od-vragensteller-scores',
+      'od-vraag-scores',
+      'puzzelPrePlayersBar',
+      'puzzelActivePlayersBar',
+      'puzzelDonePlayersBar',
+      'galerijPrePlayersBar',
+      'galerijMainPlayersBar',
+      'galerijAanvulPlayersBar',
+      'galerijSlideshowPlayersBar',
+      'galerijDonePlayersBar',
+      'collectiefPrePlayersBar',
+      'collectiefMainPlayersBar',
+      'collectiefTussenstandPlayersBar',
+      'collectiefDonePlayersBar',
+      'finalePrePlayersBar',
+      'finaleMainPlayersBar',
+      'finaleEndPlayersBar',
+      'soloEndPlayersBar'
+    ];
+
+    compactBars.forEach(id => {
+      if (document.getElementById(id)) {
+        renderPlayersBarCompact(playersData, activeIndex, id);
+      }
+    });
+  }
 
 
 
@@ -694,13 +804,13 @@ function handlePuzzelDisplayUpdate(data) {
             
             if (data.puzzelLinks && data.puzzelLinks.length > 0) {
                 puzzelLinksEl.innerHTML = data.puzzelLinks
-                    .map(link => {
+                    .map((link, index) => {
                         
                         const displayText = link.found ? link.link : link.link.replace(/./g, '█');
                         const points = link.timeGain || 30;
 
                         return `
-                            <div class="puzzel-link-line${!link.found ? ' unguessed' : ''}">
+                            <div class="puzzel-link-line${!link.found ? ' unguessed' : ''} ${link.found ? `found-link-${index}` : ''}">
                                 <div class="puzzel-link-text${!link.found ? ' blurred' : ''}">
                                     ${displayText}
                                 </div>
@@ -720,8 +830,8 @@ function handlePuzzelDisplayUpdate(data) {
 
     } else if (data.scene === 'scene-round-puzzel-waiting') {
         updateScene('round-puzzel-waiting');
-        renderMiniLobby(playersData, 'puzzelWaitingMiniLobby');
-        renderPlayersBarCompact(playersData, activeIndex, 'puzzelWaitingPlayersBar');
+        renderMiniLobby(playersData, 'puzzelPreMiniLobby');
+        renderPlayersBarCompact(playersData, activeIndex, 'puzzelPrePlayersBar');
     } 
     else if (data.scene === 'scene-round-puzzel-done') {
         updateScene('scene-round-puzzel-done');
@@ -1108,10 +1218,19 @@ function handleGalerijDisplayUpdate(data) {
       case 'scene-round-finale-end': {
         renderMiniLobby(displayPlayers, 'finaleEndMiniLobby');
         
+        // Sla huidige spelers op voor finale lobby view
+        finaleEndViewState.allPlayers = displayPlayers;
+        
         
         const winnaar = displayPlayers.find(p => p.seconds > 0);
         const verliezer = displayPlayers.find(p => p.seconds <= 0);
         const isHighestWinner = data.collectiefEndOption === 'highestWinner';
+        
+        // Sla winner data op in state voor latere rendering
+        finaleEndViewState.winner = winnaar;
+        finaleEndViewState.loser = verliezer;
+        finaleEndViewState.isHighestWinner = isHighestWinner;
+        finaleEndViewState.preFinaleAfvallerName = data.preFinaleAfvallerName;
         
         
         const winnerNameEl = document.getElementById('finaleWinnerName');
@@ -1184,6 +1303,561 @@ function renderSoloGameEnd(data) {
         renderMiniLobby([data.player], 'soloEndMiniLobby');
         renderPlayersBarCompact([data.player], -1, 'soloEndPlayersBar');
     }
+}
+
+// ===== INTRO SCENE HANDLING =====
+let introState = {
+  playing: false,
+  audioPlaying: null,
+  currentPerspective: 'full'
+};
+
+function handleIntroStart(data) {
+  console.log('🎬 Intro start ontvangen:', data);
+  updateScene('intro');
+  initializeIntroScene(data.text || '');
+}
+
+function initializeIntroScene(introText) {
+  console.log('🎬 Intro scene initialiseren, tekst:', introText);
+  
+  const videoPlayer = document.getElementById('introVideoPlayer');
+  const firstFrame = document.getElementById('introFirstFrame');
+  const textBox = document.getElementById('introTextBox');
+  
+  // Controleer of alle elementen bestaan
+  if (!videoPlayer) {
+    console.error('❌ Intro video element niet gevonden in HTML');
+    return;
+  }
+  
+  // Verberg textBox en firstFrame img (tekst wordt getoond in index.html)
+  if (textBox) {
+    textBox.style.display = 'none';
+  }
+  if (firstFrame) {
+    firstFrame.style.display = 'none';
+  }
+  
+  // Laad video en pauzeer op allereerste frame
+  try {
+    videoPlayer.onloadedmetadata = () => {
+      console.log('✅ Video metadata geladen');
+      videoPlayer.currentTime = 0;
+      videoPlayer.pause();
+      console.log('⏸️ Video gepauzeerd op eerste frame');
+    };
+    
+    videoPlayer.muted = true;
+    videoPlayer.load();
+    videoPlayer.style.display = 'block';
+    console.log('✅ Video geladen en klaar');
+  } catch (e) {
+    console.error('❌ Fout bij laden video:', e);
+  }
+}
+
+// WebSocket handlers voor intro controls (vanuit index.html)
+function handleIntroPlayVideo() {
+  console.log('▶️ Play video ontvangen via WebSocket');
+  const videoPlayer = document.getElementById('introVideoPlayer');
+  const firstFrame = document.getElementById('introFirstFrame');
+  const lobbyView = document.getElementById('introLobbyView');
+  
+  if (!videoPlayer) return;
+  
+  // Verberg eerste frame img en lobby, toon video
+  if (firstFrame) {
+    firstFrame.style.display = 'none';
+  }
+  if (lobbyView) {
+    lobbyView.style.display = 'none';
+  }
+  videoPlayer.style.display = 'block';
+  videoPlayer.style.transform = 'none'; // Reset transform
+  
+  // Herstart video vanaf het begin (muted)
+  videoPlayer.currentTime = 0;
+  videoPlayer.muted = true;
+  videoPlayer.play().catch(e => console.warn('Video could not play:', e));
+  console.log('✅ Video hervat vanaf begin');
+  
+  // Start audio (generiek.mp3)
+  introState.audioPlaying = new Audio('SFX/generiek.mp3');
+  introState.audioPlaying.play().catch(e => {
+    console.warn('Intro audio afspelen mislukt:', e);
+  });
+  
+  introState.playing = true;
+}
+
+function handleIntroPerspectiveChange(perspective) {
+  console.log('🔄 Perspectief wissel naar:', perspective);
+  introState.currentPerspective = perspective;
+  
+  const videoPlayer = document.getElementById('introVideoPlayer');
+  const firstFrame = document.getElementById('introFirstFrame');
+  const lobbyView = document.getElementById('introLobbyView');
+  const textBox = document.getElementById('introTextBox');
+  
+  if (!lobbyView) return;
+  
+  // Stop video en verberg video/eerste frame
+  if (videoPlayer) {
+    videoPlayer.pause();
+    videoPlayer.style.display = 'none';
+  }
+  if (firstFrame) {
+    firstFrame.style.display = 'none';
+  }
+  
+  // Verberg tekst overlay
+  if (textBox) {
+    textBox.style.display = 'none';
+  }
+  
+  // Toon lobby
+  lobbyView.style.display = 'flex';
+  
+  // Render kandidaten in lobby
+  renderIntroLobby();
+  
+  // Pas zoom toe voor kandidaat perspectieven
+  let transform = 'none';
+  
+if (perspective === 'cand1') {
+  transform = 'scale(3) translateX(22.22%) translateY(-13%)';
+} else if (perspective === 'cand2') {
+  transform = 'scale(3) translateY(-13%)';
+} else if (perspective === 'cand3') {
+  transform = 'scale(3) translateX(-22.22%) translateY(-13%)';
+} else {
+    // Volledig lobby: geen zoom
+    transform = 'none';
+  }
+  
+  lobbyView.style.transform = transform;
+  
+  console.log(`✅ Lobby perspectief ingesteld: ${perspective}, transform: ${transform}`);
+}
+
+function renderIntroLobby() {
+  const container = document.getElementById('introLobbyPlayerImages');
+  if (!container || !players) return;
+  
+  container.innerHTML = players.map(p => `
+    <div class="lobby-photo">
+      <img src="${p.photoUrl || 'assets/avatar.png'}">
+      <div>${p.name}</div>
+    </div>
+  `).join('');
+  
+  console.log('✅ Intro lobby gerenderd met', players.length, 'kandidaten');
+}
+
+function handleIntroStop() {
+  console.log('⏹️ Stop intro ontvangen via WebSocket');
+  const videoPlayer = document.getElementById('introVideoPlayer');
+  const firstFrame = document.getElementById('introFirstFrame');
+  const lobbyView = document.getElementById('introLobbyView');
+  const introTitleBar = document.getElementById('introTitleBar');
+  
+  // Stop video
+  if (videoPlayer) {
+    videoPlayer.pause();
+    videoPlayer.currentTime = 0;
+    videoPlayer.style.display = 'none';
+  }
+  
+  // Verberg eerste frame
+  if (firstFrame) {
+    firstFrame.style.display = 'none';
+  }
+  
+  // Stop audio
+  if (introState.audioPlaying) {
+    introState.audioPlaying.pause();
+    introState.audioPlaying = null;
+  }
+  
+  introState.playing = false;
+  
+  // Play outro audio (intro.wav)
+  const outroAudio = new Audio('SFX/intro.wav');
+  outroAudio.play().catch(e => console.warn('Outro audio could not play:', e));
+  
+  // Check of we ingezoomd zijn
+  const isZoomedIn = introState.currentPerspective !== 'full';
+  
+  if (isZoomedIn && lobbyView) {
+    // Toon lobby als die niet zichtbaar is
+    lobbyView.style.display = 'flex';
+    
+    // Zoom uit naar volledig lobby
+    console.log('🔍 Zoom uit naar volledig lobby');
+    lobbyView.style.transform = 'none';
+    
+    // Wacht op zoom-out animatie (300ms) + extra tijd
+    setTimeout(() => {
+      // Toon logo met fade-in
+      if (introTitleBar) {
+        introTitleBar.style.opacity = '1';
+      }
+      
+      // Ga naar normale lobby scene
+      setTimeout(() => {
+        updateScene('lobby');
+        renderLobby(players);
+        
+        // Reset intro state
+        if (lobbyView) lobbyView.style.display = 'none';
+        if (introTitleBar) {
+          introTitleBar.style.opacity = '0';
+        }
+        introState.currentPerspective = 'full';
+      }, 1500);
+    }, 500);
+  } else {
+    // Als al volledig lobby of geen lobby view: direct naar logo fade-in
+    if (lobbyView) {
+      lobbyView.style.display = 'flex';
+      lobbyView.style.transform = 'none';
+    }
+    
+    // Render kandidaten als ze er nog niet zijn
+    if (lobbyView) {
+      renderIntroLobby();
+    }
+    
+    // Toon logo met fade-in
+    if (introTitleBar) {
+      introTitleBar.style.opacity = '1';
+    }
+    
+    // Ga naar normale lobby scene
+    setTimeout(() => {
+      updateScene('lobby');
+      renderLobby(players);
+      
+      // Reset intro state
+      if (lobbyView) lobbyView.style.display = 'none';
+      if (introTitleBar) {
+        introTitleBar.style.opacity = '0';
+      }
+      introState.currentPerspective = 'full';
+    }, 1500);
+  }
+}
+
+// ===== OUTRO SCENE HANDLING =====
+let outroState = {
+  playing: false,
+  audioPlaying: null,
+  allPlayers: [] // Bewaar alle spelers inclusief afvaller
+};
+
+function handleOutroStart(data) {
+  console.log('🎬 Outro start ontvangen!', data);
+  
+  // Sla alle spelers op (inclusief afvaller)
+  if (data.allPlayers && data.allPlayers.length > 0) {
+    outroState.allPlayers = data.allPlayers;
+    console.log('📋 Outro spelers opgeslagen:', outroState.allPlayers.map(p => p.name));
+  }
+  
+  updateScene('outro');
+  initializeOutroScene();
+}
+
+function initializeOutroScene() {
+  console.log('🎬 Outro scene initialiseren...');
+  
+  const outroLobbyView = document.getElementById('outroLobbyView');
+  const outroVideo = document.getElementById('outroVideoPlayer');
+  const outroTitleBar = document.getElementById('outroTitleBar');
+  
+  // Render lobby spelers in outro scene (alle spelers inclusief afvaller)
+  renderOutroLobby();
+  
+  // Toon lobbyview
+  if (outroLobbyView) {
+    outroLobbyView.style.display = 'flex';
+    outroLobbyView.classList.remove('fade-out');
+    outroLobbyView.style.opacity = '1';
+    outroLobbyView.style.pointerEvents = 'auto';
+  }
+  
+  // Zorg dat video verborgen is
+  if (outroVideo) {
+    outroVideo.style.display = 'none';
+    outroVideo.style.opacity = '0';
+  }
+  
+  // Start intro audio (intro.wav)
+  outroState.audioPlaying = new Audio('SFX/intro.wav');
+  outroState.audioPlaying.play().catch(e => {
+    console.warn('Outro audio afspelen mislukt:', e);
+  });
+  
+  console.log('✅ Outro scene klaar, audio speelt, fade start over 6s');
+  
+  // Start fade-out animatie na korte delay
+  setTimeout(() => {
+    startOutroFadeSequence();
+  }, 500);
+}
+
+function renderOutroLobby() {
+  const container = document.getElementById('outroLobbyPlayerImages');
+  if (!container) return;
+  
+  // Gebruik all players uit outroState
+  const playersToRender = outroState.allPlayers.length > 0 ? outroState.allPlayers : players;
+  
+  container.innerHTML = playersToRender.map(p => 
+    `<div class="lobby-photo">
+      <img src="${p.photoUrl || 'assets/avatar.png'}" alt="${p.name}">
+      <div>${p.name}</div>
+    </div>`
+  ).join('');
+  
+  console.log('✅ Outro lobby gerenderd met', playersToRender.length, 'kandidaten');
+}
+
+function startOutroFadeSequence() {
+  console.log('🎬 Outro fade sequence gestart...');
+  
+  const outroLobbyView = document.getElementById('outroLobbyView');
+  const fadeOverlay = document.getElementById('outroFadeOut');
+  const outroVideo = document.getElementById('outroVideoPlayer');
+  
+  // Fade lobby weg (opacity naar 0 over 6 seconden)
+  if (outroLobbyView) {
+    outroLobbyView.style.transition = 'opacity 6s ease-out';
+    outroLobbyView.style.opacity = '0';
+    outroLobbyView.style.pointerEvents = 'none';
+  }
+  
+  // Na fade lobby, start video faden (na ~6 seconden)
+  setTimeout(() => {
+    // Laad video
+    if (outroVideo) {
+      outroVideo.style.display = 'block';
+      outroVideo.style.transition = 'opacity 0.5s ease-in';
+      outroVideo.muted = true;
+      outroVideo.currentTime = 0;
+      outroVideo.style.opacity = '1';
+      outroVideo.play().catch(e => console.warn('Outro video could not play:', e));
+      console.log('▶️ Outro video start afspelen');
+    }
+    
+    // Verberg lobby view en fade overlay volledig
+    if (outroLobbyView) {
+      outroLobbyView.style.display = 'none';
+    }
+    
+    if (fadeOverlay) {
+      fadeOverlay.style.display = 'none';
+    }
+  }, 6000);
+}
+
+// ===== FINALE END GAME VIEW HANDLING =====
+let finaleEndViewState = {
+  currentView: 'winner' // 'winner' of 'lobby'
+};
+
+function handleFinaleViewChange(data) {
+  console.log('🎬 Finale view wisselen naar:', data.view, data);
+  finaleEndViewState.currentView = data.view;
+  
+  // Als spelers meekomen (bijv. van restore), update finaleEndViewState
+  if (data.players && data.players.length > 0) {
+    finaleEndViewState.allPlayers = data.players;
+    console.log('📋 Finale spelers updated:', data.players.map(p => p.name));
+  }
+  
+  if (data.view === 'lastquestion') {
+    // Toon laatste vraag (scene-round-finale-main)
+    updateScene('round-finale-main');
+    
+    const finaleMainScene = document.getElementById('scene-round-finale-main');
+    
+    // Update de content van de finale main scene
+    if (finaleMainScene) {
+      // Render mini lobby als players data beschikbaar is
+      if (data.players) {
+        renderMiniLobby(data.players, 'finaleMainMiniLobby');
+      }
+      
+      // Render antwoorden
+      const answersContainer = document.getElementById('finaleMainAnswers');
+      if (answersContainer && data.answers) {
+        answersContainer.innerHTML = data.answers.map((answer, i) => {
+          const text = typeof answer === 'string' ? answer : (answer.answer || answer.text || '');
+          const found = true; // Altijd als gevonden tonen bij laatste vraag perspectief
+          
+          return `
+            <div class="collectief-answer-line found" data-index="${i}">
+              <div class="collectief-answer-text">
+                ${text}
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+      
+      // Update info
+      const infoEl = document.getElementById('finaleMainInfo');
+      if (infoEl && data.question) {
+        infoEl.innerHTML = `
+          <div class="round-name">DE FINALE</div>
+          <div class="round-status">Laatste vraag (alle antwoorden onthuld)</div>
+          ${data.question ? `<div class="round-status" style="font-size: 1.8em; margin-top: 15px;">${data.question}</div>` : ''}
+        `;
+      }
+      
+      // Render players bar als data beschikbaar is
+      if (data.players && data.activeIndex !== undefined) {
+        renderPlayersBarCompact(data.players, data.activeIndex, 'finaleMainPlayersBar');
+      }
+      
+      console.log('✅ Laatste vraag met alle antwoorden weergegeven');
+    }
+  } else if (data.view === 'lobby') {
+    // Switch naar finale end scene
+    updateScene('round-finale-end');
+    
+    // Get content divs NA updateScene
+    const finaleEndScene = document.getElementById('scene-round-finale-end');
+    const winnerContent = finaleEndScene?.querySelector('.finale-winner-content');
+    const lobbyContent = finaleEndScene?.querySelector('.finale-lobby-content');
+    
+    if (finaleEndViewState.allPlayers && finaleEndViewState.allPlayers.length > 0) {
+      console.log('🎬 Rendering finale lobby met spelers:', finaleEndViewState.allPlayers.map(p => p.name));
+      renderLobby(finaleEndViewState.allPlayers, 'finaleEndLobbyPlayerImages');
+    } else {
+      console.warn('⚠️ Geen spelers beschikbaar voor finale lobby');
+    }
+    
+    // Toon fullscreen lobby, verberg winnaarscherm
+    if (lobbyContent) {
+      lobbyContent.style.display = 'block';
+      lobbyContent.style.opacity = '1';
+      console.log('✅ Lobby content zichtbaar gemaakt');
+    } else {
+      console.error('❌ Lobby content element niet gevonden!');
+    }
+    if (winnerContent) {
+      winnerContent.style.display = 'none';
+    }
+  } else {
+    // Switch naar finale end scene
+    updateScene('round-finale-end');
+    
+    // Get content divs NA updateScene  
+    const finaleEndScene = document.getElementById('scene-round-finale-end');
+    const winnerContent = finaleEndScene?.querySelector('.finale-winner-content');
+    const lobbyContent = finaleEndScene?.querySelector('.finale-lobby-content');
+    
+    // Re-render winnaarscherm content vanuit opgeslagen state
+    if (finaleEndViewState.winner) {
+      const winnaar = finaleEndViewState.winner;
+      const verliezer = finaleEndViewState.loser;
+      const isHighestWinner = finaleEndViewState.isHighestWinner;
+      const preFinaleAfvallerName = finaleEndViewState.preFinaleAfvallerName;
+      
+      // Update mini lobby
+      if (finaleEndViewState.allPlayers) {
+        renderMiniLobby(finaleEndViewState.allPlayers, 'finaleEndMiniLobby');
+      }
+      
+      // Update winnaar naam
+      const winnerNameEl = document.getElementById('finaleWinnerName');
+      if (winnerNameEl) {
+        winnerNameEl.textContent = winnaar.name.toUpperCase();
+      }
+      
+      // Update titel
+      const winnerTitleEl = document.getElementById('finaleWinnerTitle');
+      if (winnerTitleEl) {
+        if (isHighestWinner) {
+          winnerTitleEl.textContent = 'GAAT DOOR NAAR DE VOLGENDE AFLEVERING!';
+        } else {
+          winnerTitleEl.innerHTML = `
+            is
+            <div class="initial-title-bar-2">
+              de slimste mens
+              <img src="assets/slimstemens.png" alt="Het Slimste Mens logo">
+              van twitch
+            </div>
+          `;
+        }
+      }
+      
+      // Update loser text
+      const loserTextEl = document.getElementById('finaleLoserText');
+      if (loserTextEl && verliezer) {
+        let loserText = '';
+        if (isHighestWinner) {
+          loserText = `${verliezer.name} valt af.`;
+          if (preFinaleAfvallerName) {
+            loserText += `<br>${preFinaleAfvallerName} gaat ook door naar de volgende aflevering!`;
+          }
+        } else {
+          loserText = `${verliezer.name} is afgevallen in de finale.`;
+          if (preFinaleAfvallerName) {
+            loserText += `<br>${preFinaleAfvallerName} viel af voor de finale.`;
+          }
+        }
+        loserTextEl.innerHTML = loserText;
+      }
+      
+      // Update spelers bar
+      if (finaleEndViewState.allPlayers) {
+        renderPlayersBarCompact(finaleEndViewState.allPlayers, 0, 'finaleEndPlayersBar');
+      }
+      
+      console.log('✅ Winnaarscherm opnieuw gerenderd');
+    } else {
+      console.warn('⚠️ Geen winner data beschikbaar in finaleEndViewState');
+    }
+    
+    // Toon winnaarscherm, verberg fullscreen lobby
+    if (winnerContent) {
+      winnerContent.style.display = 'block';
+      winnerContent.style.opacity = '1';
+      console.log('✅ Winner content zichtbaar gemaakt');
+    } else {
+      console.error('❌ Winner content element niet gevonden!');
+    }
+    if (lobbyContent) {
+      lobbyContent.style.display = 'none';
+    }
+  }
+}
+
+function handleRestoreScenery(scene) {
+  console.log('🔧 Scène herstellen:', scene);
+  
+  // Reset scene elementen
+  if (scene === 'scene-round-finale-end') {
+    const finaleScene = document.getElementById('scene-round-finale-end');
+    if (finaleScene) {
+      // Reset CSS classes en stijlen
+      finaleScene.style.filter = 'none';
+      finaleScene.style.opacity = '1';
+      
+      // Reset outline content
+      const lobbyContent = finaleScene.querySelector('.finale-lobby-content');
+      if (lobbyContent) {
+        lobbyContent.style.opacity = '1';
+        lobbyContent.style.filter = 'none';
+      }
+      
+      console.log('✅ Scène hersteld');
+    }
+  }
 }
 
 connectWebSocket();

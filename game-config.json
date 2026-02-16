@@ -15,6 +15,11 @@
       "enabled": true,
       "_comment": "Zet op false om rondebumpers uit te schakelen"
     },
+    "intro": {
+      "enabled": false,
+      "text": "",
+      "_comment": "Schakel intro in en voeg eventueel intro-tekst toe. Text wordt getoond tijdens intro video."
+    },
     "threeSixNine": {
       "shuffle": true,
       "maxQuestions": null,
@@ -29,7 +34,8 @@
     "galerij": {
       "shuffle": true,
       "photoCount": null,
-      "_comment": "Zet photoCount op een getal (bijv. 8) om het aantal foto's per galerij te forceren"
+      "manualAssignment": false,
+      "_comment": "Zet photoCount op een getal (bijv. 8) om het aantal foto's per galerij te forceren. Zet manualAssignment op true om per kandidaat een galerij te kiezen."
     },
     "collectief": {
       "shuffle": true

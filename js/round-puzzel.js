@@ -3,6 +3,16 @@
 let puzzelTimerActive = false;
 let puzzelTimerInterval = null;
 
+// Fisher-Yates shuffle algoritme voor garanteerde goede shuffling
+function shuffleArrayPuzzels(array) {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 function sendPuzzelDisplayUpdate(scene, extraData = {}) {
   if (!streamerBotWS || streamerBotWS.readyState !== WebSocket.OPEN) {
     console.warn('Display update kon niet worden verzonden (WebSocket niet verbonden).');
@@ -80,6 +90,12 @@ function setupPuzzelRound() {
 
   
   function pickUniqueGroup(available) {
+    if (!shouldShuffle) {
+      // Geen shuffle: neem altijd eerste 3 in volgorde
+      return available.length >= 3 ? available.slice(0, 3) : null;
+    }
+    
+    // Met shuffle: probeer tot je unieke antwoorden hebt
     const tries = 300;
     for (let t = 0; t < tries; t++) {
       const cand = shuffle(available).slice(0, 3);
@@ -87,6 +103,7 @@ function setupPuzzelRound() {
       if (linksHaveUniqueAnswers(cand)) return cand;
     }
     
+    // Fallback: neem eerste 3 uit beschikbare
     return available.slice(0, 3);
   }
 
@@ -138,7 +155,8 @@ function setupPuzzelRound() {
         }
       });
     });
-    puzzel.currentWords = shuffle(allWords);
+    // ALTIJD antwoorden shufflen, ongeacht shuffle setting
+    puzzel.currentWords = shuffleArrayPuzzels(allWords);
     puzzel.foundLinks = [];
     puzzel.remainingWords = [...puzzel.currentWords];
   });
@@ -282,17 +300,11 @@ function startPuzzelTimer() {
     
     if (players[activePlayerIndex].seconds <= 0) {
       clearInterval(thinkingTimerInterval);
-      stopLoopTimerSFX();
-      if (typeof playSFX === 'function') playSFX('SFX/klokeind.mp3'); 
       flash(`${players[activePlayerIndex].name} is door zijn tijd heen! Moet nu passen.`);
-      
-      perRoundState.timerRunning = false;
-      document.getElementById('startTimerBtn').disabled = true;
-      document.getElementById('puzzelPassBtn').disabled = true;
-      document.querySelectorAll('#checkLinks button').forEach(btn => btn.disabled = true);
-
+      if (typeof showPreFinaleBonusControls === 'function') showPreFinaleBonusControls();
       
       if (typeof passPuzzel === 'function') passPuzzel();
+      return;
     }
   }, 1000);
 
@@ -375,17 +387,20 @@ function renderPuzzelDisplay(puzzel) {
   
   const disabledAttr = (perRoundState.timerRunning) ? '' : 'disabled';
   const checkLinkButtons = puzzel.links
-    .filter(link => !puzzel.foundLinks.includes(link))
-    .map(link => {
+    .map((link, originalIndex) => {
+      // Controleer of deze link al gevonden is
+      if (puzzel.foundLinks.includes(link)) return null;
       
-      return `<button onclick="markPuzzelLink('${link.link.replace(/'/g, "\\'")}')" class="right" ${disabledAttr}>${link.link} goed (${link.answers.join(', ')})</button>`;
+      // Gebruik altijd de originele index, niet de gefilterde index
+      return `<button onclick="markPuzzelLink('${link.link.replace(/'/g, "\\'")}')" class="right" ${disabledAttr}>(${originalIndex + 1}) ${link.link} goed (${link.answers.join(', ')})</button>`;
     })
+    .filter(btn => btn !== null)
     .join('');
 
   rc.innerHTML = `
-    <button id="startTimerBtn" onclick="startPuzzelTimer()" class="bank">Start Timer</button>
+    <button id="startTimerBtn" onclick="startPuzzelTimer()" class="bank">Start Timer (T)</button>
     <div id="checkLinks" class="button-row" style="flex-wrap: wrap;">${checkLinkButtons}</div>
-    <button id="puzzelPassBtn" onclick="passPuzzel()" class="secondary" style="margin-top: 10px;" disabled>Pas</button>
+    <button id="puzzelPassBtn" onclick="passPuzzel()" class="secondary" style="margin-top: 10px;" disabled>Pas (P)</button>
   `;
 
 sendPuzzelDisplayUpdate('scene-round-puzzel-active', {

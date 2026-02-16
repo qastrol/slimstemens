@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>De Slimste Mens - Display</title>
     <link rel="stylesheet" href="css/display.css">
+    <link rel="stylesheet" href="css/display-opendeur.css">
   <link rel="stylesheet" href="css/display-collectief.css">
 </head>
 <body>
@@ -58,6 +59,33 @@
             van twitch
         </div>
         <div id="lobbyPlayerImages"></div>
+    </div>
+
+    <!-- 🎬 SCENE 4b: Intro - Alleen weergave (bediening via index.html) -->
+    <div id="scene-intro" class="scene" style="background: #1a1a1a;">
+        <div id="introContainer" class="intro-container">
+            <!-- Video -->
+            <video id="introVideoPlayer" class="intro-video" muted style="display:none;">
+                <source src="assets/Intro.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            
+            <!-- First frame display -->
+            <img id="introFirstFrame" src="" alt="Intro eerste frame" class="intro-first-frame" />
+            
+            <!-- Lobby perspective view (exact dezelfde structuur als scene-lobby) -->
+            <div id="introLobbyView" class="intro-lobby-view" style="display:none;">
+                <div class="initial-title-bar" id="introTitleBar" style="opacity:0;transition:opacity 1s ease;">
+                    de slimste mens
+                    <img src="assets/slimstemens.png" alt="logo">
+                    van twitch
+                </div>
+                <div id="introLobbyPlayerImages"></div>
+            </div>
+            
+            <!-- Intro text overlay -->
+            <div id="introTextBox" class="intro-text-box" style="display:none;"></div>
+        </div>
     </div>
 
     <!-- 🎬 SCENE 5 & 6 COMBINED: 3-6-9 -->
@@ -147,31 +175,30 @@
     </div>
 
 <div id="scene-round-puzzel-waiting" class="scene">
-  <div class="round-grid">
-    <!-- Linkerhelft: lege puzzeltabel -->
-    <div class="grid-part part1 puzzel-table">
-      <div id="puzzelTableWaiting" class="puzzel-table-grid">
-        <!-- lege tabel -->
-      </div>
-      <div id="puzzelLinksContainerWaiting">
-        <!-- eventueel lege links -->
-      </div>
+    <div id="puzzel-pre-grid" class="galerij-round-grid">
+        <!-- Linkerhelft: Lege ruimte voor intro/wachtscherm -->
+        <div class="grid-part part-left-full" id="puzzelPreMainContainer">
+            <div class="round-name" style="font-size: 4em; text-align: center; margin-top: 200px;">Puzzel</div>
+            <div class="round-status" style="font-size: 2em; text-align: center; margin-top: 30px; color: #ffd17a;">Klaar om te starten</div>
+        </div>
+        
+        <!-- Rechterboven: Mini-lobby -->
+        <div class="grid-part part2">
+            <div class="mini-lobby">
+                <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
+                <div id="puzzelPreMiniLobby"></div>
+            </div>
+        </div>
+        
+        <!-- Rechtsonder: Info en spelersbalk -->
+        <div class="grid-part part4-status">
+            <div id="puzzelPreInfo" class="round-status">
+                <div class="round-name">Puzzel</div>
+                <div class="round-status">Wacht op de host om de puzzel te starten.</div>
+            </div>
+            <div id="puzzelPrePlayersBar" class="players-bar-compact"></div>
+        </div>
     </div>
-
-    <!-- Rechterboven: mini-lobby -->
-    <div class="grid-part part2">
-      <div class="mini-lobby">
-        <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
-        <div id="puzzelWaitingMiniLobby"></div>
-      </div>
-    </div>
-
-    <!-- Rechtsonder: ronde-info + spelers -->
-    <div class="grid-part part3 puzzel-info">
-      <div id="puzzelWaitingRoundInfo" class="puzzel-round-info">Puzzel</div>
-      <div id="puzzelWaitingPlayersBar" class="players-bar-compact"></div>
-    </div>
-  </div>
 </div>
 
 
@@ -521,34 +548,51 @@
 
   <!-- 🎬 SCENE: Finale - End (Winnaar) -->
 <div id="scene-round-finale-end" class="scene">
-    <div id="finale-end-grid" class="galerij-round-grid">
-      <!-- Linkerhelft: Winnaar bekendmaking -->
-      <div class="grid-part part-left-full" id="finaleEndMainContainer">
-        <div class="round-name" style="font-size: 5em; text-align: center; margin-top: 180px; color: #ffd17a;">
-          <span id="finaleWinnerName"></span>
+    <!-- Winner Content (StandaardView) -->
+    <div class="finale-winner-content" style="display: block; width: 100%; height: 100%;">
+      <div id="finale-end-grid" class="galerij-round-grid">
+        <!-- Linkerhelft: Winnaar bekendmaking -->
+        <div class="grid-part part-left-full" id="finaleEndMainContainer">
+          <div class="round-name" style="font-size: 5em; text-align: center; margin-top: 180px; color: #ffd17a;">
+            <span id="finaleWinnerName"></span>
+          </div>
+          <div class="round-status" style="font-size: 3em; text-align: center; margin-top: 40px;">
+            <span id="finaleWinnerTitle"></span>
+          </div>
+          <div class="round-status" style="font-size: 1.8em; text-align: center; margin-top: 30px; color: #eee;">
+            <span id="finaleLoserText"></span>
+          </div>
         </div>
-        <div class="round-status" style="font-size: 3em; text-align: center; margin-top: 40px;">
-          <span id="finaleWinnerTitle"></span>
+          
+        <!-- Rechterboven: Mini-lobby -->
+        <div class="grid-part part2">
+          <div class="mini-lobby">
+            <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
+            <div id="finaleEndMiniLobby"></div>
+          </div>
         </div>
-        <div class="round-status" style="font-size: 1.8em; text-align: center; margin-top: 30px; color: #eee;">
-          <span id="finaleLoserText"></span>
+          
+        <!-- Rechtsonder: Eindstand -->
+        <div class="grid-part part4-status">
+          <div id="finaleEndInfo" class="round-status">
+            <div class="round-name">Finale Afgelopen</div>
+          </div>
+          <div id="finaleEndPlayersBar" class="players-bar-compact"></div>
         </div>
       </div>
-        
-      <!-- Rechterboven: Mini-lobby -->
-      <div class="grid-part part2">
-        <div class="mini-lobby">
-          <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
-          <div id="finaleEndMiniLobby"></div>
+    </div>
+
+    <!-- Fullscreen Lobby Content (Toggle View) -->
+    <div class="finale-lobby-content" style="display: none; width: 100%; height: 100%;">
+      <div style="width: 100%; height: 100%; background-color: #bd321d; background-image: url('assets/kandidatenstoelen.jpg'); background-size: cover; background-position: center center; background-repeat: no-repeat; position: relative;">
+        <div style="position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+          <div class="initial-title-bar" id="finaleEndLobbyTitleBar" style="position: absolute; top: 20px; opacity: 1; transition: opacity 0.3s ease;">
+            de slimste mens
+            <img src="assets/slimstemens.png" alt="logo">
+            van twitch
+          </div>
+          <div id="finaleEndLobbyPlayerImages" style="position: relative; width: 1920px; height: 1080px;"></div>
         </div>
-      </div>
-        
-      <!-- Rechtsonder: Eindstand -->
-      <div class="grid-part part4-status">
-        <div id="finaleEndInfo" class="round-status">
-          <div class="round-name">Finale Afgelopen</div>
-        </div>
-        <div id="finaleEndPlayersBar" class="players-bar-compact"></div>
       </div>
     </div>
 </div>
@@ -587,6 +631,30 @@
     </div>
 </div>
 
+    <!-- 🎬 SCENE: Outro -->
+    <div id="scene-outro" class="scene" style="background: #000000;">
+        <div id="outroContainer" class="outro-container">
+            <!-- Fullscreen Lobby met fade-out -->
+            <div id="outroLobbyView" class="outro-lobby-view">
+                <div class="initial-title-bar" id="outroTitleBar">
+                    de slimste mens
+                    <img src="assets/slimstemens.png" alt="logo">
+                    van twitch
+                </div>
+                <div id="outroLobbyPlayerImages"></div>
+            </div>
+            
+            <!-- Fade-out overlay naar zwart -->
+            <div id="outroFadeOut" class="outro-fade-overlay" style="display:none;"></div>
+            
+            <!-- Outro video (na fade uit zwart) -->
+            <video id="outroVideoPlayer" class="outro-video" muted style="display:none;">
+                <source src="assets/Outro.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+    </div>
+
     <!-- Presentator Overlay -->
     <div id="presenterOverlay" style="display:none;">
       <div class="presenter-container">
@@ -594,6 +662,11 @@
         <img id="presenterPhoto" alt="Presentator" class="presenter-photo" />
         <img src="assets/desk.png" alt="Desk overlay" class="presenter-desk" />
       </div>
+    </div>
+
+    <!-- Jury Overlay -->
+    <div id="juryOverlay" style="display:none;">
+      <img src="assets/jury.png" alt="Jury" class="jury-image" />
     </div>
 
     <div id="flashMessage"></div>

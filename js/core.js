@@ -1,10 +1,14 @@
 
 let players = [];
+let originalPlayersOrder = []; // Bewaar originele volgorde voor finale-stoelen herstellen
 let startSeconds = 60;
 let currentRoundIndex = 0;
 let roundsSequence = ["threeSixNine","opendeur","puzzel","galerij","collectief","finale"];
 let playerModeSettings = { playerCount: 3, questionsPerRound: 1 };
 let bumpersEnabled = true;
+let introEnabled = false;
+let outroEnabled = false;
+let introText = '';
 let roundRunning = false;
 let currentQuestionIndex = 0;
 let perRoundState = {};
@@ -159,11 +163,14 @@ function renderPlayers(){
     </div>`;
     playersArea.appendChild(el);
   });
-    
+
+  const activeDisplayIndex = players.findIndex(p => p.index === activePlayerIndex);
+  const safeActiveIndex = activeDisplayIndex !== -1 ? activeDisplayIndex : activePlayerIndex;
+
   sendDisplayUpdate({
     type: 'players',
     players,
-    active: activePlayerIndex,
+    active: safeActiveIndex,
     round: perRoundState?.round || '-'
   });
 }
@@ -177,6 +184,47 @@ function flash(text){
 
   
   sendDisplayUpdate({ type: 'flash', text });
+}
+
+function clearPreFinaleBonusControls() {
+  const area = document.getElementById('preFinaleBonusControls');
+  if (area) area.innerHTML = '';
+}
+
+function grantPreFinaleBonus(seconds = 30) {
+  if (perRoundState?.round === 'finale') {
+    flash('Bonus is niet beschikbaar tijdens de finale.');
+    return;
+  }
+
+  players.forEach(p => {
+    p.seconds += seconds;
+  });
+
+  renderPlayers();
+  sendDisplayUpdate({
+    type: 'players',
+    players,
+    active: activePlayerIndex,
+    round: perRoundState?.round || '-'
+  });
+  flash(`Quizmaster bonus: iedereen +${seconds}s.`);
+  clearPreFinaleBonusControls();
+}
+
+function showPreFinaleBonusControls(seconds = 30) {
+  if (perRoundState?.round === 'finale') return;
+
+  const area = document.getElementById('preFinaleBonusControls');
+  if (!area) return;
+  if (area.querySelector('#preFinaleBonusBtn')) return;
+
+  const btn = document.createElement('button');
+  btn.id = 'preFinaleBonusBtn';
+  btn.className = 'secondary';
+  btn.textContent = `Geef iedereen +${seconds}s`;
+  btn.addEventListener('click', () => grantPreFinaleBonus(seconds));
+  area.appendChild(btn);
 }
 
 function highlightActive(){
@@ -246,6 +294,13 @@ function startRoundAfterBumper(roundKey) {
   currentRoundEl.textContent = niceRoundName(roundKey);
   currentQuestionEl.innerHTML = '<em>Ronde gestart — druk op Volgende vraag om te beginnen.</em>';
   stopAllTimers();
+  clearPreFinaleBonusControls();
+
+  // Verberg intro controls wanneer ronde start
+  const introControlArea = document.getElementById('introControlArea');
+  if (introControlArea) {
+    introControlArea.style.display = 'none';
+  }
 
   if (roundKey === 'threeSixNine') setupThreeSixNineRound();
   else if (roundKey === 'opendeur') {
@@ -276,10 +331,10 @@ function showRoundBumper(roundKey, callback) {
     roundTitle: roundTitle
   });
   
-  // Wacht 3 seconden en ga dan verder
+  // Wacht 4.5 seconden en ga dan verder
   setTimeout(() => {
     if (callback) callback();
-  }, 3000);
+  }, 4500);
 }
 
 function nextQuestion() {
@@ -312,6 +367,10 @@ document.getElementById('applyBtn').addEventListener('click', async ()=>{
   // Lees bumpers setting
   bumpersEnabled = document.getElementById('bumpersEnabledCheckbox').checked;
   
+  // Lees intro setting
+  introEnabled = document.getElementById('introEnabledCheckbox').checked;
+  introText = document.getElementById('introText').value.trim();
+  
   // Sla player mode settings op
   playerModeSettings = {
     playerCount: playerCountSelect,
@@ -337,13 +396,24 @@ document.getElementById('applyBtn').addEventListener('click', async ()=>{
     const photoInput = photoInputs[i];
     let photoUrl = 'assets/avatar.png'; 
 
-    
-    if (photoInput && photoInput.files && photoInput.files[0]) {
+    // Controleer eerst of foto van config beschikbaar is
+    if (window.playerPhotosFromConfig && window.playerPhotosFromConfig[i]) {
+      photoUrl = window.playerPhotosFromConfig[i];
+      console.log(`✅ Speler ${i} "${name}": foto van config`);
+    }
+    // Anders: gebruik foto van file input als aanwezig
+    else if (photoInput && photoInput.files && photoInput.files[0]) {
       photoUrl = await readFileAsDataURL(photoInput.files[0]);
+      console.log(`✅ Speler ${i} "${name}": foto van file input`);
+    } else {
+      console.log(`⚠️ Speler ${i} "${name}": standaard avatar`);
     }
 
     return { name, seconds: startSeconds, index: i, position: i, photoUrl };
   }));
+
+  // Sla originele volgorde op voor later herstellen in finale
+  originalPlayersOrder = JSON.parse(JSON.stringify(players));
 
   playerCountEl.textContent = players.length;
   renderPlayers();
@@ -417,40 +487,62 @@ function toggleAudio(audioObj) {
     .catch(err => console.warn('Audio kon niet starten:', err));
 }
 
-document.getElementById('playSting').addEventListener('click', () => {
-  
-  sendDisplayUpdate({ type: 'audio', action: 'play', src: 'SFX/generiek.mp3' });
-});
-document.getElementById('playBumper').addEventListener('click', () => {
-  sendDisplayUpdate({ type: 'audio', action: 'play', src: 'SFX/snd_bumper.mp3' });
-});
+// Audio Buttons - met null checks
+const stingBtn = document.getElementById('playSting');
+if (stingBtn) {
+  stingBtn.addEventListener('click', () => {
+    sendDisplayUpdate({ type: 'audio', action: 'play', src: 'SFX/generiek.mp3' });
+  });
+}
 
+const bumperBtn = document.getElementById('playBumper');
+if (bumperBtn) {
+  bumperBtn.addEventListener('click', () => {
+    sendDisplayUpdate({ type: 'audio', action: 'play', src: 'SFX/snd_bumper.mp3' });
+  });
+}
 
-document.getElementById('playKlok').addEventListener('click', () => {
-  
-  sendDisplayUpdate({ type: 'audio', action: 'loopStart', src: 'SFX/klok2.mp3' });
-  startLoopTimer();
-});
+const applauseBtn = document.getElementById('playApplause');
+if (applauseBtn) {
+  applauseBtn.addEventListener('click', () => {
+    sendDisplayUpdate({ type: 'audio', action: 'play', src: 'SFX/applause.ogg' });
+  });
+}
 
-document.getElementById('stopKlokFout').addEventListener('click', () => {
-  stopLoopTimerSFX(); 
-  playSFX('SFX/fout.mp3'); 
+const klokBtn = document.getElementById('playKlok');
+if (klokBtn) {
+  klokBtn.addEventListener('click', () => {
+    sendDisplayUpdate({ type: 'audio', action: 'loopStart', src: 'SFX/klok2.mp3' });
+    startLoopTimer();
+  });
+}
 
-  
-  if(loopTimerInterval){
-    clearInterval(loopTimerInterval);
-    loopTimerInterval = null;
-  }
-});
+const stopKlokBtn = document.getElementById('stopKlokFout');
+if (stopKlokBtn) {
+  stopKlokBtn.addEventListener('click', () => {
+    stopLoopTimerSFX(); 
+    playSFX('SFX/fout.mp3');
+    if(loopTimerInterval){
+      clearInterval(loopTimerInterval);
+      loopTimerInterval = null;
+    }
+  });
+}
 
-document.getElementById('playFinaleBumper').addEventListener('click', () => {
-  playSFX('SFX/finale.mp3');
-});
+const finalBumperBtn = document.getElementById('playFinaleBumper');
+if (finalBumperBtn) {
+  finalBumperBtn.addEventListener('click', () => {
+    playSFX('SFX/finale.mp3');
+  });
+}
 
-document.getElementById('collectiefEndOption').addEventListener('change', (e)=>{
+const collectiefEndSelect = document.getElementById('collectiefEndOption');
+if (collectiefEndSelect) {
+  collectiefEndSelect.addEventListener('change', (e)=>{
     collectiefEndOption = e.target.value;
     flash(`Collectief Geheugen eindinstelling aangepast: ${e.target.selectedOptions[0].text}`);
-});
+  });
+}
 
 let loopTimerInterval = null;   
 
@@ -492,5 +584,233 @@ loopTimerInterval = setInterval(() => {
     }, 1000);
 }
 
+// Intro Start knop
+document.addEventListener('DOMContentLoaded', () => {
+  const startIntroBtn = document.getElementById('startIntroBtn');
+  if (startIntroBtn) {
+    startIntroBtn.addEventListener('click', function() {
+      console.log('🎬 Start Intro knop geklikt');
+      
+      if (!introEnabled) {
+        console.warn('⚠️ Intro niet ingeschakeld');
+        alert('Intro is niet ingeschakeld!');
+        return;
+      }
+      
+      // Lees intro-tekst rechtstreeks uit input element
+      const introTextInput = document.getElementById('introText');
+      const finalIntroText = introTextInput ? introTextInput.value.trim() : '';
+      
+      console.log('📤 Stuur intro_start bericht');
+      console.log('- ingeschakeld:', introEnabled);
+      console.log('- tekst:', finalIntroText || '(leeg)');
+      
+      // Stuur WebSocket bericht naar display
+      sendDisplayUpdate({
+        type: 'intro_start',
+        text: finalIntroText || ''
+      });
+      
+      // Toon intro script voor presentator
+      const introScriptArea = document.getElementById('introScriptArea');
+      const introScriptText = document.getElementById('introScriptText');
+      if (introScriptArea && introScriptText) {
+        if (finalIntroText) {
+          introScriptText.textContent = finalIntroText;
+          introScriptArea.style.display = 'block';
+        } else {
+          introScriptArea.style.display = 'none';
+        }
+      }
+      
+      // Toon video controls
+      document.getElementById('playIntroVideo').style.display = 'inline-block';
+      document.getElementById('introPerspectiveFull').style.display = 'inline-block';
+      document.getElementById('introPerspectiveCand1').style.display = 'inline-block';
+      document.getElementById('introPerspectiveCand2').style.display = 'inline-block';
+      document.getElementById('introPerspectiveCand3').style.display = 'inline-block';
+      document.getElementById('stopIntroBtn').style.display = 'inline-block';
+      
+      // Verberg Start Intro knop
+      startIntroBtn.style.display = 'none';
+    });
+  } else {
+    console.error('❌ Start Intro knop niet gevonden in HTML');
+  }
+  
+  // Play Video knop
+  const playIntroVideo = document.getElementById('playIntroVideo');
+  if (playIntroVideo) {
+    playIntroVideo.addEventListener('click', function() {
+      console.log('▶️ Speel Video knop geklikt');
+      sendDisplayUpdate({ type: 'intro_play_video' });
+    });
+  }
+  
+  // Perspectief knoppen
+  const introPerspectives = {
+    'introPerspectiveFull': 'full',
+    'introPerspectiveCand1': 'cand1',
+    'introPerspectiveCand2': 'cand2',
+    'introPerspectiveCand3': 'cand3'
+  };
+  
+  for (const [btnId, perspective] of Object.entries(introPerspectives)) {
+    const btn = document.getElementById(btnId);
+    if (btn) {
+      btn.addEventListener('click', function() {
+        console.log(`🔄 Perspectief wissel naar: ${perspective}`);
+        sendDisplayUpdate({ 
+          type: 'intro_perspective',
+          perspective: perspective
+        });
+      });
+    }
+  }
+  
+  // Stop Intro knop
+  const stopIntroBtn = document.getElementById('stopIntroBtn');
+  if (stopIntroBtn) {
+    stopIntroBtn.addEventListener('click', function() {
+      console.log('⏹️ Stop Intro knop geklikt');
+      sendDisplayUpdate({ type: 'intro_stop' });
+      
+      // Verberg intro script
+      const introScriptArea = document.getElementById('introScriptArea');
+      if (introScriptArea) {
+        introScriptArea.style.display = 'none';
+      }
+      
+      // Reset button visibility
+      startIntroBtn.style.display = 'inline-block';
+      playIntroVideo.style.display = 'none';
+      document.getElementById('introPerspectiveFull').style.display = 'none';
+      document.getElementById('introPerspectiveCand1').style.display = 'none';
+      document.getElementById('introPerspectiveCand2').style.display = 'none';
+      document.getElementById('introPerspectiveCand3').style.display = 'none';
+      stopIntroBtn.style.display = 'none';
+    });
+  }
+});
+
 renderPlayers();
 console.log('Core.js geladen — basisfunctionaliteit actief');
+
+function shouldIgnoreHotkeys(event) {
+  if (event.ctrlKey || event.altKey || event.metaKey) return true;
+  const target = event.target;
+  if (!target) return false;
+  const tag = target.tagName ? target.tagName.toLowerCase() : '';
+  return tag === 'input' || tag === 'textarea' || tag === 'select' || target.isContentEditable;
+}
+
+function handleRoundHotkey(key) {
+  if (!perRoundState || !perRoundState.round) return false;
+
+  const round = perRoundState.round;
+  const numberIndex = /^[1-9]$/.test(key) ? parseInt(key, 10) - 1 : null;
+
+  if (key === 'n' && typeof nextQuestion === 'function') {
+    nextQuestion();
+    return true;
+  }
+
+  if (key === 't') {
+    if (round === 'opendeur' && typeof startOpenDeurTimer === 'function') { startOpenDeurTimer(); return true; }
+    if (round === 'puzzel' && typeof startPuzzelTimer === 'function') { startPuzzelTimer(); return true; }
+    if (round === 'galerij' && typeof startGalerijTimer === 'function') { startGalerijTimer(); return true; }
+    if (round === 'collectief' && typeof startCollectiefTimer === 'function') { startCollectiefTimer(); return true; }
+    if (round === 'finale' && typeof startFinaleTimer === 'function') { startFinaleTimer(); return true; }
+  }
+
+  if (key === 'g') {
+    if (round === 'threeSixNine' && typeof markThreeSixNineAnswer === 'function') {
+      markThreeSixNineAnswer(true);
+      if (typeof playSFX === 'function') playSFX('SFX/goed.mp3');
+      return true;
+    }
+    if (round === 'galerij' && typeof markGalerijAnswer === 'function' && galleryPhase === 'main') {
+      const img = galleryImages[galleryIndex];
+      if (img) {
+        markGalerijAnswer(true, img.answer);
+        return true;
+      }
+    }
+  }
+
+  if (key === 'f') {
+    if (round === 'threeSixNine' && typeof markThreeSixNineAnswer === 'function') {
+      markThreeSixNineAnswer(false);
+      if (typeof playSFX === 'function') playSFX('SFX/fout.mp3');
+      return true;
+    }
+  }
+
+  if (key === 'p') {
+    if (round === 'opendeur' && typeof passOpenDeur === 'function') { passOpenDeur(); return true; }
+    if (round === 'puzzel' && typeof passPuzzel === 'function') { passPuzzel(); return true; }
+    if (round === 'galerij') {
+      if (galleryPhase === 'aanvul' && typeof nextAanvulTurn === 'function') { nextAanvulTurn(); return true; }
+      if (typeof markGalerijAnswer === 'function' && galleryPhase === 'main') {
+        const img = galleryImages[galleryIndex];
+        if (img) { markGalerijAnswer(false, img.answer); return true; }
+      }
+    }
+    if (round === 'collectief' && typeof passCollectief === 'function') { passCollectief(); return true; }
+    if (round === 'finale' && typeof passFinale === 'function') { passFinale(); return true; }
+  }
+
+  if (numberIndex !== null) {
+    if (round === 'opendeur' && typeof markOpenDeurAnswer === 'function') {
+      const answers = perRoundState?.currentQuestion?.answersDisplay || [];
+      if (numberIndex < answers.length) {
+        markOpenDeurAnswer(numberIndex);
+        return true;
+      }
+    }
+
+    if (round === 'collectief' && typeof markCollectiefAnswer === 'function') {
+      const currentQuestion = perRoundState?.collectief?.questions?.[perRoundState?.collectief?.currentQuestionIndex] || null;
+      const answers = currentQuestion?.answers || [];
+      if (numberIndex < answers.length) {
+        markCollectiefAnswer(numberIndex);
+        return true;
+      }
+    }
+
+    if (round === 'finale' && typeof markFinaleAnswer === 'function') {
+      const currentQuestion = perRoundState?.finale?.currentQuestion || null;
+      const answers = currentQuestion?.answers || [];
+      if (numberIndex < answers.length) {
+        markFinaleAnswer(numberIndex);
+        return true;
+      }
+    }
+
+    if (round === 'puzzel' && typeof markPuzzelLink === 'function') {
+      const puzzel = perRoundState?.currentPuzzel || null;
+      const links = puzzel?.links || [];
+      if (numberIndex < links.length) {
+        markPuzzelLink(links[numberIndex].link);
+        return true;
+      }
+    }
+
+    if (round === 'galerij' && galleryPhase === 'aanvul' && typeof markAanvulAnswer === 'function') {
+      if (numberIndex < passedImages.length) {
+        markAanvulAnswer(passedImages[numberIndex]);
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+document.addEventListener('keydown', (event) => {
+  if (shouldIgnoreHotkeys(event)) return;
+  const key = event.key.toLowerCase();
+  if (handleRoundHotkey(key)) {
+    event.preventDefault();
+  }
+});

@@ -1,31 +1,73 @@
 {
   "metadata": {
-    "name": "Quiz Config met Game Settings",
+    "name": "Quiz voor Walta's Stream",
     "description": "Volledig voorbeeld met game-instellingen geforceerd via config",
     "created": "2026-02-02",
     "note": "Dit voorbeeld toont hoe je game-instellingen zoals aantal vragen kunt forceren via de config"
   },
   "settings": {
+    "playerMode": {
+      "playerCount": 3,
+      "questionsPerRound": 1,
+      "players": [
+        {
+          "name": "KapiteinCactus",
+          "photoUrl": "Walta/Cactus.jpeg",
+          "_comment": "Relatief pad of data-URL naar foto van kandidaat 1"
+        },
+        {
+          "name": "LizardKingNL",
+          "photoUrl": "Walta/LizardKingNL.png",
+          "_comment": "Relatief pad of data-URL naar foto van kandidaat 2"
+        },
+        {
+          "name": "Animatig",
+          "photoUrl": "Walta/Animatig.png",
+          "_comment": "Relatief pad of data-URL naar foto van kandidaat 3"
+        }
+      ],
+      "_comment": "playerCount: 1, 2 of 3. Bij 1 speler: questionsPerRound kan 1 of 3 zijn. Bij 1-2 spelers: Finale wordt overgeslagen. Players array is optioneel — autofill namen/foto's als aanwezig."
+    },
+    "bumpers": {
+      "enabled": true,
+      "_comment": "Zet op false om rondebumpers uit te schakelen"
+    },
+    "intro": {
+      "enabled": true,
+      "text": "Wie kent alles over six seven en weet alles over livestreamers? Wie is thuis in Cuphead, kan meepraten over Super Mario 64 en weet alles over Peggle? Wie oh wie is de slimste mens? Is het Kapitein Cactus? Of is het LizardKing? Of is het Animatig? Welkom bij De Slimste Mens van Twitch!",
+      "_comment": "Schakel intro in en voeg eventueel intro-tekst toe. Text wordt getoond tijdens intro video."
+    },
+    "presenter": {
+      "enabled": true,
+      "photoUrl": "Walta/qastrol.png",
+      "_comment": "Relatief pad of data-URL naar de presentatorfoto. Deze wordt vastgezet via config."
+    },
+    "jury": {
+      "enabled": true,
+      "_comment": "Zet op false om jury uit te zetten."
+    },
     "threeSixNine": {
       "shuffle": false,
-      "maxQuestions": 15,
-      "_description": "Deze ronde krijgt precies 15 vragen, ook al zijn er meer beschikbaar. Als maxQuestions niet is ingesteld, gebruikt het spel de standaard waarde (12) of de waarde die handmatig is ingesteld."
+      "maxQuestions": 12,
+      "_description": "Deze ronde krijgt precies 12 vragen, ook al zijn er meer beschikbaar. Als maxQuestions niet is ingesteld, gebruikt het spel de standaard waarde (12) of de waarde die handmatig is ingesteld.",
+      "shuffleMultipleChoiceOptions": true
     },
     "opendeur": {
       "shuffle": false,
       "_description": "Vragen komen in de volgorde zoals hieronder gedefinieerd"
     },
     "puzzel": {
-      "shuffle": true,
+      "shuffle": false,
       "_description": "Puzzellinks worden willekeurig gekozen"
     },
     "galerij": {
       "shuffle": true,
-      "photoCount": 8,
-      "_description": "Elke galerij toont 8 foto's in plaats van de standaard 10. Handig voor kortere rondes."
+      "photoCount": 10,
+      "manualAssignment": true,
+      "_description": "Elke galerij toont 10 foto's in plaats van de standaard 10. Handig voor kortere rondes."
     },
     "collectief": {
-      "shuffle": false,
+      "shuffle": true,
       "_description": "Videofragmenten in vaste volgorde"
     },
     "finale": {
@@ -35,16 +77,31 @@
   },
   "threeSixNine": [
     {
+      "text": "Hoe heet het eiland waar Cuphead en Mugman wonen?",
+      "answers": ["Inkwell Isle"],
+      "type": "classic"
+    },
+    {
+      "text": "Van welke artiest was het meest gestreamde Nederlandse album van 2025 volgens Spotify?",
+      "answers": ["Roxy Dekker"],
+      "type": "classic"
+    },
+    {
+      "text": "Wie is de zanger van dit audiofragment?",
+      "answers": ["Piebe-Guido van den Berg"],
+      "audioUrl": "Walta/frikandel.mp3",
+      "type": "audio"
+    },
+    {
       "text": "Welk spel heeft Game of the Year gewonnen bij The Game Awards 2025?",
       "answers": ["Clair Obscur: Expedition 33"],
       "type": "classic",
       "remarks": "Dit is een turn-based RPG game geïnspireerd door Franse fantasy kunst. Je kunt de kandidaten vragen of zij dit spel kennen, of andere GOTY nominees kunnen noemen."
     },
     {
-      "text": "In juni 2025 was de NAVO-top in Den Haag. Donald Trump sprak van iets uit Nederland dat hij graag mee wou nemen naar de Verenigde Staten. Welk object was dit?",
-      "answers": ["De Nederlandse bomen"],
-      "type": "classic",
-      "remarks": "Trump was onder de indruk van de grote, gezonde bomen in Nederland. Vraag kandidaten wat zij denken van deze uitspraak."
+      "text": "Wie is de streamer met de meeste deelnames aan KerstKnallers?",
+      "answers": ["LimitsGG"],
+      "type": "classic"
     },
     {
       "text": "Hoeveel games heeft OrdinaryVicious uitgespeeld op stream, volgens haar kanaalbeschrijving?",
@@ -53,26 +110,16 @@
       "type": "estimation"
     },
     {
-      "type": "multiple-choice",
-      "text": "Welke streamer heeft de snelste PB in Super Mario 64?",
-      "options": {
-        "A": "Mars",
-        "B": "Jupiter",
-        "C": "Saturnus",
-        "D": "Neptunus"
-      },
-      "correctAnswer": "B"
+      "type": "photo",
+      "text": "Welke film en serie lijken hier geïnspireerd door elkaar?",
+      "photoUrl": "Walta/LOTRTeletubbies.png",
+      "answers": ["Lord of the Rings en Teletubbies"]
     },
     {
-      "text": "Wie is de zanger van dit audiofragment?",
-      "answers": ["Piebe-Guido van den Berg"],
-      "audioUrl": "assets/frikandel.mp3",
-      "type": "audio"
-    },
-    {
-      "text": "Wie is de streamer met de meeste deelnames aan KerstKnallers?",
-      "answers": ["LimitsGG"],
-      "type": "classic"
+      "type": "audio",
+      "text": "Wat hebben Bowser en Boo met elkaar gemeen in Super Mario 64?",
+      "audioUrl": "Walta/Bowser.mp3",
+      "answers": ["Ze maken beide hetzelfde geluid, maar met een andere snelheid"]
     },
     {
       "text": "In welke Nederlandse plaats was de eerste Walta-meetup?",
@@ -81,130 +128,109 @@
       "remarks": "27 januari 2024, Apeldoorn - Lunch bij Stadscafé, gebowled bij Bowlmore, burgers gegeten bij Finnegan's, drankjes voor de liefhebber bij Het Stadscafé."
     },
     {
-      "type": "multiple-choice",
-      "text": "Welke kleur krijg je als je rood en blauw mengt?",
+      "text": "Hoe heet dit nummer van Peggle?",
+      "answers": ["Ode To Joy"],
+      "audioUrl": "Walta/odetojoy.mp3",
+      "type": "audio"
+    },
+    {
+      "type": "photo-multiple-choice",
+      "text": "Hoe heet dit natuurgebied?",
+      "photoUrl": "Walta/retezat.jpg",
       "options": {
-        "A": "Groen",
-        "B": "Oranje",
-        "C": "Paars",
-        "D": "Bruin"
+        "A": "Retezat",
+        "B": "Scheitezat",
+        "C": "Lamzat",
+        "D": "Pottoezat"
       },
-      "correctAnswer": "C"
-    },
-    {
-      "text": "Wat is de hoogste berg ter wereld?",
-      "answers": ["Mount Everest", "Everest"],
-      "type": "classic"
-    },
-    {
-      "text": "Hoeveel continenten zijn er?",
-      "answers": ["7", "zeven"],
-      "type": "classic"
-    },
-    {
-      "text": "In welk land staat de Eiffeltoren?",
-      "answers": ["Frankrijk", "France"],
-      "type": "classic"
+      "correctAnswer": "A",
+      "remarks": "Retezat , nationaal park in Roemenië."
     },
     {
       "type": "multiple-choice",
-      "text": "Welk dier is het snelst op land?",
+      "text": "Hoe heet de nieuwe Managing Director van McDonalds Nederland?",
       "options": {
-        "A": "Leeuw",
-        "B": "Cheetah",
-        "C": "Paard",
-        "D": "Gazelle"
+        "A": "Zoe Hamburger",
+        "B": "Zoe McDonald",
+        "C": "Zoe Mayo",
+        "D": "Zoe Cook"
       },
-      "correctAnswer": "B"
-    },
-    {
-      "text": "Wie schilderde de Mona Lisa?",
-      "answers": ["Leonardo da Vinci", "Da Vinci"],
-      "type": "classic"
-    },
-    {
-      "text": "Wat is het grootste continent?",
-      "answers": ["Azië", "Asia"],
-      "type": "classic"
-    },
-    {
-      "text": "Hoeveel uren heeft een dag?",
-      "answers": ["24"],
-      "type": "classic"
+      "correctAnswer": "A"
     }
   ],
   "opendeur": [
     {
-      "from": "Gert",
+      "from": "Niels",
       "question": "Wat zijn de vier meest gestreamde games op twitch.tv/nielswalta?",
       "answers": ["Pokémon Scarlet/Violet", "The Legend of Zelda: Tears of the Kingdom", "Mario Kart 8 Deluxe", "Pokémon Legends: Z-A"]
     },
     {
-      "from": "Lucas",
-      "question": "Wat zijn de vier films met de hoogste opbrengst van 2025?",
-      "answers": ["Ne Zha 2", "Zootopia 2", "Avatar: Fire and Ash", "Lilo & Stitch"]
+      "from": "Oscar",
+      "question": "Wat waren in 2025 de vier best bezochte films in Nederlandse bioscopen?",
+      "answers": ["A Minecraft Movie", "Lilo & Stitch", "Mufasa: The Lion King", "Jurassic World: Rebirth"],
+      "remarks": "A Minecraft Movie: 991.310 bezoekers, Lilo & Stitch: 941.749 bezoekers, Mufasa: The Lion King: 811.043 bezoekers, Jurassic World: Rebirth: 685.864 bezoekers"
     },
     {
-      "from": "Sophie",
-      "question": "Noem de Beatles leden",
-      "answers": ["John Lennon", "Paul McCartney", "George Harrison", "Ringo Starr"]
+      "from": "Olympia",
+      "question": "Welke vier Nederlanders hebben deze Olympische Spelen tot nu toe een gouden medaille gewonnen?",
+      "answers": ["Jens van 't Wout", "Xandra Velzeboer", "Jutta Leerdam", "Femke Kok"]
     }
   ],
-    "puzzel": [
-    {"link": "Kondmapjes", "answers": ["Streamweek", "Knutselt ook soms", "Tekent soms", "Capibara"]},
-    {"link": "Flaflippie", "answers": ["Eend", "Streammaand", "Hoedjes", "Aju Paraplu"]},
-    {"link": "Muntjesman", "answers": ["N64 Toernooi", "Mario Speedrunner", "... vs LizardKing", "Skateboarder"]},
-    {"link": "CearienPurple", "answers": ["Zelda-fan", "Streamde als duo", "Streamt nu alleen", "Final Fantasy XIV"]},
-    {"link": "Deur", "answers": ["Voordeur", "Achterdeur", "Open deur", "Deurknop"]},
-    {"link": "Bal", "answers": ["Voetbal", "Basketbal", "Dansgala", "Ballon"]},
-    {"link": "Pot", "answers": ["Bloempot", "Koffiepot", "Potten en pannen", "Jackpot"]},
-    {"link": "Bril", "answers": ["Leesbril", "Zonnebril", "Veiligheidsbril", "Duikbril"]},
-    {"link": "Muis", "answers": ["Computermuis", "Klein knaagdier", "Mickey Mouse", "Muizenval"]}
+  "puzzel": [
+    {"link": "Kondmapjes", "answers": ["Streamweek", "Creatieve streams", "Mario 64", "Capibara"]},
+    {"link": "Flaflippie", "answers": ["Eend", "Streammaand", "PEAK", "Aju Paraplu"]},
+    {"link": "CearienPurple", "answers": ["Zelda-fan", "Streamde als duo", "Streamt nu alleen", "Paars"]},
+    {"link": "Kit", "answers": ["EHBO-...", "Lijm", "Afdichting", "Gereedschap"]},
+    {"link": "Wil", "answers": ["...lem", "...skracht", "Testament", "Vrije keuze"]},
+    {"link": "Son", "answers": ["Zoon", "In het Engels", "... of a Bitch", "Achtervoegsel achternaam"]},
+    {"link": "Appelkanjer", "answers": ["Soort gebakje", "Call of Duty: Warzone", "Lang Leve de Liefde", "SnackbarSander"]},
+    {"link": "Weslyv8", "answers": ["Furugiwear", "Videogamemannetjes", "Amnesia", "Metroid-fan"]},
+    {"link": "Harde Hugo", "answers": ["HARD!", "Trackmania", "League of Legends", "Waarom dit paneel er niet professioneel uitziet?"]}
   ],
   "galerij": [
     {
-      "theme": "Bekende Gebouwen",
+      "theme": "Super Mario 64",
       "images": [
-        {"src": "galerij/Gebouwen/gebouw1.jpg", "answer": "Eiffeltoren"},
-        {"src": "galerij/Gebouwen/gebouw2.jpg", "answer": "Big Ben"},
-        {"src": "galerij/Gebouwen/gebouw3.jpg", "answer": "Colosseum"},
-        {"src": "galerij/Gebouwen/gebouw4.jpg", "answer": "Taj Mahal"},
-        {"src": "galerij/Gebouwen/gebouw5.jpg", "answer": "Burj Khalifa"},
-        {"src": "galerij/Gebouwen/gebouw6.jpg", "answer": "Sydney Opera House"},
-        {"src": "galerij/Gebouwen/gebouw7.jpg", "answer": "Empire State Building"},
-        {"src": "galerij/Gebouwen/gebouw8.jpg", "answer": "Sagrada Familia"},
-        {"src": "galerij/Gebouwen/gebouw9.jpg", "answer": "Atomium"},
-        {"src": "galerij/Gebouwen/gebouw10.jpg", "answer": "Golden Gate Bridge"}
+        {"src": "Walta/galerij/Mario 64/1_Goomba.png", "answer": "Goomba"},
+        {"src": "Walta/galerij/Mario 64/2_Heave-Ho.png", "answer": "Heave-Ho"},
+        {"src": "Walta/galerij/Mario 64/3_Chain Chomp.png", "answer": "Chain Chomp"},
+        {"src": "Walta/galerij/Mario 64/4_Chuckya.png", "answer": "Chuckya"},
+        {"src": "Walta/galerij/Mario 64/5_Bob-omb.png", "answer": "Bob-omb"},
+        {"src": "Walta/galerij/Mario 64/6_Skeeter.png", "answer": "Skeeter"},
+        {"src": "Walta/galerij/Mario 64/7_Bully.png", "answer": "Bully"},
+        {"src": "Walta/galerij/Mario 64/8_Mr. I.png", "answer": "Mr. I"},
+        {"src": "Walta/galerij/Mario 64/9_Klepto.png", "answer": "Klepto"},
+        {"src": "Walta/galerij/Mario 64/10_MIPS.png", "answer": "MIPS"}
       ]
     },
     {
-      "theme": "Beroemde Personen",
+      "theme": "Memes",
       "images": [
-        {"src": "galerij/Personen/persoon1.jpg", "answer": "Albert Einstein"},
-        {"src": "galerij/Personen/persoon2.jpg", "answer": "Nelson Mandela"},
-        {"src": "galerij/Personen/persoon3.jpg", "answer": "Marie Curie"},
-        {"src": "galerij/Personen/persoon4.jpg", "answer": "Leonardo da Vinci"},
-        {"src": "galerij/Personen/persoon5.jpg", "answer": "Cleopatra"},
-        {"src": "galerij/Personen/persoon6.jpg", "answer": "Winston Churchill"},
-        {"src": "galerij/Personen/persoon7.jpg", "answer": "Gandhi"},
-        {"src": "galerij/Personen/persoon8.jpg", "answer": "Mozart"},
-        {"src": "galerij/Personen/persoon9.jpg", "answer": "Shakespeare"},
-        {"src": "galerij/Personen/persoon10.jpg", "answer": "Beethoven"}
+        {"src": "Walta/galerij/Memes/1_Trollface.png", "answer": "Trollface"},
+        {"src": "Walta/galerij/Memes/2_KeyboardCat.jpg", "answer": "Keyboard Cat"},
+        {"src": "Walta/galerij/Memes/3_67.jpeg", "answer": "67"},
+        {"src": "Walta/galerij/Memes/4_Hotline Bling.png", "answer": "Hotline Bling"},
+        {"src": "Walta/galerij/Memes/5_ChangeMyMind.png", "answer": "Change My Mind"},
+        {"src": "Walta/galerij/Memes/6_Harold.jpg", "answer": "Harold"},
+        {"src": "Walta/galerij/Memes/7_Soyjack_Wojack.jpg", "answer": "Soyjack / Wojack"},
+        {"src": "Walta/galerij/Memes/8_Doge.jpg", "answer": "Doge"},
+        {"src": "Walta/galerij/Memes/9_BadLuckBrian.jpg", "answer": "Bad Luck Brian"},
+        {"src": "Walta/galerij/Memes/10_Bernie.png", "answer": "Bernie Sanders ('I'm once again asking for your financial support')"}
       ]
     },
     {
-      "theme": "Filmposters",
+      "theme": "Bordspellen",
       "images": [
-        {"src": "galerij/Films/film1.jpg", "answer": "Titanic"},
-        {"src": "galerij/Films/film2.jpg", "answer": "Star Wars"},
-        {"src": "galerij/Films/film3.jpg", "answer": "The Godfather"},
-        {"src": "galerij/Films/film4.jpg", "answer": "Jurassic Park"},
-        {"src": "galerij/Films/film5.jpg", "answer": "Pulp Fiction"},
-        {"src": "galerij/Films/film6.jpg", "answer": "The Matrix"},
-        {"src": "galerij/Films/film7.jpg", "answer": "Forrest Gump"},
-        {"src": "galerij/Films/film8.jpg", "answer": "Avatar"},
-        {"src": "galerij/Films/film9.jpg", "answer": "Inception"},
-        {"src": "galerij/Films/film10.jpg", "answer": "The Dark Knight"}
+        {"src": "Walta/galerij/Bordspellen/1_Monopoly.png", "answer": "Monopoly"},
+        {"src": "Walta/galerij/Bordspellen/2_Catan.png", "answer": "Catan"},
+        {"src": "Walta/galerij/Bordspellen/3_Twister.png", "answer": "Twister"},
+        {"src": "Walta/galerij/Bordspellen/4_Ticket To Ride.png", "answer": "Ticket To Ride"},
+        {"src": "Walta/galerij/Bordspellen/5_Stratego.png", "answer": "Stratego"},
+        {"src": "Walta/galerij/Bordspellen/6_Risk.png", "answer": "Risk"},
+        {"src": "Walta/galerij/Bordspellen/7_Jungle Speed.png", "answer": "Jungle Speed"},
+        {"src": "Walta/galerij/Bordspellen/8_Rummikub.png", "answer": "Rummikub"},
+        {"src": "Walta/galerij/Bordspellen/9_Wie Is Het.png", "answer": "Wie Is Het"},
+        {"src": "Walta/galerij/Bordspellen/10_Dammen.png", "answer": "Dammen"}
       ]
     }
   ],
@@ -228,7 +254,47 @@
         "Just Dance",
         "Mr. Blue Sky"
       ]
+    },
+    {
+      "video": "Walta/Reggie.mp4",
+      "answers": [
+        "Reggie Fils-Aimé",
+        "Nintendo of America",
+        "Bedrijfsleider (President)",
+        "Nintendo Switch",
+        "E3"
+      ]
     }
   ],
-  "finale": []
+  "finale": [
+    {
+      "question": "Wat zijn de vijf Nintendo Switch 2 first-party releases die Nintendo tot nu toe uitgebracht heeft (Switch 2 Editions niet meegerekend)?",
+      "answers": ["Mario Kart World", "Donkey Kong Bananza", "Hyrule Warriors", "Kirby Air Riders", "Mario Tennis Fever"]
+    },
+    {
+      "question": "Wie zijn de vijf eerste bazen die je tegenkomt in Cuphead? (Inkwell Isle One)",
+      "answers": ["The Root Pack", "Goopy Le Grande", "Hilda Berg", "Cagney Carnation", "Ribby and Croaks"]
+    },
+    {
+      "question": "Wat zijn de vijf meest gestreamde games op twitch.tv/flaflippie?",
+      "answers": ["PEAK", "Call of Duty: Warzone", "Golf With Your Friends", "Poppy Playtime", "Fortnite"]
+    },
+    {
+      "question": "Waar waren de laatste vijf Walta-meetups?",
+      "answers": ["Nijmegen", "Brussel & Mechelen", "Utrecht", "Sassenheim", "Rotterdam"]
+    },
+    {
+      "question": "Wat zijn de vijf meest gestreamde games op twitch.tv/speciaaltjuh?",
+      "answers": ["Super Mario 64", "PEAK", "Call of Duty: Warzone", "Shadows of Doubt", "EA Sports FC"]
+    },
+    {
+      "question": "Welke vijf gameseries van PopCap Games hebben de hoogste spelerpiek op Steam gehad?",
+      "answers": ["Plants vs. Zombies", "Bejeweled", "Zuma", "Peggle", "Insaniquarium"]
+    },
+    {
+      "question": "Wat zijn de vijf levels van Super Mario 64 die je vanaf de begane grond betreedt? (Bowser uitgezonderd)",
+      "answers": ["Bob-omb Battlefield", "Whomp's Fortress", "Jolly Roger Bay", "Cool Cool Mountain", "Big Boo's Haunt"]
+    }
+  ]
+  
 }

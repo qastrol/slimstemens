@@ -28,8 +28,8 @@ function startLoopTimer() {
 
         if (activePlayer.seconds <= 0) {
             clearInterval(collectiefTimerInterval);
-            stopLoopTimer(true); 
             flash(`${activePlayer.name} is door zijn tijd heen!`);
+            if (typeof showPreFinaleBonusControls === 'function') showPreFinaleBonusControls();
             passCollectief(); 
         }
     }, 1000);
@@ -459,8 +459,8 @@ currentQuestionEl.innerHTML = `
         ${answers.map((ans, i) => {
             const found = foundAnswers.find(fa => fa.answer === ans);
             const display = found ? 
-                `✅ ${ans} (${found.points}s)` : 
-                `❓ ${ans}`;
+                `✅ (${i + 1}) ${ans} (${found.points}s)` : 
+                `❓ (${i + 1}) ${ans}`;
             const className = found ? 'secondary' : 'primary';
             const disabled = found || phase !== 'main' ? 'disabled' : ''; 
             return `<button onclick="markCollectiefAnswer(${i})" class="${className}" ${disabled}>${display}</button>`;
@@ -480,15 +480,15 @@ currentQuestionEl.innerHTML = `
     else if (phase === 'video') {
         
         html = `
-            <button onclick="startCollectiefTimer()" id="collectiefStartTimer">Start Klok voor ${activePlayerName}</button>
+            <button onclick="startCollectiefTimer()" id="collectiefStartTimer">Start Klok (T) voor ${activePlayerName}</button>
         `;
     } 
     else if (phase === 'main') {
         
         const passDisabled = allFound ? 'disabled' : ''; 
         html = `
-            <button onclick="startCollectiefTimer()" id="collectiefRestartTimer">Start Klok</button>
-            <button onclick="passCollectief()" ${passDisabled} class="secondary">Passen (${activePlayerName} is klaar)</button>
+            <button onclick="startCollectiefTimer()" id="collectiefRestartTimer">Start Klok (T)</button>
+            <button onclick="passCollectief()" ${passDisabled} class="secondary">Passen (P) (${activePlayerName} is klaar)</button>
         `;
     } 
     else if (phase === 'answered') {
@@ -500,7 +500,7 @@ currentQuestionEl.innerHTML = `
             <div style="margin-top:10px; padding:10px; border:1px solid #c084fc; font-weight:bold;">
                 Fragment ${qIndex + 1} Afgerond. Tussenstand bekendgemaakt.
             </div>
-            <button onclick="nextCollectiefQuestion()">${btnText}</button>
+            <button onclick="nextCollectiefQuestion()">${btnText} (N)</button>
         `;
     }
 

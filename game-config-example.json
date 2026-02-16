@@ -21,7 +21,8 @@
     "galerij": {
       "shuffle": true,
       "photoCount": 8,
-      "description": "8 foto's per galerij in plaats van standaard 10"
+      "manualAssignment": false,
+      "description": "8 foto's per galerij in plaats van standaard 10. Zet manualAssignment op true om per kandidaat een galerij te kiezen."
     },
     "collectief": {
       "shuffle": true

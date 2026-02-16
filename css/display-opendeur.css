@@ -441,53 +441,67 @@
         #opendeur-vragensteller-grid .part3 {
             grid-column: 1 / span 2;
             grid-row: 2;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            padding: 0 50px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            padding: 0;
+            gap: 0;
+            height: 540px;
+            width: 100%;
         }
 
-.vragenstellers-container {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 2rem;
-  justify-items: center;
-  align-items: center;
-  margin-top: 2rem;
+#vragenstellersContainer {
+  display: contents;
 }
 
-.vragensteller-box {
+#vragenstellersContainer .vragensteller-box {
   background: rgba(255,255,255,0.1);
-  border-radius: 20px;
-  padding: 1.5rem;
+  border-radius: 0;
+  padding: 2rem;
   text-align: center;
-  font-size: 2.4rem;
-  width: 300px;
-  height: 160px;
+  font-size: 4rem;
+  font-weight: 800;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
   position: relative;
   transition: all 0.3s ease;
+  border-right: 2px solid rgba(0,0,0,0.3);
+  border-bottom: 2px solid rgba(0,0,0,0.3);
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
 }
 
-.vragensteller-box.beschikbaar {
-  border: 3px solid #4caf50;
+#vragenstellersContainer .vragensteller-box:last-child {
+  border-right: none;
 }
 
-.vragensteller-box.gekozen {
-  border: 3px solid #888;
+#vragenstellersContainer .vragensteller-box.beschikbaar {
+  border: 2px solid #4caf50;
+  border-right: 2px solid #4caf50;
+  border-bottom: 2px solid #4caf50;
+}
+
+#vragenstellersContainer .vragensteller-box.gespeeld {
+  border: 2px solid #555;
+  border-right: 2px solid #555;
+  border-bottom: 2px solid #555;
+  background: rgba(0, 0, 0, 0.8);
   opacity: 0.4;
   filter: grayscale(100%);
 }
 
-.vragensteller-box .status-label {
+#vragenstellersContainer .vragensteller-box .status-label {
   position: absolute;
-  bottom: 10px;
+  bottom: 15px;
   width: 100%;
   text-align: center;
-  font-size: 1rem;
-  color: #ccc;
+  font-size: 1.5rem;
+  color: #888;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
 }
 
 
@@ -736,19 +750,19 @@
 }
 
 .puzzel-word.found-link-0 {
-    background: #0b2e0b; 
-    color: #9aff9a;
-    border-color: #9aff9a;
+  background: #004186;
+  color: #e3f1f8;
+  border: 3px solid #333333;
 }
 .puzzel-word.found-link-1 {
-    background: #0b202e; 
-    color: #9acfff;
-    border-color: #9acfff;
+  background: #cee5f7;
+  color: #003e7b;
+  border: 3px solid #333333;
 }
 .puzzel-word.found-link-2 {
-    background: #2e2a0b; 
-    color: #fffb9a;
-    border-color: #fffb9a;
+  background: #001d3c;
+  color: #e3f1f8;
+  border: 3px solid #333333;
 }
 
 #puzzel-grid .part2 {
@@ -948,8 +962,6 @@
 }
 
 .puzzel-word.found {
-    background: #0b2e0b;
-    color: #9aff9a;
     text-decoration: line-through;
 }
 
