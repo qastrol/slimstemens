@@ -545,14 +545,18 @@
         .od-answer-line {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: flex-start;
+            gap: 20px;
             margin: 20px 0;
             padding: 15px 30px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
+          background: rgba(0, 0, 0, 0.35);
+          border: 2px solid rgba(255, 255, 255, 0.15);
+          border-radius: 15px;
+          transition: all 0.3s ease;
         }
         
         .od-answer-text {
+          flex: 1;
             font-size: 3.5em;
             font-weight: bold;
             color: white;
@@ -996,13 +1000,17 @@
 .puzzel-link-line {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+  justify-content: flex-start;
+  gap: 20px;
     padding: 15px 30px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 10px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 15px;
+  transition: all 0.3s ease;
 }
 
 .puzzel-link-text {
+  flex: 1;
     font-size: 3.5em;  
     font-weight: bold;
     color: white;
@@ -1021,6 +1029,21 @@
     font-weight: bold;
     color: #071021;
 }
+
+  .puzzel-link-line.found-link-0 .puzzel-link-points {
+    background: #004186;
+    color: #e3f1f8;
+  }
+
+  .puzzel-link-line.found-link-1 .puzzel-link-points {
+    background: #cee5f7;
+    color: #003e7b;
+  }
+
+  .puzzel-link-line.found-link-2 .puzzel-link-points {
+    background: #001d3c;
+    color: #e3f1f8;
+  }
 
 .puzzel-link-text.blurred {
     -webkit-filter: blur(8px);

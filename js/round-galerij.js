@@ -19,6 +19,8 @@ let isGalerijTimerRunning = false;
 let galleryTimerRunning = false;
 
 let galerijRoundOrder = []; 
+let galerijStarterOrder = [];
+let galerijStarterTurn = 0;
 
 function sendGalerijDisplayUpdate() {
   const baseData = {
@@ -113,6 +115,14 @@ function setupGalerijRound() {
   const galerieCount = (typeof playerModeSettings !== 'undefined' && playerModeSettings.playerCount === 1) 
     ? playerModeSettings.questionsPerRound 
     : Math.min(3, players.length);
+
+  galerijStarterOrder = players
+    .map((p, i) => ({ i, seconds: p.seconds }))
+    .sort((a, b) => a.seconds - b.seconds || a.i - b.i)
+    .map(p => p.i)
+    .slice(0, galerieCount);
+  galerijStarterTurn = 0;
+  galleryPlayerIndex = galerijStarterOrder[0] ?? 0;
 
   galerijAssignedGalleries = {};
 
@@ -275,8 +285,10 @@ function renderGalerijHostUI() {
   
   const activePlayer = galleryPhase === 'aanvul' ? currentAanvulPlayer : players[galleryPlayerIndex];
   const playerName = activePlayer ? activePlayer.name : '—';
-  const nextPlayer = players[galleryPlayerIndex + 1];
-  const isLastGallery = galleryPlayerIndex === players.length - 1; 
+  const nextStarterTurn = galerijStarterTurn + 1;
+  const nextPlayerIndex = galerijStarterOrder[nextStarterTurn];
+  const nextPlayer = typeof nextPlayerIndex === 'number' ? players[nextPlayerIndex] : null;
+  const isLastGallery = nextPlayer === null; 
   const currentAnswerStatus = galleryPhase === 'main' 
     ? (galleryIndex < galleryImages.length ? galleryImages[galleryIndex].answer : '—') 
     : '—';
@@ -350,8 +362,8 @@ else if (galleryPhase === 'slideshow') {
         <button class="secondary" onclick="showNextSlideshow()">Volgende afbeelding</button>
         ${isLastGallery 
           ? `<button onclick="endGalerijRound()" style="margin-left:8px;">Einde ronde scherm</button>` 
-          : `${renderGalerijAssignmentControls(galleryPlayerIndex + 1)}
-             <button onclick="startGalerijForPlayer(${galleryPlayerIndex + 1})" style="margin-left:8px;">Start volgende galerij (${nextPlayer.name})</button>`}
+           : `${renderGalerijAssignmentControls(nextPlayerIndex)}
+             <button onclick="startNextGalerijStarter()" style="margin-left:8px;">Start volgende galerij (${nextPlayer.name})</button>`}
         <!-- ✅ Knop om display handmatig naar bespreekfase te sturen -->
         <button onclick="forceSlideshowPhaseOnDisplay()" class="secondary" style="margin-left:8px;">➡️ Forceer bespreekfase op display</button>
       </div>
@@ -374,8 +386,8 @@ else if (galleryPhase === 'slideshow') {
         
         ${isLastGallery 
           ? `<button onclick="endGalerijRound()" style="margin-left:8px;">Einde ronde scherm</button>` 
-          : `${renderGalerijAssignmentControls(galleryPlayerIndex + 1)}
-             <button onclick="startGalerijForPlayer(${galleryPlayerIndex + 1})" style="margin-left:8px;">Start volgende galerij (${nextPlayer.name})</button>`}
+          : `${renderGalerijAssignmentControls(nextPlayerIndex)}
+             <button onclick="startNextGalerijStarter()" style="margin-left:8px;">Start volgende galerij (${nextPlayer.name})</button>`}
       </div>
     `;
   }
@@ -422,6 +434,10 @@ function startGalerijForPlayer(playerIndex) {
   stopGalerijTimer(false);
 
   galleryPlayerIndex = playerIndex;
+  const orderTurn = galerijStarterOrder.indexOf(playerIndex);
+  if (orderTurn !== -1) {
+    galerijStarterTurn = orderTurn;
+  }
   let selectedGallery = null;
 
   if (galerijManualAssignmentEnabled) {
@@ -480,6 +496,18 @@ function startGalerijForPlayer(playerIndex) {
 
   startGalerijTimer();
   renderGalerijHostUI();
+}
+
+function startNextGalerijStarter() {
+  const nextTurn = galerijStarterTurn + 1;
+  if (nextTurn >= galerijStarterOrder.length) {
+    endGalerijRound();
+    return;
+  }
+
+  galerijStarterTurn = nextTurn;
+  const nextPlayerIndex = galerijStarterOrder[galerijStarterTurn];
+  startGalerijForPlayer(nextPlayerIndex);
 }
 
 function nextGalerijQuestion() {
@@ -625,7 +653,7 @@ function startSlideshowPhase() {
 function showNextSlideshow() {
     galleryIndex++;
     const isLastImage = galleryIndex >= galleryImages.length;
-    const isLastGallery = galleryPlayerIndex === players.length - 1;
+    const isLastGallery = galerijStarterTurn >= galerijStarterOrder.length - 1;
 
     if (isLastImage) {
         if (isLastGallery) {

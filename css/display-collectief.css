@@ -59,6 +59,16 @@
   display: none;
 }
 
+#finaleMainAnswers .collectief-answer-line.revealed-unfound .collectief-answer-points {
+  display: flex;
+}
+
+#finaleMainAnswers .finale-finder-name {
+  font-size: 1.1em;
+  color: #ffd17a;
+  white-space: nowrap;
+}
+
 .collectief-tussenstand-list {
   padding: 40px;
   display: flex;

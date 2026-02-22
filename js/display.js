@@ -3,6 +3,8 @@ let players = [];
 let defaultThreeSixNineMax = 12;
 let perRoundState = { max: defaultThreeSixNineMax };
 let allGalleryAnswers = []; 
+let openDeurIntroVideoActive = false;
+let openDeurPendingVraagData = null;
 
 function updateScene(sceneName) {
     document.querySelectorAll('.scene').forEach(s => {
@@ -16,7 +18,8 @@ function applyOverlayPosition(overlayEl) {
 
   const isLobbyScene = currentScene === 'lobby' ||
                       currentScene === 'waiting-game' ||
-                      currentScene === 'round-opendeur-lobby';
+                      currentScene === 'round-opendeur-lobby' ||
+                      currentScene === 'round-opendeur-video';
 
   const is369Scene = currentScene === 'round-369';
 
@@ -120,11 +123,19 @@ function connectWebSocket() {
         
         if (data.key === 'opendeur') {
           if (data.scene === 'scene-round-opendeur-lobby') {
+            stopOpenDeurIntroVideoPlayback();
             updateScene('round-opendeur-lobby');
             renderOpenDeurLobby(data);
           } else if (data.scene === 'scene-round-opendeur-vragensteller') {
+            stopOpenDeurIntroVideoPlayback();
             updateScene('round-opendeur-vragensteller');
             renderOpenDeurVragensteller(data);
+          } else if (data.scene === 'scene-round-opendeur-vraag') {
+            if (tryHandleOpenDeurIntroVideo(data)) {
+              break;
+            }
+            updateScene('round-opendeur-vraag');
+            renderOpenDeurVraag(data);
           }
           break;
         }
@@ -217,12 +228,17 @@ function handleAudioMessage(data) {
         
         if (data.key === 'opendeur') {
           if (data.scene === 'scene-round-opendeur-lobby') {
+            stopOpenDeurIntroVideoPlayback();
             updateScene('round-opendeur-lobby');
             renderOpenDeurLobby(data);
           } else if (data.scene === 'scene-round-opendeur-vragensteller') {
+            stopOpenDeurIntroVideoPlayback();
             updateScene('round-opendeur-vragensteller');
             renderOpenDeurVragensteller(data);
           } else if (data.scene === 'scene-round-opendeur-vraag') {
+            if (tryHandleOpenDeurIntroVideo(data)) {
+              break;
+            }
             updateScene('round-opendeur-vraag');
             renderOpenDeurVraag(data);
             if (data.questionCompleted) {
@@ -491,6 +507,11 @@ function renderThreeSixNine(data){
         roundStatusEl.textContent = "Einde van deze ronde";
         roundQuestionEl.textContent = ""; 
         if (questionNumbersContainer) questionNumbersContainer.innerHTML = ""; 
+        const photoContainer = document.getElementById('threeSixNinePhotoContainer');
+        if (photoContainer) {
+          photoContainer.style.display = 'none';
+          photoContainer.innerHTML = '';
+        }
     } else {
         
         const qText = data.currentQuestionDisplay || "—";
@@ -536,6 +557,15 @@ function renderThreeSixNine(data){
                     }
                 }, 0);
             }
+        }
+        else {
+          setTimeout(() => {
+            const photoContainer = document.getElementById('threeSixNinePhotoContainer');
+            if (photoContainer) {
+              photoContainer.style.display = 'none';
+              photoContainer.innerHTML = '';
+            }
+          }, 0);
         }
         
         // Audio indicator
@@ -634,6 +664,79 @@ function renderOpenDeurVragensteller(data) {
     renderPlayersBarCompact(data.players, data.activeChoosingPlayerIndex, 'od-vragensteller-scores');
 }
 
+  function stopOpenDeurIntroVideoPlayback() {
+    const videoPlayer = document.getElementById('openDeurIntroVideoPlayer');
+    const videoSource = document.getElementById('openDeurIntroVideoSource');
+
+    openDeurIntroVideoActive = false;
+    openDeurPendingVraagData = null;
+
+    if (!videoPlayer) return;
+
+    try {
+      videoPlayer.pause();
+      videoPlayer.currentTime = 0;
+    } catch (e) {}
+
+    videoPlayer.onended = null;
+    videoPlayer.onerror = null;
+
+    if (videoSource) {
+      videoSource.src = '';
+      videoPlayer.load();
+    }
+  }
+
+  function tryHandleOpenDeurIntroVideo(data) {
+    const introVideoUrl = data.introVideoUrl || data.currentQuestion?.introVideoUrl || '';
+
+    if (openDeurIntroVideoActive) {
+      openDeurPendingVraagData = { ...data, showIntroVideo: false };
+      return true;
+    }
+
+    if (!data.showIntroVideo || !introVideoUrl) {
+      return false;
+    }
+
+    const videoPlayer = document.getElementById('openDeurIntroVideoPlayer');
+    const videoSource = document.getElementById('openDeurIntroVideoSource');
+    if (!videoPlayer || !videoSource) {
+      return false;
+    }
+
+    openDeurIntroVideoActive = true;
+    openDeurPendingVraagData = { ...data, showIntroVideo: false };
+
+    const finishIntroVideo = () => {
+      if (!openDeurIntroVideoActive) return;
+
+      openDeurIntroVideoActive = false;
+      videoPlayer.onended = null;
+      videoPlayer.onerror = null;
+
+      const vraagData = openDeurPendingVraagData || { ...data, showIntroVideo: false };
+      openDeurPendingVraagData = null;
+
+      updateScene('round-opendeur-vraag');
+      renderOpenDeurVraag(vraagData);
+      renderPlayersBarUniversal(players, vraagData.activeIndex);
+    };
+
+    updateScene('round-opendeur-video');
+
+    videoSource.src = introVideoUrl;
+    videoPlayer.load();
+    videoPlayer.onended = finishIntroVideo;
+    videoPlayer.onerror = finishIntroVideo;
+
+    videoPlayer.play().catch(() => {
+      finishIntroVideo();
+    });
+
+    return true;
+  }
+
 
 function renderOpenDeurVraag(data) {
     if (!data.currentQuestion) return;
@@ -651,10 +754,10 @@ function renderOpenDeurVraag(data) {
         
         return `
             <div class="od-answer-line${!a.isAnswered ? ' unguessed' : ''}">
+            ${a.isAnswered ? `<div class="od-answer-points"><span>${points}</span></div>` : ''}
                 <div class="od-answer-text${isBlurred ? ' blurred' : ''}">
                     ${displayText}
                 </div>
-                ${a.isAnswered ? `<div class="od-answer-points"><span>${points}</span></div>` : ''}
             </div>
         `;
     }).join('');
@@ -811,10 +914,10 @@ function handlePuzzelDisplayUpdate(data) {
 
                         return `
                             <div class="puzzel-link-line${!link.found ? ' unguessed' : ''} ${link.found ? `found-link-${index}` : ''}">
+                            ${link.found ? `<div class="puzzel-link-points"><span>${points}</span></div>` : ''}
                                 <div class="puzzel-link-text${!link.found ? ' blurred' : ''}">
                                     ${displayText}
                                 </div>
-                                ${link.found ? `<div class="puzzel-link-points"><span>${points}</span></div>` : ''}
                             </div>
                         `;
                     })
@@ -1175,6 +1278,10 @@ function handleGalerijDisplayUpdate(data) {
 
       case 'scene-round-finale-main': {
         renderMiniLobby(displayPlayers, 'finaleMainMiniLobby');
+        const revealAllAnswers = !!data.revealAllAnswers;
+        const bothPlayersPassed = Array.isArray(data.playersWhoPassed) && data.playersWhoPassed.length >= 2;
+        const showFinderNames = revealAllAnswers && bothPlayersPassed;
+        const deductionSeconds = Number(data.deductionSeconds) > 0 ? Number(data.deductionSeconds) : 20;
       
         
         const answersContainer = document.getElementById('finaleMainAnswers');
@@ -1186,16 +1293,21 @@ function handleGalerijDisplayUpdate(data) {
               ? !!(answer.isFound || answer.found)
               : false;
             const finderName = typeof answer === 'object' ? (answer.finderName || '') : '';
+            const isVisible = found || revealAllAnswers;
+            const showPointsBadge = found || revealAllAnswers;
+            const pointsText = found ? `${deductionSeconds}` : '';
+            const revealClass = revealAllAnswers && !found ? ' revealed-unfound' : '';
             
             
-            const displayText = found ? text : text.replace(/./g, '█');
+            const displayText = isVisible ? text : text.replace(/./g, '█');
             
             return `
-              <div class="collectief-answer-line${found ? ' found' : ''}" data-index="${i}">
-                <div class="collectief-answer-text${found ? '' : ' blurred'}">
+              <div class="collectief-answer-line${found ? ' found' : ''}${revealClass}" data-index="${i}">
+                ${showPointsBadge ? `<div class="collectief-answer-points"><span>${pointsText}</span></div>` : ''}
+                <div class="collectief-answer-text${isVisible ? '' : ' blurred'}">
                   ${displayText}
-                  ${finderName ? `<span style="font-size: 0.7em; margin-left: 15px; color: #ffd17a;">(${finderName})</span>` : ''}
                 </div>
+                ${showFinderNames && found && finderName ? `<div class="finale-finder-name">✓ ${finderName}</div>` : ''}
               </div>
             `;
           }).join('');
@@ -1693,12 +1805,14 @@ function handleFinaleViewChange(data) {
       // Render antwoorden
       const answersContainer = document.getElementById('finaleMainAnswers');
       if (answersContainer && data.answers) {
+        const deductionSeconds = Number(data.deductionSeconds) > 0 ? Number(data.deductionSeconds) : 20;
         answersContainer.innerHTML = data.answers.map((answer, i) => {
           const text = typeof answer === 'string' ? answer : (answer.answer || answer.text || '');
           const found = true; // Altijd als gevonden tonen bij laatste vraag perspectief
           
           return `
             <div class="collectief-answer-line found" data-index="${i}">
+              <div class="collectief-answer-points"><span>${deductionSeconds}</span></div>
               <div class="collectief-answer-text">
                 ${text}
               </div>

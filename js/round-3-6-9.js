@@ -299,10 +299,8 @@ function nextThreeSixNineQuestion() {
   // Reset error count voor nieuwe vraag
   klok369_resetErrorCount();
   
-  // Reset foto visibility voor vragen met foto's
-  if (q.photoUrl || q.type === 'photo' || q.type === 'photo-multiple-choice') {
-    perRoundState.photoVisible = false;
-  }
+  // Reset foto visibility bij ELKE nieuwe vraag
+  perRoundState.photoVisible = false;
   
   highlightActive();
   
@@ -331,6 +329,7 @@ function markThreeSixNineAnswer(isRight) {
   if (!roundRunning || !perRoundState.currentQuestion) return;
 
   const currentPlayer = players[activePlayerIndex];
+  const currentQuestion = perRoundState.currentQuestion;
 
   if (isRight) {
     // KLOK RESET: Goed antwoord
@@ -363,11 +362,16 @@ function markThreeSixNineAnswer(isRight) {
     isRight,
     currentRoundName: 'threeSixNine',
     scene: 'round-369',
-    currentQuestionDisplay: perRoundState.currentQuestion?.text || "—",
+    questionType: currentQuestion.type || 'classic',
+    currentQuestionDisplay: currentQuestion.text || "—",
     currentQuestionIndex,
     maxQuestions: perRoundState.max,
     activePlayer: players[activePlayerIndex]?.name || '-',
     activeIndex: activePlayerIndex,
+    options: currentQuestion.options,
+    photoUrl: currentQuestion.photoUrl,
+    photoVisible: perRoundState.photoVisible || false,
+    audioUrl: currentQuestion.audioUrl,
     players
   });
 

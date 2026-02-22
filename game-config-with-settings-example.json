@@ -133,7 +133,8 @@
     {
       "from": "Emma",
       "question": "Noem landen die grenzen aan Duitsland",
-      "answers": ["Nederland", "België", "Frankrijk", "Zwitserland", "Oostenrijk", "Tsjechië", "Polen", "Denemarken", "Luxemburg"]
+      "answers": ["Nederland", "België", "Frankrijk", "Zwitserland", "Oostenrijk", "Tsjechië", "Polen", "Denemarken", "Luxemburg"],
+      "introVideoUrl": "assets/opendeur/emma-intro.mp4"
     },
     {
       "from": "Lucas",

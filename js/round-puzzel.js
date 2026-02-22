@@ -166,10 +166,16 @@ function setupPuzzelRound() {
   perRoundState.playerOrder = [];
   perRoundState.originalPlayer = null; 
   perRoundState.timerRunning = false; 
+  perRoundState.playersWhoStartedPuzzel = [];
+  perRoundState.puzzelStarterOrder = players
+    .map((p, i) => ({ i, seconds: p.seconds }))
+    .sort((a, b) => a.seconds - b.seconds || a.i - b.i)
+    .map(p => p.i);
+  perRoundState.currentPuzzelStarterTurn = 0;
 
   
-  const sortedPlayers = [...players].sort((a, b) => a.seconds - b.seconds);
-  activePlayerIndex = sortedPlayers[0].index;
+  activePlayerIndex = perRoundState.puzzelStarterOrder[0];
+  perRoundState.playersWhoStartedPuzzel.push(activePlayerIndex);
 
   currentQuestionEl.innerHTML = `
     <em>Puzzel: 3 puzzels. De kandidaat met de **laagste tijd** start de eerste puzzel.</em><br>
@@ -528,10 +534,10 @@ function passPuzzel() {
     perRoundState.playerOrder.push(activePlayerIndex);
   }
 
-  const allPlayersIndices = players.map((p,i) => i);
+  const allPlayersIndices = perRoundState.puzzelStarterOrder || players.map((p,i) => i);
   const remainingCandidates = allPlayersIndices
     .filter(idx => !perRoundState.playerOrder.includes(idx))
-    .sort((a,b) => players[a].seconds - players[b].seconds);
+    .sort((a,b) => players[a].seconds - players[b].seconds || a - b);
 
   if (remainingCandidates.length > 0) {
     activePlayerIndex = remainingCandidates[0];
@@ -560,25 +566,23 @@ function passPuzzel() {
 
 
 function determineNextPuzzleStarter() {
-  
-  if (!perRoundState.playersWhoStartedPuzzel) perRoundState.playersWhoStartedPuzzel = [];
+  if (!perRoundState.puzzelStarterOrder || !perRoundState.puzzelStarterOrder.length) {
+    perRoundState.puzzelStarterOrder = players
+      .map((p, i) => ({ i, seconds: p.seconds }))
+      .sort((a, b) => a.seconds - b.seconds || a.i - b.i)
+      .map(p => p.i);
+  }
 
-  
-  const availablePlayers = players
-    .map((p, i) => ({ ...p, index: i }))
-    .filter(p => !perRoundState.playersWhoStartedPuzzel.includes(p.index));
+  if (!Array.isArray(perRoundState.playersWhoStartedPuzzel)) {
+    perRoundState.playersWhoStartedPuzzel = [];
+  }
 
-  
-  availablePlayers.sort((a, b) => a.seconds - b.seconds);
-
-  if (availablePlayers.length > 0) {
-    
-    activePlayerIndex = availablePlayers[0].index;
+  const nextStarter = perRoundState.puzzelStarterOrder.find(idx => !perRoundState.playersWhoStartedPuzzel.includes(idx));
+  if (typeof nextStarter === 'number') {
+    activePlayerIndex = nextStarter;
     perRoundState.playersWhoStartedPuzzel.push(activePlayerIndex);
   } else {
-    
-    const highestScorer = [...players].sort((a, b) => b.seconds - a.seconds)[0];
-    activePlayerIndex = highestScorer.index;
+    activePlayerIndex = perRoundState.puzzelStarterOrder[0];
   }
 
   perRoundState.originalPlayer = activePlayerIndex; 
@@ -636,15 +640,8 @@ function showPuzzelSolution(puzzel) {
   perRoundState.currentPuzzelIndex++;
 
   if (perRoundState.currentPuzzelIndex < perRoundState.puzzles.length) {
-    
-    if (perRoundState.currentPuzzelIndex === 2 && perRoundState.puzzles.length > 2) {
-      const highestScorer = [...players].sort((a, b) => b.seconds - a.seconds)[0];
-      activePlayerIndex = highestScorer.index;
-      flash(`Hoogste tijd: ${players[activePlayerIndex].name} start Puzzel 3.`);
-    } else {
-      activePlayerIndex = perRoundState.originalPlayer; 
-      flash(`Puzzel gestart door ${players[activePlayerIndex].name} start Puzzel ${perRoundState.currentPuzzelIndex + 1}.`);
-    }
+    determineNextPuzzleStarter();
+    flash(`${players[activePlayerIndex].name} start Puzzel ${perRoundState.currentPuzzelIndex + 1}.`);
 
     document.getElementById('roundControls').innerHTML =
       '<button onclick="nextPuzzelQuestion()">Start Volgende Puzzel</button>';

@@ -2,6 +2,11 @@ function shuffle(arr) {
   return [...arr].sort(() => Math.random() - 0.5);
 }
 
+function getOpenDeurIntroVideoUrl(question) {
+  if (!question) return '';
+  return question.introVideoUrl || question.videoUrl || question.introVideo || question.video || '';
+}
+
 function setupOpenDeurRound() {
   // Stop klok als deze loopt (exclusief voor 3-6-9)
   if (typeof klok369_stopLoop === 'function') {
@@ -32,9 +37,11 @@ function setupOpenDeurRound() {
       played: false 
   }));
 
-  perRoundState.remainingPlayers = [...players]
-    .sort((a,b) => a.seconds - b.seconds)
-    .map(p => p.index);
+  perRoundState.remainingPlayers = players
+    .map((p, i) => ({ i, seconds: p.seconds }))
+    .sort((a, b) => a.seconds - b.seconds || a.i - b.i)
+    .map(p => p.i);
+  perRoundState.openDeurStarterOrder = [...perRoundState.remainingPlayers];
   perRoundState.playersWhoChoseQuestion = []; 
   perRoundState.currentQuestion = null;
   currentQuestionIndex = 0;
@@ -77,59 +84,12 @@ function renderOpenDeurChoices() {
   });
 }
 
-function nextOpenDeurTurn() {
-  
-  const candidates = perRoundState.remainingPlayers
-    .filter(idx => !perRoundState.playersWhoChoseQuestion.includes(idx))
-    .sort((a,b) => players[a].seconds - players[b].seconds);
-
-  if(candidates.length === 0){
-    
-    flash('Open Deur-ronde afgerond!');
-    currentQuestionEl.innerHTML = '<em>Einde van de Open Deur-ronde.</em>';
-    document.getElementById('opendeurChoices').innerHTML = '';
-    document.getElementById('roundControls').innerHTML = '';
-    perRoundState.currentQuestion = null;
-    
-    
-    sendDisplayUpdate({ type: 'round_end' });
-    return;
-  }
-
-perRoundState.currentQuestion = null;
-
-const remainingQuestions = perRoundState.questions.filter(q => !q.played);
-if(remainingQuestions.length === 0){
-    flash('Open Deur-ronde afgerond!');
-    currentQuestionEl.innerHTML = '<em>Einde van de Open Deur-ronde.</em>';
-    document.getElementById('opendeurChoices').innerHTML = '';
-    document.getElementById('roundControls').innerHTML = '';
-    return;
-}
-
-
-activePlayerIndex = candidates[0];
-highlightActive();
-resetRoundControls();
-
-currentQuestionEl.innerHTML = `
-  <em>${players[activePlayerIndex].name} mag een vraag kiezen van de overgebleven vraagstellers.</em>
-  <div id="opendeurChoices" style="margin-top:1em"></div>
-`;
-renderOpenDeurChoices();
-
-
-  
-  sendOpenDeurDisplayUpdate('update', 'scene-round-opendeur-lobby');
-}
-
-
-
 function chooseOpenDeurQuestion(index){
   const q = perRoundState.questions[index];
   if(q.played) return;
 
   q.played = true;
+  q.introVideoPlayed = false;
   perRoundState.currentQuestion = q;
   
   q.answersDisplay = q.answers.slice(0, 4); 
@@ -145,7 +105,7 @@ function chooseOpenDeurQuestion(index){
   
   perRoundState.currentAnswerPlayers = [...perRoundState.remainingPlayers]
     .filter(idx => !q.passedPlayers.includes(idx))
-    .sort((a,b)=>players[a].seconds - players[b].seconds);
+    .sort((a,b)=>players[a].seconds - players[b].seconds || a - b);
   
   
   currentQuestionEl.innerHTML = `
@@ -288,9 +248,8 @@ function showRemainingQuestionsForNextPlayer(){
 
 function nextOpenDeurTurn() {
   
-  const candidates = perRoundState.remainingPlayers
-    .filter(idx => !perRoundState.playersWhoChoseQuestion.includes(idx))
-    .sort((a,b) => players[a].seconds - players[b].seconds);
+  const candidates = (perRoundState.openDeurStarterOrder || perRoundState.remainingPlayers || [])
+    .filter(idx => !perRoundState.playersWhoChoseQuestion.includes(idx));
 
   if(candidates.length === 0){
     
@@ -340,6 +299,8 @@ function passOpenDeur(){
   
   perRoundState.currentAnswerPlayers = perRoundState.currentAnswerPlayers
     .filter(idx => !q.passedPlayers.includes(idx));
+
+  perRoundState.currentAnswerPlayers.sort((a,b) => players[a].seconds - players[b].seconds || a - b);
 
   if(perRoundState.currentAnswerPlayers.length > 0){
     
@@ -392,6 +353,11 @@ if (scene === 'scene-round-opendeur-vragensteller') {
 
     if (scene === 'scene-round-opendeur-vraag' && perRoundState.currentQuestion) {
         const q = perRoundState.currentQuestion;
+        const introVideoUrl = getOpenDeurIntroVideoUrl(q);
+        const showIntroVideo = !!introVideoUrl && !q.introVideoPlayed;
+        if (showIntroVideo) {
+          q.introVideoPlayed = true;
+        }
         const currentAnswerPlayerIndex = perRoundState.currentAnswerPlayers 
               ? perRoundState.currentAnswerPlayers[0] 
               : activePlayerIndex;
@@ -403,8 +369,12 @@ if (scene === 'scene-round-opendeur-vragensteller') {
                 text: text,
                 isAnswered: q.answered[i]
             })),
-            timeGain: 20
+          timeGain: 20,
+          introVideoUrl: introVideoUrl || null
         };
+
+        data.introVideoUrl = introVideoUrl || null;
+        data.showIntroVideo = showIntroVideo;
 
         data.activeAnsweringPlayer = currentAnswerPlayerIndex !== undefined ? players[currentAnswerPlayerIndex].name : '—';
         data.activeAnsweringPlayerIndex = currentAnswerPlayerIndex;
@@ -444,9 +414,8 @@ returnBtn.addEventListener('click', () => {
     perRoundState.allPlayersHavePassed = false;
     
     // Haal volgende beschikbare kandidaat
-    const remainingCandidates = perRoundState.remainingPlayers
-        .filter(idx => !perRoundState.playersWhoChoseQuestion.includes(idx))
-        .sort((a,b) => players[a].seconds - players[b].seconds);
+    const remainingCandidates = (perRoundState.openDeurStarterOrder || perRoundState.remainingPlayers || [])
+      .filter(idx => !perRoundState.playersWhoChoseQuestion.includes(idx));
 
     if (remainingCandidates.length > 0) {
         activePlayerIndex = remainingCandidates[0]; 

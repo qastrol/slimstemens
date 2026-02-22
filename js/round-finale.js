@@ -202,6 +202,8 @@ function setupFinaleRound() {
 function nextFinaleQuestion() {
     stopAllTimers();
     stopFinaleTimer(false); 
+    perRoundState.finale.awaitingHostNext = false;
+    perRoundState.finale.revealAllAnswers = false;
     
     perRoundState.finale.currentQuestionIndex++;
     const qIndex = perRoundState.finale.currentQuestionIndex;
@@ -250,6 +252,11 @@ function nextFinaleQuestion() {
 
 
 function startFinaleTimer() {
+    if (perRoundState?.finale?.awaitingHostNext) {
+        flash('Vraag is afgerond. Klik op "Start Volgende Vraag".', 'info');
+        return;
+    }
+
     const activePlayer = players.find(p => p.index === activePlayerIndex);
     if (!activePlayer) {
         flash('Fout: Geen actieve speler voor timer.');
@@ -323,6 +330,11 @@ function resetFinaleTimer() {
 
 
 function markFinaleAnswer(answerIndex) {
+    if (perRoundState?.finale?.awaitingHostNext) {
+        flash('Vraag is afgerond. Klik op "Start Volgende Vraag".', 'info');
+        return;
+    }
+
     const currentQuestion = perRoundState.finale.currentQuestion;
     
     if (currentQuestion.foundAnswers.length >= currentQuestion.answers.length) {
@@ -380,7 +392,10 @@ function markFinaleAnswer(answerIndex) {
     if (currentQuestion.foundAnswers.length === currentQuestion.answers.length) {
         
         stopFinaleTimer(false); 
-        nextFinaleQuestion();
+        perRoundState.finale.awaitingHostNext = true;
+        flash('Alle antwoorden gevonden. Klik op "Start Volgende Vraag" om verder te gaan.', 'info');
+        renderFinaleHostUI('answered');
+        sendFinaleDisplayUpdate('update', 'scene-round-finale-main');
         return;
     }
     
@@ -393,6 +408,11 @@ function markFinaleAnswer(answerIndex) {
 
 
 function passFinale() {
+    if (perRoundState?.finale?.awaitingHostNext) {
+        flash('Vraag is afgerond. Klik op "Start Volgende Vraag".', 'info');
+        return;
+    }
+
     const currentQuestion = perRoundState.finale.currentQuestion;
     const activePlayer = players.find(p => p.index === activePlayerIndex);
     
@@ -428,8 +448,11 @@ function passFinale() {
     
     
     if (currentQuestion.playersWhoPassed.includes(opponentIndex)) {
-        flash(`Beide spelers hebben gepast. Volgende vraag.`, 'info');
-        nextFinaleQuestion();
+        perRoundState.finale.awaitingHostNext = true;
+        perRoundState.finale.revealAllAnswers = true;
+        flash('Beide spelers hebben gepast. Klik op "Start Volgende Vraag" om verder te gaan.', 'info');
+        renderFinaleHostUI('answered');
+        sendFinaleDisplayUpdate('update', 'scene-round-finale-main');
     } else {
         
         activePlayerIndex = opponentIndex;
@@ -879,7 +902,9 @@ function sendFinaleDisplayUpdate(action, scene, extraData = {}) {
         question: currentQuestion?.question || 'Bepalen finalisten...',
         answers: answersData,
         allAnswersFound: currentQuestion?.foundAnswers.length === currentQuestion?.answers.length,
+        revealAllAnswers: !!perRoundState?.finale?.revealAllAnswers,
         playersWhoPassed: currentQuestion?.playersWhoPassed || [],
+        deductionSeconds: FINALE_POINTS_DEDUCTION,
         opponentIndex: opponentIndex,
         timerSeconds: finaleLoopTimerSeconds, 
         timerRunning: finaleTimerRunning, 

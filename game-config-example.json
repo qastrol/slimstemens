@@ -85,7 +85,9 @@
   "opendeur": [
     {
       "text": "Wat is de kleinste eenheid van het leven?",
-      "answers": ["Cel"]
+      "answers": ["Cel"],
+      "videoUrl": "assets/opendeur/cel-intro.mp4",
+      "from": "Bioloog"
     },
     {
       "text": "Hoeveel continenten zijn er?",

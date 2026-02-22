@@ -103,10 +103,15 @@ function setupCollectiefRound() {
     }));
     
     perRoundState.collectief.currentQuestionIndex = 0;
+    perRoundState.collectief.starterOrder = players
+        .map((p, i) => ({ i, seconds: p.seconds }))
+        .sort((a, b) => a.seconds - b.seconds || a.i - b.i)
+        .map(p => p.i)
+        .slice(0, questionsCount);
+    perRoundState.collectief.currentStarterTurn = 0;
     
     
-    const sortedPlayers = [...players].sort((a, b) => a.seconds - b.seconds);
-    activePlayerIndex = sortedPlayers[0].index;
+    activePlayerIndex = perRoundState.collectief.starterOrder[0];
     highlightActive();
 
     
@@ -245,11 +250,10 @@ function passCollectief(isScoreAnnounced = false) {
 
     if (availablePlayersIndices.length > 0) {
         
-        const nextPlayer = availablePlayersIndices
-            .map(index => players[index])
-            .sort((a, b) => a.seconds - b.seconds)[0]; 
+        const nextPlayerIndex = availablePlayersIndices
+            .sort((a, b) => players[a].seconds - players[b].seconds || a - b)[0]; 
 
-        activePlayerIndex = nextPlayer.index;
+        activePlayerIndex = nextPlayerIndex;
         highlightActive(); 
 
         flash(`${players[activePlayerIndex].name} mag aanvullen.`, 'info');
@@ -295,11 +299,13 @@ function nextCollectiefQuestion() {
     perRoundState.collectief.currentQuestionIndex++;
     
     if (perRoundState.collectief.currentQuestionIndex < perRoundState.collectief.questions.length) {
-        
-        
-        
-        const sortedPlayers = [...players].sort((a, b) => a.seconds - b.seconds);
-        activePlayerIndex = sortedPlayers[0].index; 
+        perRoundState.collectief.currentStarterTurn = (perRoundState.collectief.currentStarterTurn || 0) + 1;
+
+        if (perRoundState.collectief.currentStarterTurn < perRoundState.collectief.starterOrder.length) {
+            activePlayerIndex = perRoundState.collectief.starterOrder[perRoundState.collectief.currentStarterTurn];
+        } else {
+            activePlayerIndex = perRoundState.collectief.starterOrder[perRoundState.collectief.starterOrder.length - 1];
+        }
         
         highlightActive();
 

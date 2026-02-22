@@ -700,7 +700,8 @@ body {
 .od-answer-line {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 20px;
   margin: 20px 0;
   padding: 15px 30px;
   background: rgba(0, 0, 0, 0.35);
@@ -710,6 +711,7 @@ body {
 }
 
 .od-answer-text {
+  flex: 1;
   font-size: 3.5em;
   font-weight: bold;
   color: white;
@@ -1197,13 +1199,15 @@ body {
 .puzzel-link-line {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 20px;
   padding: 15px 30px;
   background: rgba(255, 255, 255, 0.05);
   border-radius: 10px;
 }
 
 .puzzel-link-text {
+  flex: 1;
   font-size: 3.5em;
   font-weight: bold;
   color: white;
@@ -1405,9 +1409,9 @@ body {
 }
 
 .galerij-answer-box.found {
-  background-color: #ffd17a;
-  color: #071021;
-  font-weight: bold;
+  background: rgba(0, 0, 0, 0.35);
+  color: white;
+  font-weight: 600;
 }
 
 
@@ -1498,7 +1502,8 @@ body {
 .galerij-aanvul-answers-list .answer-line {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 16px;
   margin: 10px 0;
   padding: 10px 20px;
   background: rgba(0, 0, 0, 0.35);
@@ -1511,11 +1516,12 @@ body {
 
 
 .answer-line.found {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.35);
 }
 
 
 .galerij-aanvul-answers-list .answer-text {
+  flex: 1;
   font-size: 1.5em;
   font-weight: bold;
   color: white;

@@ -104,6 +104,17 @@ function getQuestionsForRound(roundKey, defaultQuestions = []) {
         });
       }
     }
+
+    // Normaliseer Open Deur vragen
+    if (roundKey === 'opendeur') {
+      normalizedQuestions = configQuestions.map((q, index) => ({
+        ...q,
+        from: q.from || q.questioner || q.vragensteller || `Vragensteller ${index + 1}`,
+        question: q.question || q.text || 'Open Deur vraag',
+        answers: Array.isArray(q.answers) ? q.answers : [],
+        introVideoUrl: q.introVideoUrl || q.videoUrl || q.introVideo || q.video || null
+      }));
+    }
     
     // Normaliseer galerij vragen: zorg dat 'images' array bestaat
     if (roundKey === 'galerij') {
