@@ -9,8 +9,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
     "desktop": "electron .",
-    "dist:win": "electron-builder --win nsis",
-    "dist:portable": "electron-builder --win portable"
+    "clean:dist": "node -e \"const fs=require('fs'); fs.rmSync('dist',{recursive:true,force:true});\"",
+    "dist:win": "npm run clean:dist && electron-builder --win nsis",
+    "dist:portable": "npm run clean:dist && electron-builder --win portable"
   },
   "keywords": [],
   "license": "ISC",
@@ -27,6 +28,7 @@
     "productName": "De Slimste Mens",
     "executableName": "DeSlimsteMens",
     "asar": true,
+    "copyright": "",
     "icon": "assets/slimstemens.ico",
     "artifactName": "DeSlimsteMens.${ext}",
     "files": [
