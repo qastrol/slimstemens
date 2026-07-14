@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>De Slimste Mens — Host Tool (Simulatie)</title>
+  <link rel="stylesheet" href="css/fonts.css" />
   <link rel="stylesheet" href="css/index.css" />
   <style>
   </style>
@@ -37,6 +38,13 @@
           <label>
             <input type="checkbox" id="bumpersEnabledCheckbox" checked />
             Rondebumpers tonen
+          </label>
+        </div>
+
+        <div style="margin-top:10px;">
+          <label>
+            <input type="checkbox" id="safeRoundNavigationCheckbox" />
+            Veilige rondeknoppen (voorkom vroegtijdig afkappen)
           </label>
         </div>
         
@@ -246,10 +254,20 @@ if (uploadConfigBtn) {
     
     try {
       const file = fileInput.files[0];
-      await uploadConfigFile(file);
-      document.getElementById('configStatus').textContent = 
-        `✓ Configuratie geladen: "${gameConfig.metadata?.name || 'Onbekend'}"`;
-      flash('Configuratie succesvol geladen!', 'good');
+      const loadedConfig = await uploadConfigFile(file);
+      const warnings = Array.isArray(loadedConfig?._mediaWarnings) ? loadedConfig._mediaWarnings : [];
+      const configStatusEl = document.getElementById('configStatus');
+
+      if (warnings.length > 0) {
+        const warningPreview = warnings.slice(0, 2).join(' | ');
+        configStatusEl.textContent =
+          `⚠ Configuratie geladen met ${warnings.length} media-waarschuwing(en). Voorbeeld: ${warningPreview}`;
+        flash(`Configuratie geladen, maar ${warnings.length} media-pad(en) zijn ongeldig. Controleer Galerij/Collectief.`, 'wrong');
+      } else {
+        configStatusEl.textContent =
+          `✓ Configuratie geladen: "${gameConfig.metadata?.name || 'Onbekend'}"`;
+        flash('Configuratie succesvol geladen!', 'good');
+      }
     } catch (error) {
       document.getElementById('configStatus').textContent = `✗ Fout: ${error.message}`;
       flash(`Fout bij laden: ${error.message}`, 'wrong');

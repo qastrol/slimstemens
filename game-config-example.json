@@ -6,6 +6,12 @@
     "note": "Vul hier je vragen in per ronde. Lege rondes gebruiken standaard vragen."
   },
   "settings": {
+    "branding": {
+      "titlePrefix": "de slimste mens",
+      "titleSuffix": "van twitch",
+      "logoPath": "assets/slimstemens.png",
+      "description": "Pas titleSuffix aan naar bijvoorbeeld 'van friesland'"
+    },
     "threeSixNine": {
       "shuffle": false,
       "maxQuestions": 15,

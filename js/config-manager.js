@@ -6,6 +6,39 @@
 let gameConfig = null;
 let configLoaded = false;
 
+const DEFAULT_BRANDING_SETTINGS = Object.freeze({
+  titlePrefix: 'de slimste mens',
+  titleSuffix: 'van twitch',
+  logoPath: 'assets/slimstemens.png'
+});
+
+function normalizeBrandingSettings(branding) {
+  const merged = {
+    ...DEFAULT_BRANDING_SETTINGS,
+    ...(branding || {})
+  };
+
+  return {
+    titlePrefix: String(merged.titlePrefix || DEFAULT_BRANDING_SETTINGS.titlePrefix).trim() || DEFAULT_BRANDING_SETTINGS.titlePrefix,
+    titleSuffix: String(merged.titleSuffix || DEFAULT_BRANDING_SETTINGS.titleSuffix).trim() || DEFAULT_BRANDING_SETTINGS.titleSuffix,
+    logoPath: String(merged.logoPath || DEFAULT_BRANDING_SETTINGS.logoPath).trim() || DEFAULT_BRANDING_SETTINGS.logoPath
+  };
+}
+
+function getBrandingSettings() {
+  const branding = gameConfig?.settings?.branding;
+  return normalizeBrandingSettings(branding);
+}
+
+function getBrandingFullTitle() {
+  const branding = getBrandingSettings();
+  const combined = `${branding.titlePrefix} ${branding.titleSuffix}`.replace(/\s+/g, ' ').trim();
+  if (!combined) {
+    return 'De Slimste Mens van Twitch';
+  }
+  return combined.charAt(0).toUpperCase() + combined.slice(1);
+}
+
 function setPendingUiConfig(config) {
   if (typeof window === 'undefined') {
     return;
@@ -17,6 +50,118 @@ function setPendingUiConfig(config) {
   if (typeof window.applyUiSettingsFromConfig === 'function') {
     window.applyUiSettingsFromConfig(config);
   }
+}
+
+function collectMediaPathChecks(config) {
+  const checks = [];
+
+  if (Array.isArray(config?.galerij)) {
+    config.galerij.forEach((gallery, galleryIndex) => {
+      if (!Array.isArray(gallery?.images)) {
+        return;
+      }
+
+      gallery.images.forEach((img, imageIndex) => {
+        const path = typeof img?.src === 'string' ? img.src.trim() : '';
+        if (!path) {
+          return;
+        }
+
+        checks.push({
+          round: 'galerij',
+          label: `Galerij \"${gallery?.theme || `#${galleryIndex + 1}`}\" foto ${imageIndex + 1}`,
+          path
+        });
+      });
+    });
+  }
+
+  if (Array.isArray(config?.collectief)) {
+    config.collectief.forEach((entry, entryIndex) => {
+      const rawPath = entry?.video || entry?.videoUrl || entry?.clip;
+      const path = typeof rawPath === 'string' ? rawPath.trim() : '';
+      if (!path) {
+        return;
+      }
+
+      checks.push({
+        round: 'collectief',
+        label: `Collectief Geheugen fragment ${entryIndex + 1}`,
+        path
+      });
+    });
+  }
+
+  return checks;
+}
+
+function shouldSkipRemoteMediaPath(path) {
+  return /^(https?:|data:|blob:)/i.test(path);
+}
+
+async function checkMediaPathExists(path) {
+  if (!path || shouldSkipRemoteMediaPath(path)) {
+    return true;
+  }
+
+  try {
+    const headResponse = await fetch(path, {
+      method: 'HEAD',
+      cache: 'no-store'
+    });
+
+    if (headResponse.ok) {
+      return true;
+    }
+
+    if (headResponse.status !== 405 && headResponse.status !== 501) {
+      return false;
+    }
+  } catch (error) {
+    // Fallback naar GET voor servers die HEAD niet ondersteunen.
+  }
+
+  try {
+    const getResponse = await fetch(path, {
+      method: 'GET',
+      cache: 'no-store'
+    });
+    return getResponse.ok;
+  } catch (error) {
+    return false;
+  }
+}
+
+async function validateConfigMediaPaths(config) {
+  const checks = collectMediaPathChecks(config);
+  if (checks.length === 0) {
+    return [];
+  }
+
+  const availabilityByPath = new Map();
+  const uniquePaths = [...new Set(checks.map(item => item.path))];
+
+  await Promise.all(uniquePaths.map(async (path) => {
+    const exists = await checkMediaPathExists(path);
+    availabilityByPath.set(path, exists);
+  }));
+
+  const warnings = [];
+  checks.forEach((item) => {
+    if (!availabilityByPath.get(item.path)) {
+      warnings.push(`${item.label}: pad niet gevonden (${item.path})`);
+    }
+  });
+
+  return warnings;
+}
+
+function storeConfigMediaWarnings(warnings) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.configMediaWarnings = Array.isArray(warnings) ? warnings : [];
 }
 
 /**
@@ -32,9 +177,16 @@ async function loadGameConfig() {
     }
     
     const config = await response.json();
+    const mediaWarnings = await validateConfigMediaPaths(config);
+    if (mediaWarnings.length > 0) {
+      console.warn('⚠️ Config media-waarschuwingen:', mediaWarnings);
+    }
+
+    config._mediaWarnings = mediaWarnings;
     gameConfig = config;
     configLoaded = true;
     console.log('Game configuratie geladen:', config);
+    storeConfigMediaWarnings(mediaWarnings);
     setPendingUiConfig(config);
   } catch (error) {
     console.warn('Fout bij laden van game-config.json:', error.message);
@@ -50,6 +202,13 @@ function getDefaultConfig() {
     metadata: {
       name: "Standaard Config",
       description: "Standaard configuratie (geen aangepaste vragen)"
+    },
+    settings: {
+      branding: {
+        titlePrefix: DEFAULT_BRANDING_SETTINGS.titlePrefix,
+        titleSuffix: DEFAULT_BRANDING_SETTINGS.titleSuffix,
+        logoPath: DEFAULT_BRANDING_SETTINGS.logoPath
+      }
     },
     threeSixNine: [],
     opendeur: [],
@@ -326,9 +485,15 @@ async function uploadConfigFile(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         const config = JSON.parse(event.target.result);
+        const mediaWarnings = await validateConfigMediaPaths(config);
+        if (mediaWarnings.length > 0) {
+          console.warn('⚠️ Config media-waarschuwingen:', mediaWarnings);
+        }
+
+        config._mediaWarnings = mediaWarnings;
         gameConfig = config;
         configLoaded = true;
         console.log('Configuratie succesvol geupload:', config);
@@ -360,6 +525,7 @@ async function uploadConfigFile(file) {
         }
 
         setPendingUiConfig(config);
+        storeConfigMediaWarnings(mediaWarnings);
         
         resolve(config);
       } catch (error) {

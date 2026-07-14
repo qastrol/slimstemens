@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>De Slimste Mens - Display</title>
+    <link rel="stylesheet" href="css/fonts.css">
     <link rel="stylesheet" href="css/display.css">
     <link rel="stylesheet" href="css/display-opendeur.css">
   <link rel="stylesheet" href="css/display-collectief.css">
@@ -10,7 +11,7 @@
 <body>
     <!-- 🎬 SCENE 1: Geen verbinding -->
     <div id="scene-no-connection" class="scene">
-        <div class="initial-title-bar">
+      <div class="initial-title-bar" data-branding-mode="minimal">
             de slimste mens
             <img src="assets/slimstemens.png" alt="Het Slimste Mens logo">
             van twitch
@@ -31,7 +32,7 @@
     </div>
     <!-- 🎬 SCENE 2: Verbonden met server -->
     <div id="scene-waiting-host" class="scene">
-        <div class="initial-title-bar">
+      <div class="initial-title-bar" data-branding-mode="minimal">
             de slimste mens
             <img src="assets/slimstemens.png" alt="logo">
             van twitch
@@ -42,7 +43,7 @@
 
     <!-- 🎬 SCENE 3: Wachten op spel -->
     <div id="scene-waiting-game" class="scene">
-        <div class="initial-title-bar">
+      <div class="initial-title-bar" data-branding-mode="minimal">
             de slimste mens
             <img src="assets/slimstemens.png" alt="logo">
             van twitch
@@ -677,6 +678,30 @@
     </div>
 
     <div id="flashMessage"></div>
+    <script>
+      (function setupDisplayScaling() {
+        const baseWidth = 1920;
+        const baseHeight = 1080;
+
+        function applyScale() {
+          const viewportWidth = window.innerWidth;
+          const viewportHeight = window.innerHeight;
+          const scale = Math.min(viewportWidth / baseWidth, viewportHeight / baseHeight);
+          const offsetX = (viewportWidth - baseWidth * scale) / 2;
+          const offsetY = (viewportHeight - baseHeight * scale) / 2;
+
+          const root = document.documentElement;
+          root.style.setProperty('--display-scale', String(scale));
+          root.style.setProperty('--display-offset-x', `${offsetX}px`);
+          root.style.setProperty('--display-offset-y', `${offsetY}px`);
+        }
+
+        window.addEventListener('resize', applyScale);
+        window.addEventListener('DOMContentLoaded', applyScale);
+        applyScale();
+      })();
+    </script>
+    <script src="js/config-manager.js"></script>
     <script src="js/display.js"></script>
 </body>
 </html>

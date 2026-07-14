@@ -6,6 +6,12 @@
     "note": "Vul hier je aangepaste vragen in per ronde. Rondes die leeg zijn of ontbreken gebruiken de standaard vragen. Kijk in CONFIG_MANAGER_README.md of QUICK_START_CONFIG.md voor voorbeelden."
   },
   "settings": {
+    "branding": {
+      "titlePrefix": "de slimste mens",
+      "titleSuffix": "van twitch",
+      "logoPath": "assets/slimstemens.png",
+      "_comment": "Pas titleSuffix aan (bijv. 'van friesland') om de titelbalktekst overal te wijzigen"
+    },
     "playerMode": {
       "playerCount": 3,
       "questionsPerRound": 1,

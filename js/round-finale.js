@@ -13,17 +13,6 @@ let finaleTimerInterval = null;
 let finaleTimerRunning = false;
 let finaleLoopTimerSeconds = 0; 
 
-
-function shuffleArray(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-  return array;
-}
-
-
-
 function getOpponentIndex(currentPlayerOriginalIndex) {
     
     const currentPlayerIndexInFinalsArray = players.findIndex(p => p.index === currentPlayerOriginalIndex);
@@ -140,6 +129,8 @@ function setupFinaleRound() {
     }
     
     perRoundState.finale = perRoundState.finale || {};
+    perRoundState.finale.gameEnded = false;
+    perRoundState.finale.awaitingHostNext = false;
     
     // Bewaar ALLE originele spelers in originele volgorde voor outro
     perRoundState.finale.allOriginalPlayersForOutro = [...players].map(p => ({...p}));
@@ -166,14 +157,14 @@ function setupFinaleRound() {
     
     if (shouldShuffle && customQuestions.length > 0 && defaultQuestionCount > 0) {
         // Beide custom en standaard aanwezig: shuffle ze apart, custom eerst
-        const shuffledCustom = shuffleArray(customQuestions.slice());
+        const shuffledCustom = (typeof shuffleArrayShared === 'function') ? shuffleArrayShared(customQuestions) : customQuestions.slice();
         const defaultQuestionsArray = finaleVragen.slice(0, defaultQuestionCount);
-        const shuffledDefault = shuffleArray(defaultQuestionsArray);
+        const shuffledDefault = (typeof shuffleArrayShared === 'function') ? shuffleArrayShared(defaultQuestionsArray) : defaultQuestionsArray.slice();
         orderedQuestions = [...shuffledCustom, ...shuffledDefault];
         console.log(`✅ Finale: ${shuffledCustom.length} custom + ${shuffledDefault.length} standaard vragen gehusseld`);
     } else if (shouldShuffle) {
         // Alleen custom of alleen standaard: normale shuffle
-        orderedQuestions = shuffleArray(questionsToUse.slice());
+        orderedQuestions = (typeof shuffleArrayShared === 'function') ? shuffleArrayShared(questionsToUse) : questionsToUse.slice();
     }
     
     perRoundState.finale.questions = orderedQuestions.map(q => ({
@@ -182,10 +173,6 @@ function setupFinaleRound() {
         playersWhoPassed: []
     }));
     perRoundState.finale.finalists = [];
-    
-    
-    determineFinalistsAndSetupPreRound(); 
-
 
     if (!determineFinalistsAndSetupPreRound()) {
         roundRunning = false;
@@ -200,6 +187,10 @@ function setupFinaleRound() {
 
 
 function nextFinaleQuestion() {
+    if (!roundRunning || perRoundState?.finale?.gameEnded) {
+        flash('Finale is al afgelopen. Start een nieuwe ronde om verder te gaan.', 'info');
+        return;
+    }
     stopAllTimers();
     stopFinaleTimer(false); 
     perRoundState.finale.awaitingHostNext = false;
@@ -252,6 +243,10 @@ function nextFinaleQuestion() {
 
 
 function startFinaleTimer() {
+    if (!roundRunning || perRoundState?.finale?.gameEnded) {
+        flash('Finale is al afgelopen. Timer kan niet meer gestart worden.', 'info');
+        return;
+    }
     if (perRoundState?.finale?.awaitingHostNext) {
         flash('Vraag is afgerond. Klik op "Start Volgende Vraag".', 'info');
         return;
@@ -268,35 +263,30 @@ function startFinaleTimer() {
     
     finaleLoopTimerSeconds = 0;
 
-    
-    if (typeof playSFX === 'function') {
-        try { sendDisplayUpdate({ type: 'audio', action: 'loopStart', src: 'SFX/klok2.mp3' }); } catch(e) {}
+    if (typeof startThinkingCountdownTimer !== 'function') {
+        flash('Fout: startThinkingCountdownTimer niet gevonden in core.js.');
+        return;
     }
 
-    flash(`Klok gestart voor ${activePlayer.name}.`);
-
-    finaleTimerInterval = setInterval(() => {
-        finaleLoopTimerSeconds++;
-        
-        
-        activePlayer.seconds = Math.max(0, activePlayer.seconds - 1);
-        
-        renderPlayers();
-        
-        
-        sendFinaleDisplayUpdate('update', 'scene-round-finale-main');
-        
-        
-        if (activePlayer.seconds <= 0) {
-            clearInterval(finaleTimerInterval);
+    startThinkingCountdownTimer({
+        getActivePlayer: () => players.find(p => p.index === activePlayerIndex),
+        onStartMessage: `Klok gestart voor ${activePlayer.name}.`,
+        onTick: () => {
+            finaleLoopTimerSeconds++;
+            renderPlayers();
+            sendFinaleDisplayUpdate('update', 'scene-round-finale-main');
+        },
+        onTimeout: (player) => {
             stopFinaleTimer(true);
-            flash(`${activePlayer.name} is door zijn tijd heen!`);
+            flash(`${player.name} is door zijn tijd heen!`);
             const winner = checkFinaleEnd();
             if (winner) {
                 endFinaleGame(winner);
             }
         }
-    }, 1000);
+    });
+
+    finaleTimerInterval = thinkingTimerInterval;
 
     finaleTimerRunning = true;
     renderFinaleHostUI('main');
@@ -304,19 +294,11 @@ function startFinaleTimer() {
 
 
 function stopFinaleTimer(playEndSound = false) {
-    if (finaleTimerInterval) {
-        clearInterval(finaleTimerInterval);
-        finaleTimerInterval = null;
+    if (typeof stopThinkingCountdownTimer === 'function') {
+        stopThinkingCountdownTimer(playEndSound);
     }
 
-    
-    if (typeof stopLoopTimerSFX === 'function') {
-        stopLoopTimerSFX();
-    }
-
-    if (playEndSound && typeof playSFX === 'function') {
-        playSFX('SFX/klokeind.mp3');
-    }
+    finaleTimerInterval = null;
 
     finaleTimerRunning = false;
 }
@@ -330,6 +312,10 @@ function resetFinaleTimer() {
 
 
 function markFinaleAnswer(answerIndex) {
+    if (!roundRunning || perRoundState?.finale?.gameEnded) {
+        flash('Finale is al afgelopen. Antwoorden zijn geblokkeerd.', 'info');
+        return;
+    }
     if (perRoundState?.finale?.awaitingHostNext) {
         flash('Vraag is afgerond. Klik op "Start Volgende Vraag".', 'info');
         return;
@@ -408,6 +394,10 @@ function markFinaleAnswer(answerIndex) {
 
 
 function passFinale() {
+    if (!roundRunning || perRoundState?.finale?.gameEnded) {
+        flash('Finale is al afgelopen. Passen is niet meer mogelijk.', 'info');
+        return;
+    }
     if (perRoundState?.finale?.awaitingHostNext) {
         flash('Vraag is afgerond. Klik op "Start Volgende Vraag".', 'info');
         return;
@@ -561,6 +551,18 @@ function endFinaleGame(winner) {
         winner: winner,
         loser: loser
     };
+    perRoundState.finale.gameEnded = true;
+    perRoundState.finale.awaitingHostNext = true;
+
+    // Verwijder interactieve antwoordknoppen uit het vraagvlak na einde finale.
+    const finaleQuestionHostEl = document.getElementById('currentQuestion');
+    if (finaleQuestionHostEl) {
+        finaleQuestionHostEl.innerHTML = `
+            <h3>Finale Voorbij</h3>
+            <p><strong>Winnaar:</strong> ${winner.name}</p>
+            <p>Antwoordinvoer is nu vergrendeld.</p>
+        `;
+    }
     
     sendFinaleDisplayUpdate('round_end', 'scene-round-finale-end', {
         winnerIndex: winner.index,
@@ -686,6 +688,9 @@ function endFinaleRound() {
     stopAllTimers();
     stopFinaleTimer(false); 
     playSFX('SFX/finale.mp3');
+    perRoundState.finale = perRoundState.finale || {};
+    perRoundState.finale.gameEnded = true;
+    perRoundState.finale.awaitingHostNext = true;
     
     
     const loser = players.find(p => p.seconds <= 0);
@@ -694,13 +699,16 @@ function endFinaleRound() {
     let title = 'Finale Voorbij';
     let winnerText = '';
     let loserText = '';
+        const brandingTitle = typeof getBrandingFullTitle === 'function'
+            ? getBrandingFullTitle()
+            : 'De Slimste Mens van Twitch';
     
     const collectiefEndOption = document.getElementById('collectiefEndOption')?.value || 'lowestOut';
 
     if (winner && loser) {
         if (collectiefEndOption === 'lowestOut') {
-            title = 'De Slimste Mens van Twitch';
-            winnerText = `${winner.name} is de nieuwe Slimste Mens van Twitch!`;
+            title = brandingTitle;
+            winnerText = `${winner.name} is de nieuwe ${brandingTitle}!`;
             loserText = `${loser.name} valt af.`;
         } else { 
             title = 'Winnaar Finale';
@@ -890,15 +898,10 @@ function sendFinaleDisplayUpdate(action, scene, extraData = {}) {
         };
     }) : [];
 
-    sendDisplayUpdate({
-        type: action,
-        key: 'finale',
-        scene: scene,
+    const payloadExtraData = {
         currentQuestionIndex: qIndex + 1,
         maxQuestions: perRoundState.finale.questions.length,
         activePlayer: activePlayer?.name || '-',
-        activeIndex: activePlayerIndex,
-        players: finalPlayersArray, 
         question: currentQuestion?.question || 'Bepalen finalisten...',
         answers: answersData,
         allAnswersFound: currentQuestion?.foundAnswers.length === currentQuestion?.answers.length,
@@ -906,10 +909,30 @@ function sendFinaleDisplayUpdate(action, scene, extraData = {}) {
         playersWhoPassed: currentQuestion?.playersWhoPassed || [],
         deductionSeconds: FINALE_POINTS_DEDUCTION,
         opponentIndex: opponentIndex,
-        timerSeconds: finaleLoopTimerSeconds, 
-        timerRunning: finaleTimerRunning, 
-        ...extraData 
-    });
+        timerSeconds: finaleLoopTimerSeconds,
+        timerRunning: finaleTimerRunning,
+        ...extraData
+    };
+
+    if (typeof sendRoundDisplayUpdate === 'function') {
+        sendRoundDisplayUpdate({
+            type: action,
+            key: 'finale',
+            scene,
+            activeIndex: activePlayerIndex,
+            playersData: finalPlayersArray,
+            extraData: payloadExtraData
+        });
+    } else {
+        sendDisplayUpdate({
+            type: action,
+            key: 'finale',
+            scene,
+            activeIndex: activePlayerIndex,
+            players: finalPlayersArray,
+            ...payloadExtraData
+        });
+    }
 }
 
 // ===== OUTRO FUNCTIE =====

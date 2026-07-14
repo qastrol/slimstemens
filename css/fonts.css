@@ -1,0 +1,45 @@
+@font-face {
+  font-family: 'DIN Black';
+  src: url('../assets/fonts/DIN Black Regular.otf') format('opentype'),
+    url('../assets/fonts/DIN-Black.woff2') format('woff2'),
+    url('../assets/fonts/DIN-Black.woff') format('woff');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DIN Black Text';
+  src: url('../assets/fonts/DIN Black Regular.otf') format('opentype'),
+    url('../assets/fonts/DIN-Black.woff2') format('woff2'),
+    url('../assets/fonts/DIN-Black.woff') format('woff');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Formula Condensed Bold';
+  src: url('../assets/fonts/FormulaCondensed-Bold.otf') format('opentype'),
+    url('../assets/fonts/Formula-Condensed-Bold.woff2') format('woff2'),
+    url('../assets/fonts/Formula-Condensed-Bold.woff') format('woff');
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('../assets/fonts/Inter-Regular.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('../assets/fonts/Inter-SemiBold.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+}

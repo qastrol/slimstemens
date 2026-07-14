@@ -1,18 +1,3 @@
-
-
-let puzzelTimerActive = false;
-let puzzelTimerInterval = null;
-
-// Fisher-Yates shuffle algoritme voor garanteerde goede shuffling
-function shuffleArrayPuzzels(array) {
-  const arr = [...array];
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
-
 function sendPuzzelDisplayUpdate(scene, extraData = {}) {
   if (!streamerBotWS || streamerBotWS.readyState !== WebSocket.OPEN) {
     console.warn('Display update kon niet worden verzonden (WebSocket niet verbonden).');
@@ -33,7 +18,7 @@ function sendPuzzelDisplayUpdate(scene, extraData = {}) {
       photoUrl: p.photoUrl,
       isActive: i === activePlayerIndex,
       
-      loopTimerSeconds: (i === activePlayerIndex && puzzelTimerActive) ? currentLoopTime : 0
+      loopTimerSeconds: (i === activePlayerIndex && perRoundState.timerRunning) ? currentLoopTime : 0
     })),
     activeIndex: activePlayerIndex,
     currentPuzzelIndex: (perRoundState.currentPuzzelIndex ?? 0) + 1,
@@ -42,7 +27,19 @@ function sendPuzzelDisplayUpdate(scene, extraData = {}) {
     ...extraData
   };
 
-  streamerBotWS.send(JSON.stringify(payload));
+  if (typeof sendRoundDisplayUpdate === 'function') {
+    const { type, key, scene: payloadScene, activeIndex, players: playersData, ...rest } = payload;
+    sendRoundDisplayUpdate({
+      type,
+      key,
+      scene: payloadScene,
+      activeIndex,
+      playersData,
+      extraData: rest
+    });
+  } else {
+    streamerBotWS.send(JSON.stringify(payload));
+  }
 }
 
 
@@ -71,7 +68,9 @@ function setupPuzzelRound() {
   
   // Check of shuffle aan of uit staat
   const shouldShuffle = shouldShuffleRound('puzzel');
-  const pool = shouldShuffle ? shuffle(questionsToUse.slice()) : questionsToUse.slice();
+  const pool = shouldShuffle
+    ? (typeof shuffleArrayShared === 'function' ? shuffleArrayShared(questionsToUse) : questionsToUse.slice())
+    : questionsToUse.slice();
   const puzzles = [];
 
   
@@ -98,7 +97,7 @@ function setupPuzzelRound() {
     // Met shuffle: probeer tot je unieke antwoorden hebt
     const tries = 300;
     for (let t = 0; t < tries; t++) {
-      const cand = shuffle(available).slice(0, 3);
+      const cand = (typeof shuffleArrayShared === 'function' ? shuffleArrayShared(available) : available.slice()).slice(0, 3);
       if (cand.length < 3) return null;
       if (linksHaveUniqueAnswers(cand)) return cand;
     }
@@ -127,7 +126,7 @@ function setupPuzzelRound() {
 
   
   if (puzzles.length !== puzzelCount) {
-    const fallback = shuffle(questionsToUse.slice()).slice(0, puzzelCount * 3);
+    const fallback = (typeof shuffleArrayShared === 'function' ? shuffleArrayShared(questionsToUse) : questionsToUse.slice()).slice(0, puzzelCount * 3);
     perRoundState.puzzles = [];
     for (let i = 0; i < puzzelCount; i++) {
       perRoundState.puzzles.push({ 
@@ -136,7 +135,6 @@ function setupPuzzelRound() {
         currentWords: [] 
       });
     }
-    flash(`Fallback puzzels gebruikt (${puzzelCount} puzzels).`);
   } else {
     perRoundState.puzzles = puzzles;
   }
@@ -156,7 +154,7 @@ function setupPuzzelRound() {
       });
     });
     // ALTIJD antwoorden shufflen, ongeacht shuffle setting
-    puzzel.currentWords = shuffleArrayPuzzels(allWords);
+    puzzel.currentWords = (typeof shuffleArrayShared === 'function') ? shuffleArrayShared(allWords) : allWords.slice();
     puzzel.foundLinks = [];
     puzzel.remainingWords = [...puzzel.currentWords];
   });
@@ -167,10 +165,12 @@ function setupPuzzelRound() {
   perRoundState.originalPlayer = null; 
   perRoundState.timerRunning = false; 
   perRoundState.playersWhoStartedPuzzel = [];
-  perRoundState.puzzelStarterOrder = players
-    .map((p, i) => ({ i, seconds: p.seconds }))
-    .sort((a, b) => a.seconds - b.seconds || a.i - b.i)
-    .map(p => p.i);
+  perRoundState.puzzelStarterOrder = (typeof getStarterOrderByLowestSeconds === 'function')
+    ? getStarterOrderByLowestSeconds()
+    : players
+        .map((p, i) => ({ i, seconds: p.seconds }))
+        .sort((a, b) => a.seconds - b.seconds || a.i - b.i)
+        .map(p => p.i);
   perRoundState.currentPuzzelStarterTurn = 0;
 
   
@@ -188,7 +188,7 @@ function setupPuzzelRound() {
 }
 
 function nextPuzzelQuestion() {
-  if (typeof thinkingTimerInterval !== 'undefined') clearInterval(thinkingTimerInterval);
+  if (typeof stopThinkingCountdownTimer === 'function') stopThinkingCountdownTimer(false);
   perRoundState.timerRunning = false;
 
   if (perRoundState.currentPuzzelIndex >= perRoundState.puzzles.length) {
@@ -196,6 +196,9 @@ function nextPuzzelQuestion() {
     currentQuestionEl.innerHTML = '<em>Ronde afgelopen.</em>';
     document.getElementById('nextRound').disabled = false;
     document.getElementById('roundControls').innerHTML = '';
+    if (typeof markCurrentRoundComplete === 'function') {
+      markCurrentRoundComplete();
+    }
     return;
   }
 
@@ -231,32 +234,15 @@ highlightActive();
   });
 }
 
-function sendLoopTimerUpdate(seconds) {
-    if (!streamerBotWS || streamerBotWS.readyState !== WebSocket.OPEN) {
-        
-        
-        return;
-    }
-    
-    const payload = {
-        type: 'timer_update',
-        seconds: seconds,
-    };
-    
-    streamerBotWS.send(JSON.stringify(payload));
-}
-
 function stopPuzzelTimerAndSound() {
-  if (typeof thinkingTimerInterval !== 'undefined') clearInterval(thinkingTimerInterval);
-  if (typeof stopLoopTimerSFX === 'function') stopLoopTimerSFX(); 
-  if (typeof playSFX === 'function') playSFX('SFX/klokeind.mp3'); 
+  if (typeof stopThinkingCountdownTimer === 'function') {
+    stopThinkingCountdownTimer(true);
+  }
   perRoundState.timerRunning = false;
 
   document.getElementById('startTimerBtn').disabled = false;
   document.getElementById('puzzelPassBtn').disabled = true;
   document.querySelectorAll('#checkLinks button').forEach(btn => btn.disabled = true);
-
-  if (typeof loopTimerInterval !== 'undefined') clearInterval(loopTimerInterval);
 }
 
 function getPuzzelStarterIndex() {
@@ -279,40 +265,25 @@ function getPuzzelStarterIndex() {
 
 
 function startPuzzelTimer() {
-  
-  if (typeof stopLoopTimerSFX !== 'function' || typeof flash !== 'function' || typeof renderPlayers !== 'function') {
-    flash('Fout: Benodigde kernfuncties (timer/UI) niet gevonden in core.js.');
+  if (typeof startThinkingCountdownTimer !== 'function' || typeof renderPlayers !== 'function') {
+    flash('Fout: Benodigde timerfuncties niet gevonden in core.js.');
     return;
   }
-  
-  stopLoopTimerSFX(); 
 
-  
-  try { sendDisplayUpdate({ type: 'audio', action: 'loopStart', src: 'SFX/klok2.mp3' }); } catch(e) {}
-  
-  flash(`Tijd gestart voor ${players[activePlayerIndex].name}`);
-
-  
-  if(thinkingTimerInterval) clearInterval(thinkingTimerInterval); 
-
-  
-  thinkingTimerInterval = setInterval(()=>{
-    players[activePlayerIndex].seconds = Math.max(0, players[activePlayerIndex].seconds - 1);
-    renderPlayers();
-    
-    
-    sendPuzzelDisplayUpdate('scene-round-puzzel-active'); 
-    
-    
-    if (players[activePlayerIndex].seconds <= 0) {
-      clearInterval(thinkingTimerInterval);
-      flash(`${players[activePlayerIndex].name} is door zijn tijd heen! Moet nu passen.`);
+  startThinkingCountdownTimer({
+    getActivePlayer: () => players[activePlayerIndex],
+    onStartMessage: `Tijd gestart voor ${players[activePlayerIndex].name}`,
+    onTick: () => {
+      renderPlayers();
+      sendPuzzelDisplayUpdate('scene-round-puzzel-active');
+    },
+    onTimeout: (player) => {
+      flash(`${player.name} is door zijn tijd heen! Moet nu passen.`);
       if (typeof showPreFinaleBonusControls === 'function') showPreFinaleBonusControls();
-      
+
       if (typeof passPuzzel === 'function') passPuzzel();
-      return;
     }
-  }, 1000);
+  });
 
   perRoundState.timerRunning = true;
   
@@ -495,6 +466,9 @@ if (puzzel.foundLinks.length === puzzel.links.length) {
         
         document.getElementById('roundControls').innerHTML = '';
         document.getElementById('nextRound').disabled = false; 
+        if (typeof markCurrentRoundComplete === 'function') {
+          markCurrentRoundComplete();
+        }
 
     } else {
         
@@ -567,10 +541,12 @@ function passPuzzel() {
 
 function determineNextPuzzleStarter() {
   if (!perRoundState.puzzelStarterOrder || !perRoundState.puzzelStarterOrder.length) {
-    perRoundState.puzzelStarterOrder = players
-      .map((p, i) => ({ i, seconds: p.seconds }))
-      .sort((a, b) => a.seconds - b.seconds || a.i - b.i)
-      .map(p => p.i);
+    perRoundState.puzzelStarterOrder = (typeof getStarterOrderByLowestSeconds === 'function')
+      ? getStarterOrderByLowestSeconds()
+      : players
+          .map((p, i) => ({ i, seconds: p.seconds }))
+          .sort((a, b) => a.seconds - b.seconds || a.i - b.i)
+          .map(p => p.i);
   }
 
   if (!Array.isArray(perRoundState.playersWhoStartedPuzzel)) {
@@ -595,7 +571,7 @@ function determineNextPuzzleStarter() {
 
 
 function showPuzzelSolution(puzzel) {
-  if (typeof thinkingTimerInterval !== 'undefined') clearInterval(thinkingTimerInterval);
+  if (typeof stopThinkingCountdownTimer === 'function') stopThinkingCountdownTimer(false);
   perRoundState.timerRunning = false;
 
   flash(`Oplossing van Puzzel ${perRoundState.currentPuzzelIndex + 1} wordt getoond.`);
@@ -650,6 +626,9 @@ function showPuzzelSolution(puzzel) {
     document.getElementById('roundControls').innerHTML = '';
     flash('Einde van Puzzel! Druk op "Volgende ronde" om verder te gaan.');
     document.getElementById('nextRound').disabled = false;
+    if (typeof markCurrentRoundComplete === 'function') {
+      markCurrentRoundComplete();
+    }
   }
 }
 

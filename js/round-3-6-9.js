@@ -1,12 +1,3 @@
-
-function shuffleArray(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-  return array;
-}
-
 let defaultThreeSixNineMax = 12;
 
 // ===== STANDALONE KLOK2.MP3 LOOP FUNCTIONALITEIT =====
@@ -111,7 +102,9 @@ function setupThreeSixNineRound() {
   
   // Check of shuffle aan of uit staat
   const shouldShuffle = shouldShuffleRound('threeSixNine');
-  perRoundState.questions = shouldShuffle ? shuffleArray(questionsToUse.slice()) : questionsToUse.slice();
+  perRoundState.questions = shouldShuffle
+    ? (typeof shuffleArrayShared === 'function' ? shuffleArrayShared(questionsToUse) : questionsToUse.slice())
+    : questionsToUse.slice();
   
   // Haal maxQuestions uit config, of gebruik standaard waarde
   const configMaxQuestions = getRoundSetting('threeSixNine', 'maxQuestions', null);
@@ -165,6 +158,9 @@ function nextThreeSixNineQuestion() {
     flash('Einde van de 3-6-9 ronde!');
     currentQuestionEl.innerHTML = '<em>Ronde afgelopen.</em>';
     perRoundState.currentQuestion = null;
+    if (typeof markCurrentRoundComplete === 'function') {
+      markCurrentRoundComplete();
+    }
 
     sendDisplayUpdate({
       type: 'update',

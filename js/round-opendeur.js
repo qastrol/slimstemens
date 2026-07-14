@@ -1,7 +1,3 @@
-function shuffle(arr) {
-  return [...arr].sort(() => Math.random() - 0.5);
-}
-
 function getOpenDeurIntroVideoUrl(question) {
   if (!question) return '';
   return question.introVideoUrl || question.videoUrl || question.introVideo || question.video || '';
@@ -29,7 +25,9 @@ function setupOpenDeurRound() {
 
   // Check of shuffle aan of uit staat
   const shouldShuffle = shouldShuffleRound('opendeur');
-  const orderedQuestions = shouldShuffle ? shuffle(questionsToUse) : questionsToUse;
+  const orderedQuestions = shouldShuffle
+    ? (typeof shuffleArrayShared === 'function' ? shuffleArrayShared(questionsToUse) : questionsToUse.slice())
+    : questionsToUse;
   perRoundState.questions = orderedQuestions.slice(0, questionsCount).map((q, index) => ({
       ...q,
       
@@ -37,10 +35,12 @@ function setupOpenDeurRound() {
       played: false 
   }));
 
-  perRoundState.remainingPlayers = players
-    .map((p, i) => ({ i, seconds: p.seconds }))
-    .sort((a, b) => a.seconds - b.seconds || a.i - b.i)
-    .map(p => p.i);
+  perRoundState.remainingPlayers = (typeof getStarterOrderByLowestSeconds === 'function')
+    ? getStarterOrderByLowestSeconds()
+    : players
+        .map((p, i) => ({ i, seconds: p.seconds }))
+        .sort((a, b) => a.seconds - b.seconds || a.i - b.i)
+        .map(p => p.i);
   perRoundState.openDeurStarterOrder = [...perRoundState.remainingPlayers];
   perRoundState.playersWhoChoseQuestion = []; 
   perRoundState.currentQuestion = null;
@@ -72,6 +72,15 @@ function renderOpenDeurChoices() {
   const remainingQuestions = perRoundState.questions.filter(q => !q.played);
   if (remainingQuestions.length === 0) {
     cont.innerHTML = '<em>Geen vragen meer over.</em>';
+    const allQuestionersFinished = perRoundState.questions.every(q => q.played === true);
+    if (allQuestionersFinished) {
+      const rc = document.getElementById('roundControls');
+      if (rc) rc.innerHTML = '';
+      perRoundState.currentQuestion = null;
+      if (typeof markCurrentRoundComplete === 'function') {
+        markCurrentRoundComplete();
+      }
+    }
     return;
   }
 
@@ -157,31 +166,24 @@ function showOpenDeurAnswerControls(){
 }
 
 function startOpenDeurTimer(){
-  
-  if (typeof stopLoopTimerSFX !== 'function') return flash('Error: stopLoopTimerSFX not found'); 
-  
-  stopLoopTimerSFX(); 
+  if (typeof startThinkingCountdownTimer !== 'function') {
+    flash('Error: startThinkingCountdownTimer niet gevonden');
+    return;
+  }
 
-  
-  try { sendDisplayUpdate({ type: 'audio', action: 'loopStart', src: 'SFX/klok2.mp3' }); } catch(e) {}
-  
-  flash(`Tijd gestart voor ${players[activePlayerIndex].name}`);
-  if(thinkingTimerInterval) clearInterval(thinkingTimerInterval);
-thinkingTimerInterval = setInterval(()=>{
-    players[activePlayerIndex].seconds = Math.max(0, players[activePlayerIndex].seconds - 1);
-
-    renderPlayers(); 
-    sendOpenDeurDisplayUpdate('update', 'scene-round-opendeur-vraag'); 
-
-    if (players[activePlayerIndex].seconds <= 0) {
-        clearInterval(thinkingTimerInterval);
-      flash(`${players[activePlayerIndex].name} is door zijn tijd heen!`);
+  startThinkingCountdownTimer({
+    getActivePlayer: () => players[activePlayerIndex],
+    onStartMessage: `Tijd gestart voor ${players[activePlayerIndex].name}`,
+    onTick: () => {
+      renderPlayers();
+      sendOpenDeurDisplayUpdate('update', 'scene-round-opendeur-vraag');
+    },
+    onTimeout: (player) => {
+      flash(`${player.name} is door zijn tijd heen!`);
       if (typeof showPreFinaleBonusControls === 'function') showPreFinaleBonusControls();
       if (typeof passOpenDeur === 'function') passOpenDeur();
-      return;
     }
-}, 1000);
-
+  });
 }
 
 function markOpenDeurAnswer(ansIndex){
@@ -201,8 +203,7 @@ function markOpenDeurAnswer(ansIndex){
 
   
   if(q.answered.every(a => a)){
-    clearInterval(thinkingTimerInterval);
-    if (typeof stopLoopTimerSFX === 'function') stopLoopTimerSFX();
+    if (typeof stopThinkingCountdownTimer === 'function') stopThinkingCountdownTimer(false);
     flash(`Vraag "${q.from}" volledig opgelost!`);
     playSFX('SFX/goed.mp3');
 
@@ -235,6 +236,9 @@ function showRemainingQuestionsForNextPlayer(){
     if(cont) cont.innerHTML = '';
     const rc = document.getElementById('roundControls');
     if(rc) rc.innerHTML = '';
+    if (typeof markCurrentRoundComplete === 'function') {
+      markCurrentRoundComplete();
+    }
     return;
   }
 
@@ -250,12 +254,23 @@ function nextOpenDeurTurn() {
   
   const candidates = (perRoundState.openDeurStarterOrder || perRoundState.remainingPlayers || [])
     .filter(idx => !perRoundState.playersWhoChoseQuestion.includes(idx));
+  const remainingQuestions = perRoundState.questions.filter(q => !q.played);
 
-  if(candidates.length === 0){
+  if(remainingQuestions.length === 0){
     
     flash('Open Deur-ronde afgerond!');
     currentQuestionEl.innerHTML = '<em>Einde van de Open Deur-ronde.</em>';
     document.getElementById('opendeurChoices').innerHTML = '';
+    document.getElementById('roundControls').innerHTML = '';
+    perRoundState.currentQuestion = null;
+    if (typeof markCurrentRoundComplete === 'function') {
+      markCurrentRoundComplete();
+    }
+    return;
+  }
+
+  if (candidates.length === 0) {
+    currentQuestionEl.innerHTML = '<em>Einde van de Open Deur-ronde.</em>';
     document.getElementById('roundControls').innerHTML = '';
     perRoundState.currentQuestion = null;
     return;
@@ -266,7 +281,6 @@ function nextOpenDeurTurn() {
   highlightActive();
   perRoundState.currentQuestion = null;
 
-  const remainingQuestions = perRoundState.questions.filter(q => !q.played);
   if(remainingQuestions.length > 0){
     currentQuestionEl.innerHTML = `
       <em>${players[activePlayerIndex].name} mag een vraag kiezen van de overgebleven vraagstellers.</em>
@@ -282,10 +296,10 @@ function nextOpenDeurTurn() {
 
 
 function passOpenDeur(){
-  clearInterval(thinkingTimerInterval);
-  if (typeof stopLoopTimerSFX === 'function') stopLoopTimerSFX();
+  if (typeof stopThinkingCountdownTimer === 'function') {
+    stopThinkingCountdownTimer(true);
+  }
   sendOpenDeurDisplayUpdate('update', 'scene-round-opendeur-vraag');
-  playSFX('SFX/klokeind.mp3');
   const q = perRoundState.currentQuestion;
   if(!q) return;
 
@@ -389,7 +403,19 @@ if (scene === 'scene-round-opendeur-vragensteller') {
         data.questionCompleted = true;
     }
 
-    sendDisplayUpdate(data);
+    if (typeof sendRoundDisplayUpdate === 'function') {
+      const { type: payloadType, key: payloadKey, scene: payloadScene, activeIndex: payloadActiveIndex, players: payloadPlayers, ...extraData } = data;
+      sendRoundDisplayUpdate({
+        type: payloadType,
+        key: payloadKey,
+        scene: payloadScene,
+        activeIndex: payloadActiveIndex,
+        playersData: payloadPlayers,
+        extraData
+      });
+    } else {
+      sendDisplayUpdate(data);
+    }
 }
 function showReturnToQuestionerButton() {
   const rc = document.getElementById('roundControls');

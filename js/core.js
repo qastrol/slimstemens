@@ -9,6 +9,7 @@ let bumpersEnabled = true;
 let introEnabled = false;
 let outroEnabled = false;
 let introText = '';
+let safeRoundNavigationEnabled = false;
 let roundRunning = false;
 let currentQuestionIndex = 0;
 let perRoundState = {};
@@ -84,15 +85,48 @@ function connectToQuizServer() {
 
 
 function sendDisplayUpdate(data) {
+  const fallbackBranding = {
+    titlePrefix: 'de slimste mens',
+    titleSuffix: 'van twitch',
+    logoPath: 'assets/slimstemens.png'
+  };
+  const branding = typeof getBrandingSettings === 'function' ? getBrandingSettings() : fallbackBranding;
+  const payload = {
+    ...data,
+    branding: data?.branding || branding
+  };
+
   if (streamerBotWS && streamerBotWS.readyState === WebSocket.OPEN) {
-    
-    streamerBotWS.send(JSON.stringify(data));
+    streamerBotWS.send(JSON.stringify(payload));
   } else {
     
     if (!streamerBotWS || streamerBotWS.readyState === WebSocket.CLOSED) {
         connectToQuizServer(); 
     }
   }
+}
+
+function sendRoundDisplayUpdate({
+  type = 'update',
+  key,
+  scene,
+  activeIndex = activePlayerIndex,
+  playersData = players,
+  extraData = {}
+} = {}) {
+  if (!key) {
+    console.warn('sendRoundDisplayUpdate: key ontbreekt.');
+    return;
+  }
+
+  sendDisplayUpdate({
+    type,
+    key,
+    scene,
+    activeIndex,
+    players: playersData,
+    ...extraData
+  });
 }
 
 
@@ -202,12 +236,6 @@ function grantPreFinaleBonus(seconds = 30) {
   });
 
   renderPlayers();
-  sendDisplayUpdate({
-    type: 'players',
-    players,
-    active: activePlayerIndex,
-    round: perRoundState?.round || '-'
-  });
   flash(`Quizmaster bonus: iedereen +${seconds}s.`);
   clearPreFinaleBonusControls();
 }
@@ -240,11 +268,98 @@ function stopLoopTimerSFX() {
   try { sendDisplayUpdate({ type: 'audio', action: 'loopStop' }); } catch(e) {}
 }
 
+function stopThinkingCountdownTimer(playEndSound = false) {
+  if (thinkingTimerInterval) {
+    clearInterval(thinkingTimerInterval);
+    thinkingTimerInterval = null;
+  }
+
+  stopLoopTimerSFX();
+
+  if (playEndSound && typeof playSFX === 'function') {
+    playSFX('SFX/klokeind.mp3');
+  }
+}
+
+function startThinkingCountdownTimer(options = {}) {
+  const {
+    getActivePlayer,
+    onTick,
+    onTimeout,
+    onStartMessage = null,
+    startAudio = true
+  } = options;
+
+  if (typeof getActivePlayer !== 'function') {
+    console.warn('startThinkingCountdownTimer: getActivePlayer ontbreekt of is geen functie.');
+    return false;
+  }
+
+  stopThinkingCountdownTimer(false);
+
+  const initialPlayer = getActivePlayer();
+  if (!initialPlayer) {
+    return false;
+  }
+
+  if (startAudio) {
+    try { sendDisplayUpdate({ type: 'audio', action: 'loopStart', src: 'SFX/klok2.mp3' }); } catch(e) {}
+  }
+
+  if (onStartMessage) {
+    flash(onStartMessage);
+  }
+
+  thinkingTimerInterval = setInterval(() => {
+    const activePlayer = getActivePlayer();
+    if (!activePlayer) {
+      stopThinkingCountdownTimer(false);
+      return;
+    }
+
+    activePlayer.seconds = Math.max(0, activePlayer.seconds - 1);
+
+    if (typeof onTick === 'function') {
+      onTick(activePlayer);
+    }
+
+    if (activePlayer.seconds <= 0) {
+      stopThinkingCountdownTimer(false);
+
+      if (typeof onTimeout === 'function') {
+        onTimeout(activePlayer);
+      }
+    }
+  }, 1000);
+
+  return true;
+}
+
+function getStarterOrderByLowestSeconds(maxCount = null) {
+  const ordered = players
+    .map((p, i) => ({ i, seconds: p.seconds }))
+    .sort((a, b) => a.seconds - b.seconds || a.i - b.i)
+    .map(p => p.i);
+
+  if (typeof maxCount === 'number' && maxCount > 0) {
+    return ordered.slice(0, maxCount);
+  }
+
+  return ordered;
+}
+
+function shuffleArrayShared(array) {
+  const arr = Array.isArray(array) ? array.slice() : [];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 function stopAllTimers(){
   if(globalTimerInterval){ clearInterval(globalTimerInterval); globalTimerInterval=null; }
-  if(thinkingTimerInterval){ clearInterval(thinkingTimerInterval); thinkingTimerInterval=null; }
-  
-  stopLoopTimerSFX();
+  stopThinkingCountdownTimer(false);
 }
 
 function updateRoundsSequence() {
@@ -288,7 +403,7 @@ function startRound(roundKey) {
 
 function startRoundAfterBumper(roundKey) {
   roundRunning = true;
-  perRoundState = { round: roundKey };
+  perRoundState = { round: roundKey, roundComplete: false };
   currentQuestionIndex = 0;
   activePlayerIndex = 0;
   currentRoundEl.textContent = niceRoundName(roundKey);
@@ -313,13 +428,58 @@ function startRoundAfterBumper(roundKey) {
   else if (roundKey === 'finale') setupFinaleRound && setupFinaleRound();
 
   renderPlayers();
+  updateRoundNavigationButtons();
   
   
   sendDisplayUpdate({
       type: 'round_start',
       name: niceRoundName(roundKey),
-      key: roundKey
+      key: roundKey,
+      scene: roundKey === 'puzzel' ? 'scene-round-puzzel-waiting' : undefined
   });
+}
+
+function canAdvanceToNextRound() {
+  if (!Array.isArray(roundsSequence) || roundsSequence.length === 0) return false;
+
+  const currentKey = roundsSequence[currentRoundIndex];
+  const hasNextRound = currentRoundIndex < roundsSequence.length - 1;
+  const allowSoloEndScreen = playerModeSettings.playerCount === 1 && currentKey === 'collectief';
+
+  return hasNextRound || allowSoloEndScreen;
+}
+
+function updateRoundNavigationButtons() {
+  const startRoundBtn = document.getElementById('startRound');
+  const nextRoundBtn = document.getElementById('nextRound');
+  if (!startRoundBtn || !nextRoundBtn) return;
+
+  const expectedCount = playerModeSettings.playerCount;
+  const hasValidPlayers = players.length === expectedCount && players.length > 0;
+  const hasStartedRound = !!(perRoundState && perRoundState.round);
+
+  if (!safeRoundNavigationEnabled) {
+    startRoundBtn.style.display = '';
+    nextRoundBtn.style.display = '';
+    startRoundBtn.disabled = false;
+    nextRoundBtn.disabled = false;
+    return;
+  }
+
+  const canStartFirstRound = hasValidPlayers && !hasStartedRound;
+  const canGoNext = hasValidPlayers && hasStartedRound && perRoundState.roundComplete === true && canAdvanceToNextRound();
+
+  startRoundBtn.style.display = canStartFirstRound ? '' : 'none';
+  nextRoundBtn.style.display = canGoNext ? '' : 'none';
+  startRoundBtn.disabled = !canStartFirstRound;
+  nextRoundBtn.disabled = !canGoNext;
+}
+
+function markCurrentRoundComplete() {
+  if (!perRoundState || !perRoundState.round) return;
+  perRoundState.roundComplete = true;
+  roundRunning = false;
+  updateRoundNavigationButtons();
 }
 
 function showRoundBumper(roundKey, callback) {
@@ -350,6 +510,10 @@ function nextQuestion() {
 }
 
 function markAnswer(isRight) {
+  if (!roundRunning) {
+    flash('Er loopt geen actieve ronde.');
+    return;
+  }
   const r = perRoundState.round;
   if (r === 'threeSixNine') markThreeSixNineAnswer(isRight);
   else if (r === 'opendeur' && typeof markOpenDeurAnswer==='function') markOpenDeurAnswer(isRight);
@@ -417,6 +581,11 @@ document.getElementById('applyBtn').addEventListener('click', async ()=>{
 
   playerCountEl.textContent = players.length;
   renderPlayers();
+  perRoundState = {};
+  roundRunning = false;
+  currentRoundIndex = 0;
+  currentRoundEl.textContent = '—';
+  updateRoundNavigationButtons();
 
   sendDisplayUpdate({
       type: 'scene_change',
@@ -433,9 +602,12 @@ document.getElementById('resetBtn').addEventListener('click', ()=>{
   players = [];
   renderPlayers();
   currentRoundIndex = 0;
+  perRoundState = {};
+  roundRunning = false;
   currentRoundEl.textContent = '—';
   currentQuestionEl.innerHTML = '<em>Spel gereset</em>';
   stopAllTimers();
+  updateRoundNavigationButtons();
   flash('Spel gereset');
 });
 
@@ -446,11 +618,20 @@ document.getElementById('startRound').addEventListener('click', ()=>{
     flash(`Maak eerst het spel aan met ${expectedCount} kandidaat/kandidaten`); 
     return; 
   }
+  if (safeRoundNavigationEnabled && perRoundState?.round) {
+    flash('Veilige modus: gebruik pas "Volgende ronde" nadat de huidige ronde is afgerond.');
+    return;
+  }
   currentRoundIndex = currentRoundIndex % roundsSequence.length;
   startRound(roundsSequence[currentRoundIndex]);
 });
 
 document.getElementById('nextRound').addEventListener('click', ()=>{
+  if (safeRoundNavigationEnabled && (!perRoundState?.round || perRoundState.roundComplete !== true)) {
+    flash('Veilige modus: deze ronde is nog niet klaar om door te gaan.');
+    return;
+  }
+
   // Bij 1 speler en einde van collectief: toon eindstand
   if (playerModeSettings.playerCount === 1 && 
       currentRoundIndex < roundsSequence.length && 
@@ -476,6 +657,19 @@ document.getElementById('nextRound').addEventListener('click', ()=>{
   if(currentRoundIndex>=roundsSequence.length) currentRoundIndex = roundsSequence.length-1;
   startRound(roundsSequence[currentRoundIndex]);
 });
+
+const safeRoundNavigationCheckbox = document.getElementById('safeRoundNavigationCheckbox');
+if (safeRoundNavigationCheckbox) {
+  safeRoundNavigationCheckbox.addEventListener('change', (event) => {
+    safeRoundNavigationEnabled = !!event.target.checked;
+    updateRoundNavigationButtons();
+    flash(
+      safeRoundNavigationEnabled
+        ? 'Veilige rondeknoppen ingeschakeld.'
+        : 'Veilige rondeknoppen uitgeschakeld.'
+    );
+  });
+}
 
 function toggleAudio(audioObj) {
   if (!audioObj) return;
@@ -694,6 +888,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 renderPlayers();
+updateRoundNavigationButtons();
 console.log('Core.js geladen — basisfunctionaliteit actief');
 
 function shouldIgnoreHotkeys(event) {
@@ -705,6 +900,7 @@ function shouldIgnoreHotkeys(event) {
 }
 
 function handleRoundHotkey(key) {
+  if (!roundRunning) return false;
   if (!perRoundState || !perRoundState.round) return false;
 
   const round = perRoundState.round;

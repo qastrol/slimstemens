@@ -1,4 +1,3 @@
-game-Walta-stream.json
 Walta/
 
 # Node modules
@@ -19,3 +18,6 @@ desktop.ini
 *.swp
 *.swo
 *~
+
+# Local Python environment
+.venv/

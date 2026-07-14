@@ -12,63 +12,131 @@ let galerijAssignedGalleries = {};
 
 
 
-let galerijTimerId = null; 
-let isGalerijTimerRunning = false; 
-
-
 let galleryTimerRunning = false;
 
 let galerijRoundOrder = []; 
 let galerijStarterOrder = [];
 let galerijStarterTurn = 0;
 
+function syncGalerijActivePlayerIndex() {
+  if (galleryPhase === 'aanvul' && currentAanvulPlayer) {
+    const aanvulPlayerIndex = players.findIndex(p => p === currentAanvulPlayer || p.name === currentAanvulPlayer.name);
+    if (aanvulPlayerIndex !== -1) {
+      activePlayerIndex = aanvulPlayerIndex;
+      return activePlayerIndex;
+    }
+  }
+
+  activePlayerIndex = galleryPlayerIndex;
+  return activePlayerIndex;
+}
+
 function sendGalerijDisplayUpdate() {
+  const resolvedActiveIndex = syncGalerijActivePlayerIndex();
   const baseData = {
-    type: 'update',
-    key: 'galerij',
-    players: players,
-    activeIndex: galleryPlayerIndex
+    activeIndex: resolvedActiveIndex,
+    playersData: players
   };
 
   if (galleryPhase === 'pre') {
-    sendDisplayUpdate({
-      ...baseData,
-      scene: 'scene-round-galerij-pre'
-    });
+    if (typeof sendRoundDisplayUpdate === 'function') {
+      sendRoundDisplayUpdate({
+        type: 'update',
+        key: 'galerij',
+        scene: 'scene-round-galerij-pre',
+        ...baseData
+      });
+    } else {
+      sendDisplayUpdate({
+        type: 'update',
+        key: 'galerij',
+        scene: 'scene-round-galerij-pre',
+        players: players,
+        activeIndex: galleryPlayerIndex
+      });
+    }
   } else if (galleryPhase === 'main') {
     const img = galleryImages[galleryIndex];
-    sendDisplayUpdate({
-      ...baseData,
-      scene: 'scene-round-galerij-main',
+    const extraData = {
       galleryTheme: currentGallery.theme,
       imageSrc: img?.src,
       activePlayer: players[galleryPlayerIndex],
       imageIndex: galleryIndex,
       totalImages: galleryImages.length
-    });
+    };
+    if (typeof sendRoundDisplayUpdate === 'function') {
+      sendRoundDisplayUpdate({
+        type: 'update',
+        key: 'galerij',
+        scene: 'scene-round-galerij-main',
+        ...baseData,
+        extraData
+      });
+    } else {
+      sendDisplayUpdate({
+        type: 'update',
+        key: 'galerij',
+        scene: 'scene-round-galerij-main',
+        players: players,
+        activeIndex: galleryPlayerIndex,
+        ...extraData
+      });
+    }
   } else if (galleryPhase === 'aanvul') {
-    const aanvulPlayerIndex = currentAanvulPlayer ? players.findIndex(p => p.name === currentAanvulPlayer.name) : -1;
-    sendDisplayUpdate({
-      ...baseData,
-      scene: 'scene-round-galerij-aanvul',
+    const aanvulPlayerIndex = currentAanvulPlayer ? players.findIndex(p => p.name === currentAanvulPlayer.name) : resolvedActiveIndex;
+    const extraData = {
       galleryTheme: currentGallery.theme,
       answers: galleryImages.map(img => ({
         text: img.answer,
         found: img.found || false,
         points: 15
       })),
-      activePlayer: currentAanvulPlayer,
-      activeIndex: aanvulPlayerIndex
-    });
+      activePlayer: currentAanvulPlayer
+    };
+    if (typeof sendRoundDisplayUpdate === 'function') {
+      sendRoundDisplayUpdate({
+        type: 'update',
+        key: 'galerij',
+        scene: 'scene-round-galerij-aanvul',
+        activeIndex: aanvulPlayerIndex,
+        playersData: players,
+        extraData
+      });
+    } else {
+      sendDisplayUpdate({
+        type: 'update',
+        key: 'galerij',
+        scene: 'scene-round-galerij-aanvul',
+        players: players,
+        activeIndex: aanvulPlayerIndex,
+        ...extraData
+      });
+    }
   } else if (galleryPhase === 'slideshow') {
     const img = galleryImages[galleryIndex];
-    sendDisplayUpdate({
-      ...baseData,
-      scene: 'scene-round-galerij-slideshow',
+    const extraData = {
       galleryTheme: currentGallery.theme,
       imageSrc: img?.src,
       activePlayer: players[galleryPlayerIndex]
-    });
+    };
+    if (typeof sendRoundDisplayUpdate === 'function') {
+      sendRoundDisplayUpdate({
+        type: 'update',
+        key: 'galerij',
+        scene: 'scene-round-galerij-slideshow',
+        ...baseData,
+        extraData
+      });
+    } else {
+      sendDisplayUpdate({
+        type: 'update',
+        key: 'galerij',
+        scene: 'scene-round-galerij-slideshow',
+        players: players,
+        activeIndex: galleryPlayerIndex,
+        ...extraData
+      });
+    }
   }
 }
 
@@ -116,13 +184,16 @@ function setupGalerijRound() {
     ? playerModeSettings.questionsPerRound 
     : Math.min(3, players.length);
 
-  galerijStarterOrder = players
-    .map((p, i) => ({ i, seconds: p.seconds }))
-    .sort((a, b) => a.seconds - b.seconds || a.i - b.i)
-    .map(p => p.i)
-    .slice(0, galerieCount);
+  galerijStarterOrder = (typeof getStarterOrderByLowestSeconds === 'function')
+    ? getStarterOrderByLowestSeconds(galerieCount)
+    : players
+        .map((p, i) => ({ i, seconds: p.seconds }))
+        .sort((a, b) => a.seconds - b.seconds || a.i - b.i)
+        .map(p => p.i)
+        .slice(0, galerieCount);
   galerijStarterTurn = 0;
   galleryPlayerIndex = galerijStarterOrder[0] ?? 0;
+  syncGalerijActivePlayerIndex();
 
   galerijAssignedGalleries = {};
 
@@ -140,7 +211,9 @@ function setupGalerijRound() {
     galerijAvailableGalleries = [];
     // Check of shuffle aan of uit staat
     const shouldShuffle = shouldShuffleRound('galerij');
-    galerijRoundOrder = shouldShuffle ? shuffleArray(questionsToUse).slice(0, galerieCount) : questionsToUse.slice(0, galerieCount);
+    galerijRoundOrder = shouldShuffle
+      ? (typeof shuffleArrayShared === 'function' ? shuffleArrayShared(questionsToUse) : questionsToUse.slice()).slice(0, galerieCount)
+      : questionsToUse.slice(0, galerieCount);
   }
 
   renderGalerijHostUI();
@@ -151,17 +224,8 @@ function setupGalerijRound() {
     key: 'galerij',
     scene: 'scene-round-galerij-pre',
     players: players,
-    activeIndex: 0
+    activeIndex: galleryPlayerIndex
   });
-}
-
-function shuffleArray(array) {
-  const arr = array.slice(); 
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]]; 
-  }
-  return arr;
 }
 
 function isManualGalleryAssignmentEnabled(questionsToUse) {
@@ -223,27 +287,24 @@ function startGalerijTimer() {
   const activePlayer = galleryPhase === 'aanvul' ? currentAanvulPlayer : players[galleryPlayerIndex];
   if (!activePlayer) return flash('Fout: Geen actieve speler om de tijd voor te starten.');
 
-  
-  stopGalerijTimer(false); 
+  syncGalerijActivePlayerIndex();
 
-  
-  if (typeof playSFX === 'function') {
-    try { sendDisplayUpdate({ type: 'audio', action: 'loopStart', src: 'SFX/klok2.mp3' }); } catch(e) {}
+  if (typeof startThinkingCountdownTimer !== 'function') {
+    flash('Fout: startThinkingCountdownTimer niet gevonden in core.js.');
+    return;
   }
 
-  flash(`Tijd gestart voor ${activePlayer.name}`);
-
-  
-  thinkingTimerInterval = setInterval(() => {
-    activePlayer.seconds = Math.max(0, activePlayer.seconds - 1);
-    renderPlayers();
-    
-    sendGalerijDisplayUpdate();
-    
-    if (activePlayer.seconds <= 0) {
-      clearInterval(thinkingTimerInterval);
-      stopGalerijTimer(true); 
-      flash(`${activePlayer.name} is door zijn tijd heen! Pas/Ga verder.`);
+  startThinkingCountdownTimer({
+    getActivePlayer: () => (galleryPhase === 'aanvul' ? currentAanvulPlayer : players[galleryPlayerIndex]),
+    onStartMessage: `Tijd gestart voor ${activePlayer.name}`,
+    onTick: () => {
+      syncGalerijActivePlayerIndex();
+      renderPlayers();
+      sendGalerijDisplayUpdate();
+    },
+    onTimeout: (player) => {
+      stopGalerijTimer(true);
+      flash(`${player.name} is door zijn tijd heen! Pas/Ga verder.`);
       if (typeof showPreFinaleBonusControls === 'function') showPreFinaleBonusControls();
       if (galleryPhase === 'aanvul') {
         nextAanvulTurn();
@@ -251,27 +312,21 @@ function startGalerijTimer() {
         const currentImage = galleryImages[galleryIndex];
         if (currentImage) markGalerijAnswer(false, currentImage.answer);
       }
-      return;
     }
-  }, 1000);
+  });
 
   galleryTimerRunning = true;
 }
 
 function stopGalerijTimerSound() {
-  if (typeof stopLoopTimerSFX === 'function') stopLoopTimerSFX();
-  if (typeof playSFX === 'function') playSFX('SFX/klokeind.mp3');
+  if (typeof stopThinkingCountdownTimer === 'function') {
+    stopThinkingCountdownTimer(true);
+  }
 }
 
 function stopGalerijTimer(playEndSound = false) { 
-  if (typeof thinkingTimerInterval !== 'undefined') clearInterval(thinkingTimerInterval);
-  
-  
-  if (typeof stopLoopTimerSFX === 'function') stopLoopTimerSFX(); 
-  
-  if (playEndSound) {
-    
-    if (typeof playSFX === 'function') playSFX('SFX/klokeind.mp3'); 
+  if (typeof stopThinkingCountdownTimer === 'function') {
+    stopThinkingCountdownTimer(playEndSound);
   }
   
   galleryTimerRunning = false;
@@ -369,28 +424,6 @@ else if (galleryPhase === 'slideshow') {
       </div>
     `;
 }
-
-else if (galleryPhase === 'slideshow') {
-    const img = galleryImages[galleryIndex];
-    area.innerHTML = `
-      <h3>Bespreekfase: ${currentGallery.theme}</h3>
-      <div style="width:480px;height:320px;background:#000;display:flex;align-items:center;justify-content:center;border-radius:8px;margin:8px 0;">
-        ${img.src.endsWith('.webm')
-          ? `<video src="${img.src}" autoplay loop muted style="max-width:100%;max-height:100%;object-fit:contain;"></video>`
-          : `<img src="${img.src}" style="max-width:100%;max-height:100%;object-fit:contain;">`}
-      </div>
-      <div style="margin-top:4px;"><strong>Antwoord:</strong> ${img.answer}</div>
-      <div>Afbeelding ${galleryIndex + 1} / ${galleryImages.length}</div>
-      <div style="margin-top:8px;">
-        <button class="secondary" onclick="showNextSlideshow()">Volgende afbeelding</button>
-        
-        ${isLastGallery 
-          ? `<button onclick="endGalerijRound()" style="margin-left:8px;">Einde ronde scherm</button>` 
-          : `${renderGalerijAssignmentControls(nextPlayerIndex)}
-             <button onclick="startNextGalerijStarter()" style="margin-left:8px;">Start volgende galerij (${nextPlayer.name})</button>`}
-      </div>
-    `;
-  }
   else if (galleryPhase === 'done') {
     
     area.innerHTML = `
@@ -434,6 +467,7 @@ function startGalerijForPlayer(playerIndex) {
   stopGalerijTimer(false);
 
   galleryPlayerIndex = playerIndex;
+  syncGalerijActivePlayerIndex();
   const orderTurn = galerijStarterOrder.indexOf(playerIndex);
   if (orderTurn !== -1) {
     galerijStarterTurn = orderTurn;
@@ -554,6 +588,7 @@ function markGalerijAnswer(isRight, answer) {
     }
   }
 
+  syncGalerijActivePlayerIndex();
   renderPlayers();
   
   
@@ -584,6 +619,9 @@ function nextAanvulTurn() {
 
     
     const aanvulPlayerIndex = currentAanvulPlayer ? players.findIndex(p => p.name === currentAanvulPlayer.name) : -1;
+    if (aanvulPlayerIndex !== -1) {
+      activePlayerIndex = aanvulPlayerIndex;
+    }
 
     
     sendDisplayUpdate({
@@ -615,6 +653,7 @@ function markAanvulAnswer(img) {
     
     passedImages = passedImages.filter(p => p !== img);
 
+    syncGalerijActivePlayerIndex();
     renderPlayers();
 
     
@@ -633,6 +672,11 @@ function startSlideshowPhase() {
     stopGalerijTimer(false);
     galleryPhase = 'slideshow';
     galleryIndex = 0;
+  const isLastGallery = galerijStarterTurn >= (galerijStarterOrder.length - 1);
+  if (isLastGallery && typeof markCurrentRoundComplete === 'function') {
+    markCurrentRoundComplete();
+  }
+  syncGalerijActivePlayerIndex();
     renderGalerijHostUI();
 
     sendDisplayUpdate({

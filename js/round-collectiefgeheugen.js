@@ -4,7 +4,6 @@ let collectiefEndOption = 'lowestOut';
 
 
 
-let collectiefTimerInterval = null;
 let collectiefTimerRunning = false;
 
 
@@ -12,41 +11,31 @@ function startLoopTimer() {
     const activePlayer = players[activePlayerIndex];
     if (!activePlayer) return flash('Fout: Geen actieve speler voor timer.');
 
-    stopLoopTimer(); 
-
-    
-    if (typeof playSFX === 'function') {
-        try { sendDisplayUpdate({ type: 'audio', action: 'loopStart', src: 'SFX/klok2.mp3' }); } catch(e) {}
+    if (typeof startThinkingCountdownTimer !== 'function') {
+        flash('Fout: startThinkingCountdownTimer niet gevonden in core.js.');
+        return;
     }
 
-    collectiefTimerInterval = setInterval(() => {
-        activePlayer.seconds = Math.max(0, activePlayer.seconds - 1);
-        renderPlayers();
-        
-        
-        sendCollectiefDisplayUpdate('update', 'scene-round-collectief-main');
-
-        if (activePlayer.seconds <= 0) {
-            clearInterval(collectiefTimerInterval);
-            flash(`${activePlayer.name} is door zijn tijd heen!`);
+    startThinkingCountdownTimer({
+        getActivePlayer: () => players[activePlayerIndex],
+        onTick: () => {
+            renderPlayers();
+            sendCollectiefDisplayUpdate('update', 'scene-round-collectief-main');
+        },
+        onTimeout: (player) => {
+            flash(`${player.name} is door zijn tijd heen!`);
             if (typeof showPreFinaleBonusControls === 'function') showPreFinaleBonusControls();
-            passCollectief(); 
+            passCollectief();
         }
-    }, 1000);
+    });
 
     collectiefTimerRunning = true;
 }
 
 
 function stopLoopTimer(playEndSound = false) {
-    if (collectiefTimerInterval) clearInterval(collectiefTimerInterval);
-    collectiefTimerInterval = null;
-
-    
-    if (typeof stopLoopTimerSFX === 'function') stopLoopTimerSFX();
-
-    if (playEndSound && typeof playSFX === 'function') {
-        playSFX('SFX/klokeind.mp3');
+    if (typeof stopThinkingCountdownTimer === 'function') {
+        stopThinkingCountdownTimer(playEndSound);
     }
 
     collectiefTimerRunning = false;
@@ -55,16 +44,6 @@ function stopLoopTimer(playEndSound = false) {
 
 function stopGlobalTimer() {
     stopLoopTimer(false);
-}
-
-
-
-function shuffleArray(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-  return array;
 }
 
 
@@ -95,7 +74,9 @@ function setupCollectiefRound() {
     
     // Check of shuffle aan of uit staat
     const shouldShuffle = shouldShuffleRound('collectief');
-    const orderedQuestions = shouldShuffle ? shuffleArray(questionsToUse.slice()) : questionsToUse.slice();
+    const orderedQuestions = shouldShuffle
+        ? (typeof shuffleArrayShared === 'function' ? shuffleArrayShared(questionsToUse) : questionsToUse.slice())
+        : questionsToUse.slice();
     perRoundState.collectief.questions = orderedQuestions.slice(0, questionsCount).map(q => ({
         ...q,
         foundAnswers: [],        
@@ -103,11 +84,13 @@ function setupCollectiefRound() {
     }));
     
     perRoundState.collectief.currentQuestionIndex = 0;
-    perRoundState.collectief.starterOrder = players
-        .map((p, i) => ({ i, seconds: p.seconds }))
-        .sort((a, b) => a.seconds - b.seconds || a.i - b.i)
-        .map(p => p.i)
-        .slice(0, questionsCount);
+    perRoundState.collectief.starterOrder = (typeof getStarterOrderByLowestSeconds === 'function')
+        ? getStarterOrderByLowestSeconds(questionsCount)
+        : players
+            .map((p, i) => ({ i, seconds: p.seconds }))
+            .sort((a, b) => a.seconds - b.seconds || a.i - b.i)
+            .map(p => p.i)
+            .slice(0, questionsCount);
     perRoundState.collectief.currentStarterTurn = 0;
     
     
@@ -321,6 +304,9 @@ function nextCollectiefQuestion() {
 
 function endCollectiefRound() {
     roundRunning = false;
+    if (typeof markCurrentRoundComplete === 'function') {
+        markCurrentRoundComplete();
+    }
     stopAllTimers();
 
     
@@ -530,20 +516,35 @@ function sendCollectiefDisplayUpdate(action, scene) {
         };
     });
 
-    sendDisplayUpdate({
-        type: action,
-        key: 'collectief',
-        scene: scene,
+    const extraData = {
         currentQuestionIndex: qIndex + 1,
         maxQuestions: perRoundState.collectief.questions.length,
         activePlayer: players[activePlayerIndex]?.name || '-',
-        activeIndex: activePlayerIndex,
-        players: players,
         answers: answersData,
         videoSrc: currentQuestion.video,
         allAnswersFound: currentQuestion.foundAnswers.length === currentQuestion.answers.length,
         allPlayersAnswered: currentQuestion.playersWhoAnswered.length === players.length
-    });
+    };
+
+    if (typeof sendRoundDisplayUpdate === 'function') {
+        sendRoundDisplayUpdate({
+            type: action,
+            key: 'collectief',
+            scene,
+            activeIndex: activePlayerIndex,
+            playersData: players,
+            extraData
+        });
+    } else {
+        sendDisplayUpdate({
+            type: action,
+            key: 'collectief',
+            scene,
+            activeIndex: activePlayerIndex,
+            players,
+            ...extraData
+        });
+    }
 }
 
 console.log('Round-CollectiefGeheugen.js geladen met Collectief Geheugen logica.');

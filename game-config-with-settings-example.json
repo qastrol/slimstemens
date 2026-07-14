@@ -6,6 +6,12 @@
     "note": "Dit voorbeeld toont hoe je game-instellingen zoals aantal vragen kunt forceren via de config"
   },
   "settings": {
+    "branding": {
+      "titlePrefix": "de slimste mens",
+      "titleSuffix": "van twitch",
+      "logoPath": "assets/slimstemens.png",
+      "_description": "Pas titleSuffix aan om de titelbalktekst te vervangen, bijvoorbeeld 'van friesland'"
+    },
     "threeSixNine": {
       "shuffle": true,
       "maxQuestions": 15,

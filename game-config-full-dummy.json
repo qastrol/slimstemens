@@ -7,6 +7,12 @@
     "note": "Dit bestand bevat dummy-data voor demonstratie. Vervang met echte quizvragen."
   },
   "settings": {
+    "branding": {
+      "titlePrefix": "de slimste mens",
+      "titleSuffix": "van test",
+      "logoPath": "assets/slimstemens.png",
+      "description": "Pas titleSuffix aan naar bijvoorbeeld 'van friesland' voor alle titelbalken"
+    },
     "threeSixNine": {
       "shuffle": false,
       "maxQuestions": 15,

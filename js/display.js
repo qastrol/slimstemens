@@ -5,6 +5,85 @@ let perRoundState = { max: defaultThreeSixNineMax };
 let allGalleryAnswers = []; 
 let openDeurIntroVideoActive = false;
 let openDeurPendingVraagData = null;
+const DEFAULT_DISPLAY_BRANDING = {
+  titlePrefix: 'de slimste mens',
+  titleSuffix: 'van twitch',
+  logoPath: 'assets/slimstemens.png'
+};
+let displayBranding = { ...DEFAULT_DISPLAY_BRANDING };
+
+function normalizeDisplayBranding(branding) {
+  const merged = {
+    ...DEFAULT_DISPLAY_BRANDING,
+    ...(branding || {})
+  };
+
+  return {
+    titlePrefix: String(merged.titlePrefix || DEFAULT_DISPLAY_BRANDING.titlePrefix).trim() || DEFAULT_DISPLAY_BRANDING.titlePrefix,
+    titleSuffix: String(merged.titleSuffix || DEFAULT_DISPLAY_BRANDING.titleSuffix).trim() || DEFAULT_DISPLAY_BRANDING.titleSuffix,
+    logoPath: String(merged.logoPath || DEFAULT_DISPLAY_BRANDING.logoPath).trim() || DEFAULT_DISPLAY_BRANDING.logoPath
+  };
+}
+
+function setBrandingBarContent(barEl) {
+  if (!barEl) {
+    return;
+  }
+
+  const brandingMode = barEl.dataset.brandingMode || 'full';
+  const existingLogo = barEl.querySelector('img');
+  const logoSrc = brandingMode === 'minimal'
+    ? (existingLogo?.getAttribute('src') || DEFAULT_DISPLAY_BRANDING.logoPath)
+    : (displayBranding.logoPath || existingLogo?.getAttribute('src') || DEFAULT_DISPLAY_BRANDING.logoPath);
+  const logoAlt = existingLogo?.getAttribute('alt') || 'Het Slimste Mens logo';
+
+  barEl.textContent = '';
+  barEl.appendChild(document.createTextNode(`${displayBranding.titlePrefix} `));
+
+  const logo = document.createElement('img');
+  logo.src = logoSrc;
+  logo.alt = logoAlt;
+  barEl.appendChild(logo);
+
+  if (brandingMode !== 'minimal') {
+    barEl.appendChild(document.createTextNode(` ${displayBranding.titleSuffix}`));
+  }
+}
+
+function createBrandingBarElement(className = 'initial-title-bar') {
+  const bar = document.createElement('div');
+  bar.className = className;
+  setBrandingBarContent(bar);
+  return bar;
+}
+
+function applyBrandingToTitleBars(root = document) {
+  if (!root) {
+    return;
+  }
+
+  const titleBars = root.querySelectorAll('.initial-title-bar, .bumper-title-bar, .initial-title-bar-2');
+  titleBars.forEach(setBrandingBarContent);
+}
+
+function setDisplayBranding(branding) {
+  displayBranding = normalizeDisplayBranding(branding);
+  applyBrandingToTitleBars(document);
+}
+
+function applyUiSettingsFromConfig(config) {
+  setDisplayBranding(config?.settings?.branding);
+}
+
+window.applyUiSettingsFromConfig = applyUiSettingsFromConfig;
+
+if (window.pendingUiConfig) {
+  applyUiSettingsFromConfig(window.pendingUiConfig);
+} else if (typeof getBrandingSettings === 'function') {
+  setDisplayBranding(getBrandingSettings());
+} else {
+  applyBrandingToTitleBars(document);
+}
 
 function updateScene(sceneName) {
     document.querySelectorAll('.scene').forEach(s => {
@@ -80,6 +159,9 @@ function connectWebSocket() {
   ws.onmessage = (event) => {
     const data = JSON.parse(event.data);
     console.log('📨 WebSocket bericht ontvangen:', data.type, data);
+    if (data.branding) {
+      setDisplayBranding(data.branding);
+    }
 
     switch (data.type) {
       case 'audio':
@@ -142,6 +224,9 @@ function connectWebSocket() {
 
         
         if (data.key === 'puzzel') {
+          if (!data.scene) {
+            data.scene = 'scene-round-puzzel-waiting';
+          }
           handlePuzzelDisplayUpdate(data);
           break;
         }
@@ -854,8 +939,9 @@ function renderPlayersBarCompact(players, activeIndex, containerId) {
 function handlePuzzelDisplayUpdate(data) {
     const playersData = data.players || [];
     const activeIndex = data.activeIndex ?? -1;
+  const scene = data.scene || (Array.isArray(data.puzzelWords) ? 'scene-round-puzzel-active' : 'scene-round-puzzel-waiting');
 
-    if (data.scene === 'scene-round-puzzel-active') {
+  if (scene === 'scene-round-puzzel-active') {
         updateScene('round-puzzel-active');
 
         
@@ -893,6 +979,7 @@ function handlePuzzelDisplayUpdate(data) {
                     return `<div class="${classes}">${w.text}</div>`;
                 })
                 .join('');
+              requestAnimationFrame(() => adjustPuzzelWordFontSizes(puzzelTableEl));
             puzzelTableEl.style.transition = 'opacity 0.3s ease';
             puzzelTableEl.style.opacity = 1;
         } else {
@@ -931,16 +1018,73 @@ function handlePuzzelDisplayUpdate(data) {
             }
         }
 
-    } else if (data.scene === 'scene-round-puzzel-waiting') {
+    } else if (scene === 'scene-round-puzzel-waiting') {
         updateScene('round-puzzel-waiting');
         renderMiniLobby(playersData, 'puzzelPreMiniLobby');
         renderPlayersBarCompact(playersData, activeIndex, 'puzzelPrePlayersBar');
     } 
-    else if (data.scene === 'scene-round-puzzel-done') {
-        updateScene('scene-round-puzzel-done');
+    else if (scene === 'scene-round-puzzel-done') {
+      updateScene('round-puzzel-done');
         renderMiniLobby(playersData, 'puzzelDoneMiniLobby');
         renderPlayersBarCompact(playersData, activeIndex, 'puzzelDonePlayersBar');
     }
+}
+
+function adjustPuzzelWordFontSizes(puzzelTableEl) {
+  if (!puzzelTableEl) return;
+
+  const wordEls = Array.from(puzzelTableEl.querySelectorAll('.puzzel-word'));
+  if (!wordEls.length) return;
+
+  const measurer = document.createElement('span');
+  measurer.style.position = 'absolute';
+  measurer.style.visibility = 'hidden';
+  measurer.style.whiteSpace = 'nowrap';
+  measurer.style.pointerEvents = 'none';
+  measurer.style.left = '-99999px';
+  measurer.style.top = '-99999px';
+  document.body.appendChild(measurer);
+
+  wordEls.forEach((wordEl) => {
+    wordEl.style.fontSize = '';
+    wordEl.classList.remove('puzzel-word-compact');
+
+    const fullText = (wordEl.textContent || '').trim();
+    if (!fullText) return;
+
+    const tokens = fullText.split(/\s+/).filter(Boolean);
+    if (!tokens.length) return;
+
+    const longestToken = tokens.reduce((longest, token) => (
+      token.length > longest.length ? token : longest
+    ), tokens[0]);
+
+    const computed = window.getComputedStyle(wordEl);
+    const baseFontSize = parseFloat(computed.fontSize) || 32;
+
+    measurer.style.fontFamily = computed.fontFamily;
+    measurer.style.fontWeight = computed.fontWeight;
+    measurer.style.fontSize = `${baseFontSize}px`;
+    measurer.style.letterSpacing = computed.letterSpacing;
+    measurer.textContent = longestToken;
+
+    const tokenWidth = measurer.getBoundingClientRect().width;
+    const horizontalPadding = (parseFloat(computed.paddingLeft) || 0) + (parseFloat(computed.paddingRight) || 0);
+    const horizontalBorder = (parseFloat(computed.borderLeftWidth) || 0) + (parseFloat(computed.borderRightWidth) || 0);
+    const availableWidth = Math.max(0, wordEl.clientWidth - horizontalPadding - horizontalBorder - 6);
+
+    if (tokenWidth <= availableWidth || availableWidth <= 0) return;
+
+    const scale = Math.max(0.62, Math.min(1, availableWidth / tokenWidth));
+    const resizedFont = Math.max(18, Math.floor(baseFontSize * scale));
+
+    if (resizedFont < baseFontSize) {
+      wordEl.style.fontSize = `${resizedFont}px`;
+      wordEl.classList.add('puzzel-word-compact');
+    }
+  });
+
+  document.body.removeChild(measurer);
 }
 
 function handleGalerijDisplayUpdate(data) {
@@ -1358,14 +1502,9 @@ function handleGalerijDisplayUpdate(data) {
             winnerTitleEl.textContent = 'GAAT DOOR NAAR DE VOLGENDE AFLEVERING!';
           } else {
             
-            winnerTitleEl.innerHTML = `
-              is
-              <div class="initial-title-bar-2">
-                de slimste mens
-                <img src="assets/slimstemens.png" alt="Het Slimste Mens logo">
-                van twitch
-              </div>
-            `;
+            winnerTitleEl.textContent = '';
+            winnerTitleEl.appendChild(document.createTextNode('is'));
+            winnerTitleEl.appendChild(createBrandingBarElement('initial-title-bar-2'));
           }
         }
         
@@ -1898,14 +2037,9 @@ function handleFinaleViewChange(data) {
         if (isHighestWinner) {
           winnerTitleEl.textContent = 'GAAT DOOR NAAR DE VOLGENDE AFLEVERING!';
         } else {
-          winnerTitleEl.innerHTML = `
-            is
-            <div class="initial-title-bar-2">
-              de slimste mens
-              <img src="assets/slimstemens.png" alt="Het Slimste Mens logo">
-              van twitch
-            </div>
-          `;
+          winnerTitleEl.textContent = '';
+          winnerTitleEl.appendChild(document.createTextNode('is'));
+          winnerTitleEl.appendChild(createBrandingBarElement('initial-title-bar-2'));
         }
       }
       
