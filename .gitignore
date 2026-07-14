@@ -21,3 +21,8 @@ desktop.ini
 
 # Local Python environment
 .venv/
+
+# Electron build output
+dist/
+release/
+*.exe

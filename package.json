@@ -1,17 +1,58 @@
 {
   "name": "site",
   "version": "1.0.0",
-  "main": "script.js",
+  "main": "electron-main.js",
+  "description": "De Slimste Mens - lokale host/display game tool",
+  "author": "qastrol",
+  "private": true,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node server.js",
+    "desktop": "electron .",
+    "dist:win": "electron-builder --win nsis",
+    "dist:portable": "electron-builder --win portable"
   },
   "keywords": [],
-  "author": "",
   "license": "ISC",
   "dependencies": {
     "express": "^5.1.0",
     "ws": "^8.19.0"
   },
-  "description": ""
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "nl.slimstemens.desktop",
+    "productName": "De Slimste Mens",
+    "executableName": "DeSlimsteMens",
+    "asar": true,
+    "icon": "assets/slimstemens.ico",
+    "artifactName": "DeSlimsteMens.${ext}",
+    "files": [
+      "*.html",
+      "*.css",
+      "*.json",
+      "server.js",
+      "websocket.js",
+      "electron-main.js",
+      "js/**/*",
+      "css/**/*",
+      "assets/**/*",
+      "galerij/**/*",
+      "collectief_geheugen/**/*",
+      "SFX/**/*",
+      "Walta/**/*"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
 }
