@@ -11,6 +11,9 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 desktop.ini
+game-config-example.json
+game-config-full-dummy.json
+game-config-with-settings-example.json
 
 # Editor directories
 .vscode/

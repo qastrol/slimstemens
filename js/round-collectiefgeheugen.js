@@ -423,6 +423,8 @@ function endCollectiefRound() {
 
 
 function renderCollectiefHostUI(phase = 'pre') {
+    perRoundState.collectief.hostPhase = phase;
+
     const controlsEl = document.getElementById('roundControls');
     const qIndex = perRoundState.collectief.currentQuestionIndex;
     const currentQuestion = perRoundState.collectief.questions[qIndex];
@@ -467,7 +469,7 @@ currentQuestionEl.innerHTML = `
 
     if (phase === 'pre') {
         
-        html = `<button onclick="startCollectiefVideo()">Start Fragment ${qIndex + 1} Video</button>`;
+        html = `<button onclick="startCollectiefVideo()">Start Fragment ${qIndex + 1} Video (V)</button>`;
     } 
     else if (phase === 'video') {
         

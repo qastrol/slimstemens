@@ -45,10 +45,27 @@ window.addEventListener('DOMContentLoaded', function() {
 
 
 let streamerBotWS = null; 
+const desktopBridge = typeof window !== 'undefined' ? window.slimstemensDesktopBridge : null;
 
 const WS_ADDRESS = 'ws://127.0.0.1:8081/';
 
 function connectToQuizServer() {
+  if (desktopBridge && typeof desktopBridge.send === 'function') {
+    if (!streamerBotWS || streamerBotWS.__transport !== 'electron') {
+      streamerBotWS = {
+        __transport: 'electron',
+        readyState: WebSocket.OPEN,
+        send(message) {
+          desktopBridge.send(message);
+        }
+      };
+      console.log('Verbonden met lokale Electron-bridge.');
+      sendDisplayUpdate({ type: 'init', players, active: activePlayerIndex, round: perRoundState?.round || '-' });
+    }
+
+    return;
+  }
+
   if (streamerBotWS && streamerBotWS.readyState === WebSocket.OPEN) return;
   
   try {
@@ -919,6 +936,11 @@ function handleRoundHotkey(key) {
     if (round === 'finale' && typeof startFinaleTimer === 'function') { startFinaleTimer(); return true; }
   }
 
+  if (key === 'k' && round === 'threeSixNine' && typeof klok369_toggleLoop === 'function') {
+    klok369_toggleLoop();
+    return true;
+  }
+
   if (key === 'g') {
     if (round === 'threeSixNine' && typeof markThreeSixNineAnswer === 'function') {
       markThreeSixNineAnswer(true);
@@ -956,12 +978,101 @@ function handleRoundHotkey(key) {
     if (round === 'finale' && typeof passFinale === 'function') { passFinale(); return true; }
   }
 
-  if (numberIndex !== null) {
-    if (round === 'opendeur' && typeof markOpenDeurAnswer === 'function') {
-      const answers = perRoundState?.currentQuestion?.answersDisplay || [];
-      if (numberIndex < answers.length) {
-        markOpenDeurAnswer(numberIndex);
+  if (round === 'threeSixNine' && perRoundState.currentQuestion && typeof getThreeSixNineMediaUrls === 'function') {
+    const questionMedia = getThreeSixNineMediaUrls(perRoundState.currentQuestion, 'question');
+    const afterMedia = getThreeSixNineMediaUrls(perRoundState.currentQuestion, 'after');
+
+    if (key === 'q' && questionMedia?.photoUrl && typeof toggleThreeSixNinePhoto === 'function') {
+      toggleThreeSixNinePhoto('question');
+      return true;
+    }
+    if (key === 'w' && questionMedia?.audioUrl && typeof playThreeSixNineAudio === 'function') {
+      playThreeSixNineAudio('question');
+      return true;
+    }
+    if (key === 'e' && questionMedia?.videoUrl && typeof playThreeSixNineVideo === 'function') {
+      playThreeSixNineVideo('question');
+      return true;
+    }
+    if (key === 'a' && afterMedia?.photoUrl && typeof toggleThreeSixNinePhoto === 'function') {
+      toggleThreeSixNinePhoto('after');
+      return true;
+    }
+    if (key === 's' && afterMedia?.audioUrl && typeof playThreeSixNineAudio === 'function') {
+      playThreeSixNineAudio('after');
+      return true;
+    }
+    if (key === 'd' && afterMedia?.videoUrl && typeof playThreeSixNineVideo === 'function') {
+      playThreeSixNineVideo('after');
+      return true;
+    }
+  }
+
+  if (round === 'galerij') {
+    if (key === 'arrowleft' && galleryPhase === 'slideshow' && typeof showPreviousSlideshow === 'function') {
+      showPreviousSlideshow();
+      return true;
+    }
+
+    if (key === 'arrowright' && galleryPhase === 'slideshow' && typeof showNextSlideshow === 'function') {
+      showNextSlideshow();
+      return true;
+    }
+
+    if (key === 'b' && galleryPhase === 'slideshow' && typeof forceSlideshowPhaseOnDisplay === 'function') {
+      forceSlideshowPhaseOnDisplay();
+      return true;
+    }
+
+    if (key === 's') {
+      if (galleryPhase === 'pre' && typeof startGalerijForPlayer === 'function') {
+        startGalerijForPlayer(galleryPlayerIndex);
         return true;
+      }
+
+      const hasNextGalerijStarter = Array.isArray(galerijStarterOrder) && (galerijStarterTurn + 1) < galerijStarterOrder.length;
+      if ((galleryPhase === 'slideshow' || galleryPhase === 'done') && hasNextGalerijStarter && typeof startNextGalerijStarter === 'function') {
+        startNextGalerijStarter();
+        return true;
+      }
+    }
+  }
+
+  if (key === 'r' && round === 'opendeur' && typeof returnToOpenDeurQuestioners === 'function') {
+    const hasReturnButton = !!document.querySelector('#roundControls .highlight-return');
+    if (hasReturnButton) {
+      returnToOpenDeurQuestioners();
+      return true;
+    }
+  }
+
+  if (key === 'v' && round === 'collectief' && typeof startCollectiefVideo === 'function') {
+    if (perRoundState?.collectief?.hostPhase === 'pre') {
+      startCollectiefVideo();
+      return true;
+    }
+  }
+
+  if (numberIndex !== null) {
+    if (round === 'opendeur') {
+      if (!perRoundState?.currentQuestion && typeof chooseOpenDeurQuestion === 'function') {
+        const remainingQuestions = (perRoundState?.questions || []).filter((q) => !q.played);
+        if (numberIndex < remainingQuestions.length) {
+          const chosenQuestion = remainingQuestions[numberIndex];
+          const questionIndex = perRoundState.questions.indexOf(chosenQuestion);
+          if (questionIndex !== -1) {
+            chooseOpenDeurQuestion(questionIndex);
+            return true;
+          }
+        }
+      }
+
+      if (typeof markOpenDeurAnswer === 'function') {
+        const answers = perRoundState?.currentQuestion?.answersDisplay || [];
+        if (numberIndex < answers.length) {
+          markOpenDeurAnswer(numberIndex);
+          return true;
+        }
       }
     }
 

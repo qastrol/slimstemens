@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Custom Game Builder - De Slimste Mens</title>
+  <link rel="stylesheet" href="css/fonts.css" />
+  <link rel="stylesheet" href="css/custom-game-builder.css" />
+</head>
+<body>
+  <div class="builder-shell">
+    <header class="builder-header">
+      <div>
+        <h1>Custom Game Builder</h1>
+        <p>Maak een aangepaste vragenlijst en exporteer als JSON of ZIP.</p>
+      </div>
+      <div class="header-actions">
+        <label class="import-label" for="builderImportInput">Importeer JSON of ZIP</label>
+        <input id="builderImportInput" type="file" accept=".json,.zip,application/json,application/zip" />
+      </div>
+    </header>
+
+    <main class="builder-main">
+      <section class="card">
+        <h2>Instellingen en Spelgedrag</h2>
+
+        <div class="settings-group">
+          <div class="block-header">
+            <h4>Metadata</h4>
+            <p class="block-description">Naam en optionele informatie voor de export.</p>
+          </div>
+          <div class="grid two">
+            <label>Naam van de game
+              <input id="metaName" type="text" value="Mijn custom game" />
+            </label>
+            <label>Beschrijving
+              <input id="metaDescription" type="text" value="Aangepaste configuratie" />
+            </label>
+            <label>Maker / auteur
+              <input id="metaAuthor" type="text" placeholder="Optioneel" />
+            </label>
+          </div>
+        </div>
+
+        <hr class="section-divider" />
+
+        <div class="settings-group">
+          <div class="block-header">
+            <h4>Basis</h4>
+            <p class="block-description">Branding en algemene spelinstellingen.</p>
+          </div>
+          <div class="grid two">
+            <label>Title prefix (voor logo)
+              <input id="brandingPrefix" type="text" value="de slimste mens" />
+            </label>
+            <label>Title suffix (na logo)
+              <input id="brandingSuffix" type="text" value="van twitch" />
+            </label>
+            <label>Aantal startseconden per kandidaat
+              <input id="settingStartSeconds" type="number" min="10" value="60" />
+            </label>
+            <label class="checkbox-label-align">
+              <input id="settingSafeRoundNavigation" type="checkbox" /> Veilige rondeknoppen
+            </label>
+            <label class="checkbox-label-align">
+              <input id="settingBumpersEnabled" type="checkbox" checked /> Rondebumpers tonen
+            </label>
+          </div>
+        </div>
+
+        <hr class="section-divider" />
+
+        <div class="settings-group">
+          <div class="block-header">
+            <h4>Vragen husselen</h4>
+            <p class="block-description">Geen vinkje = vaste vragenvolgorde (op volgorde van vraagnummer), vinkje = vragen worden gehusseld.</p>
+          </div>
+          <div class="checkbox-grid">
+            <label><input id="shuffle369" type="checkbox" checked /> 3-6-9</label>
+            <label><input id="shuffleOpenDeur" type="checkbox" checked /> Open Deur</label>
+            <label><input id="shufflePuzzel" type="checkbox" checked /> Puzzel</label>
+            <label><input id="shuffleGalerij" type="checkbox" checked /> Galerij</label>
+            <label><input id="shuffleCollectief" type="checkbox" checked /> Collectief Geheugen</label>
+            <label><input id="shuffleFinale" type="checkbox" checked /> Finale</label>
+          </div>
+                  <hr class="section-divider" />
+
+                  <div class="settings-group">
+          <div class="block-header">
+            <h4>Ronde-instellingen</h4>
+          </div>
+          <div class="grid three spaced-grid">
+            <label>Aantal vragen bij 3-6-9
+              <input id="maxQuestions369" type="number" min="1" value="12" />
+            </label>
+            <label>Aantal foto's per galerij
+              <input id="photoCountGalerij" type="number" min="1" value="10" />
+            </label>
+            <label class="checkbox-label-align">
+              <input id="manualAssignmentGalerij" type="checkbox" /> Handmatig galerij-thema toewijzen aan kandidaat
+            </label>
+            <label>Collectief Geheugen einde-gedrag
+              <select id="settingCollectiefEndOption">
+                <option value="lowestOut" selected>Kandidaat met laagste score valt af, overige kandidaten gaan naar finale</option>
+                <option value="highestWinner">Kandidaat met hoogste score Slimste van de Dag, overige kandidaten naar finale</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <hr class="section-divider" />
+
+        <div class="settings-group">
+          <div class="block-header">
+            <h4>Presentatie</h4>
+            <p class="block-description">Intro, outro en presentator-specifieke instellingen.</p>
+          </div>
+          <div class="grid three spaced-grid">
+            <label class="checkbox-label-align"><input id="settingIntroEnabled" type="checkbox" /> Intro en Outro afspelen</label>
+            <label class="checkbox-label-align"><input id="settingPresenterEnabled" type="checkbox" /> Presentator tonen</label>
+            <label class="checkbox-label-align"><input id="settingJuryEnabled" type="checkbox" /> Jury tonen</label>
+          </div>
+          <div id="introTextOptions" class="full">
+            <label>Intro-tekst
+              <textarea id="settingIntroText" placeholder="Optionele intro-tekst die getoond wordt tijdens de intro/outro"></textarea>
+            </label>
+          </div>
+          <div class="list" style="margin-top:10px;">
+            <div id="presenterPhotoOptions" class="item">
+              <div class="item-title"><strong>Presentatorfoto (optioneel)</strong></div>
+              <div class="media-row">
+                <label>Presentator foto pad
+                  <input id="settingPresenterPhotoPath" type="text" placeholder="media/presenter/foto" />
+                </label>
+                <input
+                  id="settingPresenterPhotoUpload"
+                  type="file"
+                  accept="image/*"
+                  data-path-input-id="settingPresenterPhotoPath"
+                  title="Kies een presentatorfoto"
+                />
+              </div>
+              <p class="helper">Optioneel: wordt opgeslagen als settings.presenter.photoUrl.</p>
+            </div>
+          </div>
+        </div>
+
+        <hr class="section-divider" />
+
+        <div class="settings-group">
+          <div class="block-header">
+            <h4>Vooraf invullen spelers</h4>
+            <p class="block-description">Zichtbaar wanneer je spelers automatisch wilt meegeven in een custom game.</p>
+          </div>
+          <div class="grid three">
+            <label><input id="prefillPlayersEnabled" type="checkbox" /> Spelers automatisch invullen bij laden van custom game</label>
+            <div id="prefillOptions" class="full">
+              <div class="grid three">
+                <label>Aantal spelers
+                  <select id="prefillPlayerCount">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3" selected>3</option>
+                  </select>
+                </label>
+                <label>Vragen per ronde (solo)
+                  <select id="prefillQuestionsPerRound">
+                    <option value="1" selected>1</option>
+                    <option value="3">3</option>
+                  </select>
+                </label>
+              </div>
+              <div id="prefillPlayersList" class="list"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <h2>3-6-9</h2>
+          <button class="secondary" id="addThreeSixNineBtn" type="button">+ Vraag</button>
+        </div>
+        <div id="threeSixNineList" class="list"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <h2>Open Deur</h2>
+          <button class="secondary" id="addOpenDeurBtn" type="button">+ Vraag</button>
+        </div>
+        <div id="openDeurList" class="list"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <h2>Puzzel</h2>
+          <button class="secondary" id="addPuzzelBtn" type="button">+ Link</button>
+        </div>
+        <div id="puzzelList" class="list"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <h2>Galerij</h2>
+          <button class="secondary" id="addGalerijBtn" type="button">+ Thema</button>
+        </div>
+        <div id="galerijList" class="list"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <h2>Collectief Geheugen</h2>
+          <button class="secondary" id="addCollectiefBtn" type="button">+ Fragment</button>
+        </div>
+        <div id="collectiefList" class="list"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <h2>Finale vragen</h2>
+          <button class="secondary" id="addFinaleBtn" type="button">+ Vraag</button>
+        </div>
+        <div id="finaleList" class="list"></div>
+      </section>
+    </main>
+
+    <footer class="builder-footer">
+      <div id="builderStatus">Klaar om te exporteren.</div>
+      <div class="footer-actions">
+        <button id="downloadBuilderJsonBtn" type="button">Download JSON</button>
+        <button id="downloadBuilderZipBtn" type="button">Download ZIP (met media)</button>
+      </div>
+    </footer>
+  </div>
+
+  <script src="node_modules/jszip/dist/jszip.min.js"></script>
+  <script src="js/custom-game-builder.js"></script>
+</body>
+</html>

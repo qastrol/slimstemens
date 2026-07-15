@@ -355,7 +355,7 @@ function renderGalerijHostUI() {
       <p>Kandidaat aan de beurt: <strong>${playerName}</strong></p>
       ${renderGalerijAssignmentControls(galleryPlayerIndex)}
       <button onclick="startGalerijForPlayer(${galleryPlayerIndex})">
-        ▶️ Start galerij (${playerName})
+        ▶️ Start galerij (${playerName}) (S)
       </button>
     `;
   }
@@ -376,7 +376,6 @@ function renderGalerijHostUI() {
       <div style="margin-top:8px;">
         <button class="good" onclick="markGalerijAnswer(true, '${img.answer}')">✅ Goed (G)</button>
         <button class="wrong" onclick="markGalerijAnswer(false, '${img.answer}')">⏩ Pas (P)</button>
-        <button class="secondary" onclick="nextGalerijQuestion()">Volgende (N)</button>
         ${!galleryTimerRunning ? '<button onclick="startGalerijTimer()" class="secondary" style="margin-left:8px;">Start Timer (T)</button>' : ''}
       </div>
     `;
@@ -403,6 +402,8 @@ function renderGalerijHostUI() {
   }
 else if (galleryPhase === 'slideshow') {
     const img = galleryImages[galleryIndex];
+    const canGoPreviousImage = galleryIndex > 0;
+    const canGoNextImage = galleryIndex < (galleryImages.length - 1);
     area.innerHTML = `
       <h3>Bespreekfase: ${currentGallery.theme}</h3>
       <div style="width:480px;height:320px;background:#000;display:flex;align-items:center;justify-content:center;border-radius:8px;margin:8px 0;">
@@ -414,13 +415,14 @@ else if (galleryPhase === 'slideshow') {
       ${img.remarks ? `<div class="host-remarks">💬 ${img.remarks}</div>` : ''}
       <div>Afbeelding ${galleryIndex + 1} / ${galleryImages.length}</div>
       <div style="margin-top:8px;">
-        <button class="secondary" onclick="showNextSlideshow()">Volgende afbeelding</button>
+        ${canGoPreviousImage ? '<button class="secondary" onclick="showPreviousSlideshow()">Vorige afbeelding (←)</button>' : ''}
+        ${canGoNextImage ? '<button class="secondary" onclick="showNextSlideshow()" style="margin-left:8px;">Volgende afbeelding (→)</button>' : ''}
         ${isLastGallery 
           ? `<button onclick="endGalerijRound()" style="margin-left:8px;">Einde ronde scherm</button>` 
            : `${renderGalerijAssignmentControls(nextPlayerIndex)}
-             <button onclick="startNextGalerijStarter()" style="margin-left:8px;">Start volgende galerij (${nextPlayer.name})</button>`}
+             <button onclick="startNextGalerijStarter()" style="margin-left:8px;">Start volgende galerij (${nextPlayer.name}) (S)</button>`}
         <!-- ✅ Knop om display handmatig naar bespreekfase te sturen -->
-        <button onclick="forceSlideshowPhaseOnDisplay()" class="secondary" style="margin-left:8px;">➡️ Forceer bespreekfase op display</button>
+        <button onclick="forceSlideshowPhaseOnDisplay()" class="secondary" style="margin-left:8px;">➡️ Forceer bespreekfase op display (B)</button>
       </div>
     `;
 }
@@ -726,6 +728,32 @@ function showNextSlideshow() {
     }
 
     renderGalerijHostUI();
+}
+
+function showPreviousSlideshow() {
+  if (galleryIndex <= 0) {
+    renderGalerijHostUI();
+    return;
+  }
+
+  galleryIndex -= 1;
+  const currentImage = galleryImages[galleryIndex];
+
+  sendDisplayUpdate({
+    type: 'update',
+    key: 'galerij',
+    scene: 'scene-round-galerij-slideshow',
+    galleryTheme: currentGallery.theme,
+    imageSrc: currentImage?.src,
+    imageAnswer: currentImage?.answer,
+    players: players,
+    activePlayer: players[galleryPlayerIndex],
+    activeIndex: galleryPlayerIndex,
+    imageIndex: galleryIndex,
+    totalImages: galleryImages.length
+  });
+
+  renderGalerijHostUI();
 }
 
 

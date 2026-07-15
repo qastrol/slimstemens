@@ -539,10 +539,16 @@
         }
         
         .od-answer-text {
+          flex: 1;
+          min-width: 0;
             font-size: 3.5em;
             font-weight: bold;
             color: white;
             text-transform: uppercase; 
+          white-space: normal;
+          overflow-wrap: anywhere;
+          word-break: break-word;
+          line-height: 1.1;
         }
 
         .od-answer-points {
@@ -995,10 +1001,16 @@
 }
 
 .puzzel-link-text {
+  flex: 1;
+  min-width: 0;
     font-size: 3.5em;  
     font-weight: bold;
     color: white;
     text-transform: uppercase;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.1;
 }
 
 .puzzel-link-points {

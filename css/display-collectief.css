@@ -35,10 +35,15 @@
 
 .collectief-answer-text {
   flex: 1;
+  min-width: 0;
   font-size: 2.2em;
   font-weight: 600;
   color: white;
   text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.15;
 }
 
 .collectief-answer-text.blurred {

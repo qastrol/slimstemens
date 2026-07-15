@@ -11,12 +11,15 @@
     "desktop": "electron .",
     "clean:dist": "node -e \"const fs=require('fs'); fs.rmSync('dist',{recursive:true,force:true});\"",
     "dist:win": "npm run clean:dist && electron-builder --win nsis",
-    "dist:portable": "npm run clean:dist && electron-builder --win portable"
+    "dist:portable": "npm run clean:dist && electron-builder --win portable",
+    "dist:linux": "npm run clean:dist && electron-builder --linux AppImage deb",
+    "dist:all": "npm run clean:dist && electron-builder --win nsis portable --linux AppImage deb"
   },
   "keywords": [],
   "license": "ISC",
   "dependencies": {
     "express": "^5.1.0",
+    "jszip": "^3.10.1",
     "ws": "^8.19.0"
   },
   "devDependencies": {
@@ -51,6 +54,14 @@
         "nsis",
         "portable"
       ]
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "assets/slimstemens.png",
+      "category": "Game"
     },
     "nsis": {
       "oneClick": false,

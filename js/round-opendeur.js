@@ -86,7 +86,7 @@ function renderOpenDeurChoices() {
 
   remainingQuestions.forEach((q,i)=>{
     const btn = document.createElement('button');
-    btn.textContent = `Vraag van ${q.from}`;
+    btn.textContent = `(${i + 1}) Vraag van ${q.from}`;
     btn.className = 'secondary';
     btn.addEventListener('click', ()=>chooseOpenDeurQuestion(perRoundState.questions.indexOf(q)));
     cont.appendChild(btn);
@@ -357,7 +357,8 @@ if (scene === 'scene-round-opendeur-vragensteller') {
     data.questioners = perRoundState.questions.map((q, idx) => ({
         index: idx,
         name: q.from,
-        isChosen: q.played
+    isChosen: q.played,
+    introVideoUrl: getOpenDeurIntroVideoUrl(q) || null
     }));
 
     data.activeChoosingPlayerIndex = activePlayerIndex;
@@ -417,23 +418,7 @@ if (scene === 'scene-round-opendeur-vragensteller') {
       sendDisplayUpdate(data);
     }
 }
-function showReturnToQuestionerButton() {
-  const rc = document.getElementById('roundControls');
-  if (!rc) return;
-
-  
-  rc.innerHTML = '';
-
-  
-  const returnBtn = document.createElement('button');
-  returnBtn.textContent = 'Terug naar vragenstellers';
-  returnBtn.className = 'secondary highlight-return';
-  returnBtn.style.marginTop = '1em';
-  returnBtn.style.padding = '0.5em 1em';
-  returnBtn.style.fontWeight = 'bold';
-
-  
-returnBtn.addEventListener('click', () => {
+function returnToOpenDeurQuestioners() {
     flash('Terug naar vragensteller-keuze');
 
     // Reset de state voor alle kandidaten gepast
@@ -459,6 +444,26 @@ returnBtn.addEventListener('click', () => {
     resetRoundControls();
 
     sendOpenDeurDisplayUpdate('update', 'scene-round-opendeur-vragensteller');
+}
+
+function showReturnToQuestionerButton() {
+  const rc = document.getElementById('roundControls');
+  if (!rc) return;
+
+  
+  rc.innerHTML = '';
+
+  
+  const returnBtn = document.createElement('button');
+  returnBtn.textContent = 'Terug naar vragenstellers (R)';
+  returnBtn.className = 'secondary highlight-return';
+  returnBtn.style.marginTop = '1em';
+  returnBtn.style.padding = '0.5em 1em';
+  returnBtn.style.fontWeight = 'bold';
+
+  
+returnBtn.addEventListener('click', () => {
+    returnToOpenDeurQuestioners();
 });
 
 

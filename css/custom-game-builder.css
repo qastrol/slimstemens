@@ -1,0 +1,276 @@
+:root {
+  --bg: #f3f7f5;
+  --card: #ffffff;
+  --text: #1e2b23;
+  --muted: #59685f;
+  --line: #d0dcd4;
+  --accent: #0f7b53;
+  --accent-strong: #0a5a3d;
+  --danger: #a73333;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at top right, #deefe7, transparent 45%), var(--bg);
+  color: var(--text);
+  font-family: "DIN", "Arial", sans-serif;
+}
+
+.builder-shell {
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.builder-header,
+.builder-footer {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.builder-header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+}
+
+.builder-header p {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+
+.import-label {
+  display: inline-block;
+  border: 1px solid var(--line);
+  background: #f7fbf9;
+  border-radius: 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+#builderImportInput {
+  display: none;
+}
+
+.builder-main {
+  margin-top: 16px;
+  display: grid;
+  gap: 14px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.card h2 {
+  margin: 0 0 10px;
+  font-size: 1.1rem;
+}
+
+.settings-group + .settings-group {
+  margin-top: 14px;
+}
+
+.block-header h4 {
+  margin: 0 0 4px;
+  font-size: 0.98rem;
+}
+
+.block-description {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.spaced-grid {
+  margin-top: 10px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.grid {
+  display: grid;
+  gap: 10px;
+}
+
+.grid.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.grid.three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.grid .full {
+  grid-column: 1 / -1;
+}
+
+label {
+  display: grid;
+  gap: 5px;
+  font-size: 0.93rem;
+}
+
+/* Houd checkboxen en bijhorende tekst altijd op dezelfde lijn. */
+label:has(> input[type="checkbox"]) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.25;
+}
+
+label > input[type="checkbox"] {
+  margin: 0;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+input,
+textarea,
+select,
+button {
+  font: inherit;
+}
+
+input[type="text"],
+input[type="number"],
+textarea,
+select {
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 8px 10px;
+  background: #fff;
+}
+
+textarea {
+  min-height: 70px;
+  resize: vertical;
+}
+
+button {
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+button:hover {
+  background: var(--accent-strong);
+}
+
+button.secondary {
+  background: transparent;
+  color: var(--accent);
+}
+
+button.remove {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.list {
+  display: grid;
+  gap: 10px;
+}
+
+.item {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px;
+  background: #fcfffd;
+}
+
+.item-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.item-title strong {
+  font-size: 0.94rem;
+}
+
+.compact-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.media-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px;
+  align-items: end;
+}
+
+.media-row input[type="file"] {
+  max-width: 240px;
+}
+
+.helper {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.type-help {
+  margin-top: 0;
+  margin-bottom: 6px;
+}
+
+.builder-footer {
+  margin-top: 16px;
+}
+
+#builderStatus {
+  color: var(--muted);
+}
+
+.footer-actions {
+  display: flex;
+  gap: 8px;
+}
+
+@media (max-width: 900px) {
+  .grid.two,
+  .grid.three,
+  .compact-grid,
+  .media-row {
+    grid-template-columns: 1fr;
+  }
+
+  .builder-header,
+  .builder-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .footer-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+}

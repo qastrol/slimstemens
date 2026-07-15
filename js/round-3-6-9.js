@@ -148,6 +148,33 @@ function setThreeSixNineMax(num) {
   }
 }
 
+function getThreeSixNineMediaUrls(question, phase = 'question') {
+  const q = question || {};
+
+  if (phase === 'after') {
+    return {
+      photoUrl: q.afterPhotoUrl || q.revealPhotoUrl || null,
+      audioUrl: q.afterAudioUrl || q.revealAudioUrl || null,
+      videoUrl: q.afterVideoUrl || q.revealVideoUrl || null
+    };
+  }
+
+  return {
+    photoUrl: q.questionPhotoUrl || q.photoUrl || null,
+    audioUrl: q.questionAudioUrl || q.audioUrl || null,
+    videoUrl: q.questionVideoUrl || q.videoUrl || q.clip || null
+  };
+}
+
+function resetThreeSixNineMediaState() {
+  perRoundState.mediaQuestionPhotoVisible = false;
+  perRoundState.mediaAfterPhotoVisible = false;
+  perRoundState.mediaQuestionAudioPlaying = false;
+  perRoundState.mediaAfterAudioPlaying = false;
+  perRoundState.mediaQuestionVideoPlaying = false;
+  perRoundState.mediaAfterVideoPlaying = false;
+}
+
 function nextThreeSixNineQuestion() {
   if (!players.length) {
     flash('Maak eerst het spel aan met spelers');
@@ -175,115 +202,53 @@ function nextThreeSixNineQuestion() {
   currentQuestionIndex++;
 
   const activePlayerName = players[activePlayerIndex]?.name || '-';
+  const questionMedia = getThreeSixNineMediaUrls(q, 'question');
+  const afterMedia = getThreeSixNineMediaUrls(q, 'after');
 
   // Render vraag gebaseerd op type
   let questionHTML = `<strong>Vraag ${currentQuestionIndex} (3-6-9)</strong>`;
-  
-  switch(q.type) {
-    case 'multiple-choice':
-      if (q.options && q.options.A && q.options.B && q.options.C && q.options.D) {
-        questionHTML += `
-          <div>${q.text}</div>
-          <div class="multiple-choice-options">
-            <div><strong>A:</strong> ${q.options.A}</div>
-            <div><strong>B:</strong> ${q.options.B}</div>
-            <div><strong>C:</strong> ${q.options.C}</div>
-            <div><strong>D:</strong> ${q.options.D}</div>
-          </div>
-          <div class="small">(Druk op Goed of Fout. Elke derde vraag: +10s bonus)</div>
-          <div class="muted small">Juiste antwoord: ${q.correctAnswer || 'Onbekend'}</div>`;
-        if (q.remarks) {
-          questionHTML += `<div class="host-remarks">💬 ${q.remarks}</div>`;
-        }
-      } else {
-        // Fallback als options ontbreken
-        questionHTML += `
-          <div>${q.text}</div>
-          <div class="small">(Multiple-choice opties ontbreken - behandel als klassieke vraag)</div>
-          <div class="muted small">Antwoord: ${q.answers ? q.answers.join(', ') : 'Onbekend'}</div>`;
-        if (q.remarks) {
-          questionHTML += `<div class="host-remarks">💬 ${q.remarks}</div>`;
-        }
-      }
-      break;
-      
-    case 'photo':
-      questionHTML += `
-        <div>${q.text}</div>
-        <div class="small" style="color:#888">📷 Foto beschikbaar: ${q.photoUrl || 'Geen URL'}</div>
-        <div class="small">(Gebruik knop hieronder om foto te tonen/verbergen)</div>
-        <div class="muted small">Antwoord: ${q.answers ? q.answers.join(', ') : 'Onbekend'}</div>`;
-      if (q.remarks) {
-        questionHTML += `<div class="host-remarks">💬 ${q.remarks}</div>`;
-      }
-      break;
+  const qType = q.type || 'classic';
 
-    case 'photo-multiple-choice':
-      if (q.options && q.options.A && q.options.B && q.options.C && q.options.D) {
-        questionHTML += `
-          <div>${q.text}</div>
-          <div class="small" style="color:#888">📷 Foto beschikbaar: ${q.photoUrl || 'Geen URL'}</div>
-          <div style="margin-top: 10px;"></div>
-          <div class="multiple-choice-options">
-            <div><strong>A:</strong> ${q.options.A}</div>
-            <div><strong>B:</strong> ${q.options.B}</div>
-            <div><strong>C:</strong> ${q.options.C}</div>
-            <div><strong>D:</strong> ${q.options.D}</div>
-          </div>
-          <div class="small">(Druk op Goed of Fout. Foto toont met knop. Elke derde vraag: +10s bonus)</div>
-          <div class="muted small">Juiste antwoord: ${q.correctAnswer || 'Onbekend'}</div>`;
-        if (q.remarks) {
-          questionHTML += `<div class="host-remarks">💬 ${q.remarks}</div>`;
-        }
-      } else {
-        // Fallback
-        questionHTML += `
-          <div>${q.text}</div>
-          <div class="small">(Photo + Multiple-choice: opties of foto ontbreken)</div>`;
-      }
-      break;
-      
-    case 'audio':
-      questionHTML += `
-        <div>${q.text}</div>
-        <div class="small" style="color:#888">🔊 Audio beschikbaar: ${q.audioUrl || 'Geen URL'}</div>
-        <div class="small">(Gebruik knop hieronder om audio af te spelen)</div>
-        <div class="muted small">Antwoord: ${q.answers ? q.answers.join(', ') : 'Onbekend'}</div>`;
-      if (q.remarks) {
-        questionHTML += `<div class="host-remarks">💬 ${q.remarks}</div>`;
-      }
-      break;
-      
-    case 'doe':
-      questionHTML += `
-        <div>${q.text}</div>
-        <div class="small" style="color:#f90">⚡ DOE-VRAAG: Kies welke kandidaat wint</div>
-        <div class="muted small">${q.description || ''}</div>`;
-      if (q.remarks) {
-        questionHTML += `<div class="host-remarks">💬 ${q.remarks}</div>`;
-      }
-      break;
-      
-    case 'estimation':
-      questionHTML += `
-        <div>${q.text}</div>
-        <div class="small" style="color:#09f">📊 INSCHATTINGSVRAAG: Elke kandidaat geeft een antwoord</div>
-        <div class="muted small">Juiste antwoord: ${q.correctAnswer || 'Onbekend'} ${q.unit || ''}</div>`;
-      if (q.remarks) {
-        questionHTML += `<div class="host-remarks">💬 ${q.remarks}</div>`;
-      }
-      break;
-      
-    case 'classic':
-    default:
-      questionHTML += `
-        <div>${q.text}</div>
-        <div class="small">(Druk op Goed of Fout. Elke derde vraag: +10s bonus)</div>
-        <div class="muted small">Antwoord: ${q.answers ? q.answers.join(', ') : 'Onbekend'}</div>`;
-      if (q.remarks) {
-        questionHTML += `<div class="host-remarks">💬 ${q.remarks}</div>`;
-      }
-      break;
+  questionHTML += `<div>${q.text}</div>`;
+
+  if (qType === 'multiple-choice' && q.options) {
+    questionHTML += `
+      <div class="multiple-choice-options">
+        <div><strong>A:</strong> ${q.options.A || '-'}</div>
+        <div><strong>B:</strong> ${q.options.B || '-'}</div>
+        <div><strong>C:</strong> ${q.options.C || '-'}</div>
+        <div><strong>D:</strong> ${q.options.D || '-'}</div>
+      </div>
+      <div class="muted small">Juiste antwoord: ${q.correctAnswer || 'Onbekend'}</div>`;
+  }
+
+  if (qType === 'doe') {
+    questionHTML += `<div class="small" style="color:#f90">⚡ DOE-VRAAG: Kies welke kandidaat wint</div>`;
+    if (q.description) {
+      questionHTML += `<div class="muted small">${q.description}</div>`;
+    }
+  }
+
+  if (qType === 'estimation') {
+    questionHTML += `
+      <div class="small" style="color:#09f">📊 INSCHATTINGSVRAAG: elke kandidaat geeft een antwoord</div>
+      <div class="muted small">Juiste antwoord: ${q.correctAnswer || 'Onbekend'} ${q.unit || ''}</div>`;
+  }
+
+  if (qType === 'classic') {
+    questionHTML += `<div class="muted small">Antwoord: ${q.answers ? q.answers.join(', ') : 'Onbekend'}</div>`;
+  }
+
+  if (questionMedia.photoUrl || questionMedia.audioUrl || questionMedia.videoUrl) {
+    questionHTML += `<div class="small">Vraagmedia beschikbaar:${questionMedia.photoUrl ? ' 📷 foto' : ''}${questionMedia.audioUrl ? ' 🔊 audio' : ''}${questionMedia.videoUrl ? ' 🎬 video' : ''}</div>`;
+  }
+
+  if (afterMedia.photoUrl || afterMedia.audioUrl || afterMedia.videoUrl) {
+    questionHTML += `<div class="small">Na-vraagmedia beschikbaar:${afterMedia.photoUrl ? ' 📷 foto' : ''}${afterMedia.audioUrl ? ' 🔊 audio' : ''}${afterMedia.videoUrl ? ' 🎬 video' : ''}</div>`;
+  }
+
+  if (q.remarks) {
+    questionHTML += `<div class="host-remarks">💬 ${q.remarks}</div>`;
   }
 
   currentQuestionEl.innerHTML = questionHTML;
@@ -295,8 +260,8 @@ function nextThreeSixNineQuestion() {
   // Reset error count voor nieuwe vraag
   klok369_resetErrorCount();
   
-  // Reset foto visibility bij ELKE nieuwe vraag
-  perRoundState.photoVisible = false;
+  // Reset media-visibility bij elke nieuwe vraag.
+  resetThreeSixNineMediaState();
   
   highlightActive();
   
@@ -306,15 +271,20 @@ function nextThreeSixNineQuestion() {
   sendDisplayUpdate({
     type: 'update',
     currentRoundName: 'threeSixNine',
-    questionType: q.type || 'classic',
+    questionType: qType,
     currentQuestionDisplay: q.text,
     currentQuestionIndex: currentQuestionIndex,
     maxQuestions: perRoundState.max,
     activePlayer: activePlayerName,
     activeIndex: activePlayerIndex,
-    photoUrl: q.photoUrl,
-    photoVisible: perRoundState.photoVisible || false,
-    audioUrl: q.audioUrl,
+    hasQuestionPhoto: !!questionMedia.photoUrl,
+    hasQuestionAudio: !!questionMedia.audioUrl,
+    hasQuestionVideo: !!questionMedia.videoUrl,
+    hasAfterPhoto: !!afterMedia.photoUrl,
+    hasAfterAudio: !!afterMedia.audioUrl,
+    hasAfterVideo: !!afterMedia.videoUrl,
+    photoVisible: false,
+    activeMediaPhase: 'question',
     options: q.options,
     players
   });
@@ -326,6 +296,8 @@ function markThreeSixNineAnswer(isRight) {
 
   const currentPlayer = players[activePlayerIndex];
   const currentQuestion = perRoundState.currentQuestion;
+  const questionMedia = getThreeSixNineMediaUrls(currentQuestion, 'question');
+  const afterMedia = getThreeSixNineMediaUrls(currentQuestion, 'after');
 
   if (isRight) {
     // KLOK RESET: Goed antwoord
@@ -365,9 +337,13 @@ function markThreeSixNineAnswer(isRight) {
     activePlayer: players[activePlayerIndex]?.name || '-',
     activeIndex: activePlayerIndex,
     options: currentQuestion.options,
-    photoUrl: currentQuestion.photoUrl,
-    photoVisible: perRoundState.photoVisible || false,
-    audioUrl: currentQuestion.audioUrl,
+    hasQuestionPhoto: !!questionMedia.photoUrl,
+    hasQuestionAudio: !!questionMedia.audioUrl,
+    hasQuestionVideo: !!questionMedia.videoUrl,
+    hasAfterPhoto: !!afterMedia.photoUrl,
+    hasAfterAudio: !!afterMedia.audioUrl,
+    hasAfterVideo: !!afterMedia.videoUrl,
+    photoVisible: !!perRoundState.mediaQuestionPhotoVisible,
     players
   });
 
@@ -386,27 +362,62 @@ function renderThreeSixNineControls() {
 
     const q = perRoundState.currentQuestion;
     const qType = q?.type || 'classic';
+    const questionMedia = getThreeSixNineMediaUrls(q, 'question');
+    const afterMedia = getThreeSixNineMediaUrls(q, 'after');
     
     let controlsHTML = `
       <button onclick="nextThreeSixNineQuestion()" id="roundNextQuestionBtn">Volgende vraag (N)</button>
         <button onclick="klok369_toggleLoop()" id="playKlok369" class="secondary" style="background:#E2904A">
-            Klok <span id="klok369Timer" style="margin-left:8px;font-weight:bold">${klok369ElapsedSeconds}s</span>
+            Klok (K) <span id="klok369Timer" style="margin-left:8px;font-weight:bold">${klok369ElapsedSeconds}s</span>
         </button>
     `;
     
-    // Type-specifieke knoppen
-    if (qType === 'photo' || qType === 'photo-multiple-choice') {
+    // Vraagmedia knoppen
+    if (questionMedia.photoUrl) {
         controlsHTML += `
-            <button onclick="toggleThreeSixNinePhoto()" id="togglePhotoBtn" class="secondary" style="background:#4A90E2">
-                📷 Foto Tonen/Verbergen
+        <button onclick="toggleThreeSixNinePhoto('question')" id="toggleQuestionPhotoBtn" class="secondary" style="background:#4A90E2">
+          📷 Vraagfoto tonen/verbergen (Q)
             </button>
         `;
     }
-    
-    if (qType === 'audio') {
+
+    if (questionMedia.audioUrl) {
         controlsHTML += `
-            <button onclick="playThreeSixNineAudio()" id="playAudioBtn" class="secondary" style="background:#E24A90">
-                🔊 Audio Afspelen
+        <button onclick="playThreeSixNineAudio('question')" id="playQuestionAudioBtn" class="secondary" style="background:#E24A90">
+          ${perRoundState.mediaQuestionAudioPlaying ? '⏹️ Vraagaudio stoppen (W)' : '🔊 Vraagaudio afspelen (W)'}
+        </button>
+      `;
+    }
+
+    if (questionMedia.videoUrl) {
+      controlsHTML += `
+        <button onclick="playThreeSixNineVideo('question')" id="playQuestionVideoBtn" class="secondary" style="background:#6b4ae2">
+          ${perRoundState.mediaQuestionVideoPlaying ? '⏹️ Vraagvideo stoppen (E)' : '🎬 Vraagvideo fullscreen (E)'}
+        </button>
+      `;
+    }
+
+    // Na-vraagmedia knoppen
+    if (afterMedia.photoUrl) {
+      controlsHTML += `
+        <button onclick="toggleThreeSixNinePhoto('after')" id="toggleAfterPhotoBtn" class="secondary" style="background:#2f7ecf">
+          📷 Na-vraag foto tonen/verbergen (A)
+        </button>
+      `;
+    }
+
+    if (afterMedia.audioUrl) {
+      controlsHTML += `
+        <button onclick="playThreeSixNineAudio('after')" id="playAfterAudioBtn" class="secondary" style="background:#cc3f82">
+          ${perRoundState.mediaAfterAudioPlaying ? '⏹️ Na-vraag audio stoppen (S)' : '🔊 Na-vraag audio afspelen (S)'}
+        </button>
+      `;
+    }
+
+    if (afterMedia.videoUrl) {
+      controlsHTML += `
+        <button onclick="playThreeSixNineVideo('after')" id="playAfterVideoBtn" class="secondary" style="background:#5b3ad6">
+          ${perRoundState.mediaAfterVideoPlaying ? '⏹️ Na-vraag video stoppen (D)' : '🎬 Na-vraag video fullscreen (D)'}
             </button>
         `;
     }
@@ -449,11 +460,15 @@ function renderThreeSixNineControls() {
 }
 
 // Foto tonen/verbergen
-function toggleThreeSixNinePhoto() {
+function toggleThreeSixNinePhoto(phase = 'question') {
     const q = perRoundState.currentQuestion;
-    if (!q || !q.photoUrl) return;
-    
-    perRoundState.photoVisible = !perRoundState.photoVisible;
+  if (!q) return;
+
+  const media = getThreeSixNineMediaUrls(q, phase);
+  if (!media.photoUrl) return;
+
+  const visibilityKey = phase === 'after' ? 'mediaAfterPhotoVisible' : 'mediaQuestionPhotoVisible';
+  perRoundState[visibilityKey] = !perRoundState[visibilityKey];
     
     const activePlayerName = players[activePlayerIndex]?.name || '-';
     
@@ -467,27 +482,59 @@ function toggleThreeSixNinePhoto() {
         maxQuestions: perRoundState.max,
         activePlayer: activePlayerName,
         activeIndex: activePlayerIndex,
-        photoUrl: q.photoUrl,
-        photoVisible: perRoundState.photoVisible,
+    activeMediaPhase: phase,
+    photoUrl: media.photoUrl,
+        photoVisible: !!perRoundState[visibilityKey],
         players
     });
     
-    flash(perRoundState.photoVisible ? 'Foto getoond' : 'Foto verborgen');
+  flash(perRoundState[visibilityKey] ? 'Foto getoond' : 'Foto verborgen');
 }
 
 // Audio afspelen
-function playThreeSixNineAudio() {
+function playThreeSixNineAudio(phase = 'question') {
     const q = perRoundState.currentQuestion;
-    console.log('🎵 playThreeSixNineAudio aangeroepen met vraag:', q);
+  console.log('🎵 playThreeSixNineAudio aangeroepen met vraag:', q, 'fase:', phase);
     
-    if (!q || !q.audioUrl) {
-        console.warn('❌ Geen vraag of audioUrl gevonden:', { q, audioUrl: q?.audioUrl });
+  const media = getThreeSixNineMediaUrls(q, phase);
+  if (!q || !media.audioUrl) {
+    console.warn('❌ Geen vraag of audioUrl gevonden:', { q, audioUrl: media.audioUrl, phase });
         return;
     }
     
     const activePlayerName = players[activePlayerIndex]?.name || '-';
+
+    const playingKey = phase === 'after' ? 'mediaAfterAudioPlaying' : 'mediaQuestionAudioPlaying';
+    const isAlreadyPlaying = !!perRoundState[playingKey];
+
+    if (isAlreadyPlaying) {
+      perRoundState.mediaQuestionAudioPlaying = false;
+      perRoundState.mediaAfterAudioPlaying = false;
+
+      sendDisplayUpdate({
+        type: 'update',
+        currentRoundName: 'threeSixNine',
+        action: 'stopAudio',
+        questionType: q.type || 'classic',
+        currentQuestionDisplay: q.text,
+        currentQuestionIndex: currentQuestionIndex,
+        maxQuestions: perRoundState.max,
+        activePlayer: activePlayerName,
+        activeIndex: activePlayerIndex,
+        activeMediaPhase: phase,
+        players
+      });
+
+      renderThreeSixNineControls();
+      flash('Audio gestopt.');
+      return;
+    }
+
+    perRoundState.mediaQuestionAudioPlaying = false;
+    perRoundState.mediaAfterAudioPlaying = false;
+    perRoundState[playingKey] = true;
     
-    console.log('📤 Versturen audio update naar display:', q.audioUrl);
+    console.log('📤 Versturen audio update naar display:', media.audioUrl);
     
     // Stuur alleen naar display - audio speelt ALLEEN op display.html
     sendDisplayUpdate({
@@ -500,12 +547,72 @@ function playThreeSixNineAudio() {
         maxQuestions: perRoundState.max,
         activePlayer: activePlayerName,
         activeIndex: activePlayerIndex,
-        audioUrl: q.audioUrl,
+        activeMediaPhase: phase,
+        audioUrl: media.audioUrl,
         players
     });
     
+      renderThreeSixNineControls();
     flash('Audio wordt afgespeeld op display...');
     // NIET op host afspelen: playSFX() verwijderd
+}
+
+function playThreeSixNineVideo(phase = 'question') {
+    const q = perRoundState.currentQuestion;
+    const media = getThreeSixNineMediaUrls(q, phase);
+    if (!q || !media.videoUrl) {
+      return;
+    }
+
+    const activePlayerName = players[activePlayerIndex]?.name || '-';
+
+    const playingKey = phase === 'after' ? 'mediaAfterVideoPlaying' : 'mediaQuestionVideoPlaying';
+    const isAlreadyPlaying = !!perRoundState[playingKey];
+
+    if (isAlreadyPlaying) {
+      perRoundState.mediaQuestionVideoPlaying = false;
+      perRoundState.mediaAfterVideoPlaying = false;
+
+      sendDisplayUpdate({
+        type: 'update',
+        currentRoundName: 'threeSixNine',
+        action: 'stopVideo',
+        questionType: q.type || 'classic',
+        currentQuestionDisplay: q.text,
+        currentQuestionIndex: currentQuestionIndex,
+        maxQuestions: perRoundState.max,
+        activePlayer: activePlayerName,
+        activeIndex: activePlayerIndex,
+        activeMediaPhase: phase,
+        players
+      });
+
+      renderThreeSixNineControls();
+      flash('Video gestopt.');
+      return;
+    }
+
+    perRoundState.mediaQuestionVideoPlaying = false;
+    perRoundState.mediaAfterVideoPlaying = false;
+    perRoundState[playingKey] = true;
+
+    sendDisplayUpdate({
+      type: 'update',
+      currentRoundName: 'threeSixNine',
+      action: 'playVideo',
+      questionType: q.type || 'classic',
+      currentQuestionDisplay: q.text,
+      currentQuestionIndex: currentQuestionIndex,
+      maxQuestions: perRoundState.max,
+      activePlayer: activePlayerName,
+      activeIndex: activePlayerIndex,
+      activeMediaPhase: phase,
+      videoUrl: media.videoUrl,
+      players
+    });
+
+    renderThreeSixNineControls();
+    flash('Video wordt fullscreen afgespeeld op display...');
 }
 
 // DOE-vraag winnaar selecteren

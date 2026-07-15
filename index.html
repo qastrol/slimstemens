@@ -200,11 +200,14 @@
       <div class="card">
         <div>
           <h4>Configuratie</h4>
-          <label>Upload aangepast game config bestand:</label>
-          <input id="configUpload" type="file" accept=".json" />
+          <label>Upload aangepast game config bestand (.json of .zip):</label>
+          <input id="configUpload" type="file" accept=".json,.zip,application/json,application/zip" />
           <div class="controls">
             <button id="uploadConfigBtn" class="secondary">Configuratie laden</button>
             <button id="downloadConfigBtn" class="secondary">Huidige config downloaden</button>
+          </div>
+                    <div class="controls">
+            <button id="openConfigBuilderBtn" class="secondary">Custom game maken</button>
           </div>
           <div id="configStatus" style="font-size:0.85em;color:#666;margin-top:5px;"></div>
         </div>
@@ -224,6 +227,7 @@
 
     </div>
   </div>
+<script src="node_modules/jszip/dist/jszip.min.js"></script>
 <script src="js/config-manager.js"></script>
 <script src="js/369vragen.js"></script>
 <script src="js/round-3-6-9.js"></script>
@@ -248,7 +252,7 @@ if (uploadConfigBtn) {
   uploadConfigBtn.addEventListener('click', async () => {
     const fileInput = document.getElementById('configUpload');
     if (!fileInput.files.length) {
-      alert('Selecteer eerst een JSON bestand');
+      alert('Selecteer eerst een JSON of ZIP bestand');
       return;
     }
     
@@ -256,6 +260,7 @@ if (uploadConfigBtn) {
       const file = fileInput.files[0];
       const loadedConfig = await uploadConfigFile(file);
       const warnings = Array.isArray(loadedConfig?._mediaWarnings) ? loadedConfig._mediaWarnings : [];
+      const zipUnresolved = Array.isArray(loadedConfig?._zipUnresolvedPaths) ? loadedConfig._zipUnresolvedPaths : [];
       const configStatusEl = document.getElementById('configStatus');
 
       if (warnings.length > 0) {
@@ -264,6 +269,9 @@ if (uploadConfigBtn) {
           `⚠ Configuratie geladen met ${warnings.length} media-waarschuwing(en). Voorbeeld: ${warningPreview}`;
         flash(`Configuratie geladen, maar ${warnings.length} media-pad(en) zijn ongeldig. Controleer Galerij/Collectief.`, 'wrong');
       } else {
+        if (zipUnresolved.length > 0) {
+          console.warn('ZIP media niet gevonden:', zipUnresolved);
+        }
         configStatusEl.textContent =
           `✓ Configuratie geladen: "${gameConfig.metadata?.name || 'Onbekend'}"`;
         flash('Configuratie succesvol geladen!', 'good');
@@ -280,6 +288,19 @@ if (downloadConfigBtn) {
   downloadConfigBtn.addEventListener('click', () => {
     downloadConfigFile();
     flash('Configuratie gedownload!', 'good');
+  });
+}
+
+const openConfigBuilderBtn = document.getElementById('openConfigBuilderBtn');
+if (openConfigBuilderBtn) {
+  openConfigBuilderBtn.addEventListener('click', () => {
+    const popup = window.open('custom-game-builder.html', '_blank', 'noopener,noreferrer,width=1400,height=900');
+    if (!popup) {
+      alert('Kon builder venster niet openen. Controleer of popups zijn toegestaan.');
+      return;
+    }
+
+    popup.focus();
   });
 }
 
@@ -455,6 +476,65 @@ function applyUiSettingsFromConfig(config) {
   if (jurySettings && juryCheckbox && jurySettings.enabled !== undefined) {
     juryCheckbox.checked = !!jurySettings.enabled;
     juryCheckbox.dispatchEvent(new Event('change'));
+  }
+
+  // Bumpers instelling
+  const bumpersSettings = config.settings.bumpers;
+  if (bumpersSettings && bumpersSettings.enabled !== undefined) {
+    const bumpersCheckbox = document.getElementById('bumpersEnabledCheckbox');
+    if (bumpersCheckbox) {
+      bumpersCheckbox.checked = !!bumpersSettings.enabled;
+    }
+  }
+
+  // Veilige rondeknoppen
+  const safeRoundNavigationSettings = config.settings.safeRoundNavigation;
+  if (safeRoundNavigationSettings && safeRoundNavigationSettings.enabled !== undefined) {
+    const safeCheckbox = document.getElementById('safeRoundNavigationCheckbox');
+    if (safeCheckbox) {
+      safeCheckbox.checked = !!safeRoundNavigationSettings.enabled;
+      safeCheckbox.dispatchEvent(new Event('change'));
+    }
+  }
+
+  // Intro / Outro instellingen
+  const introSettings = config.settings.intro;
+  if (introSettings) {
+    if (introCheckbox && introSettings.enabled !== undefined) {
+      introCheckbox.checked = !!introSettings.enabled;
+      introCheckbox.dispatchEvent(new Event('change'));
+    }
+
+    if (typeof introSettings.text === 'string') {
+      const introTextInput = document.getElementById('introText');
+      if (introTextInput) {
+        introTextInput.value = introSettings.text;
+      }
+      introText = introSettings.text;
+    }
+  }
+
+  const outroSettings = config.settings.outro;
+  if (outroSettings && outroSettings.enabled !== undefined) {
+    outroEnabled = !!outroSettings.enabled;
+  }
+
+  // Startseconden
+  if (config.settings.game && config.settings.game.startSeconds !== undefined) {
+    const startSecondsInput = document.getElementById('startSeconds');
+    const parsedStartSeconds = parseInt(config.settings.game.startSeconds, 10);
+    if (startSecondsInput && !isNaN(parsedStartSeconds) && parsedStartSeconds >= 10) {
+      startSecondsInput.value = parsedStartSeconds;
+    }
+  }
+
+  // Collectief Geheugen eindinstelling
+  if (config.settings.collectief && config.settings.collectief.endOption) {
+    const collectiefEndSelect = document.getElementById('collectiefEndOption');
+    if (collectiefEndSelect) {
+      collectiefEndSelect.value = config.settings.collectief.endOption;
+      collectiefEndSelect.dispatchEvent(new Event('change'));
+    }
   }
 
   // Kandidaten instellingen

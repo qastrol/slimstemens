@@ -5,6 +5,9 @@ let perRoundState = { max: defaultThreeSixNineMax };
 let allGalleryAnswers = []; 
 let openDeurIntroVideoActive = false;
 let openDeurPendingVraagData = null;
+let threeSixNineVideoActive = false;
+let lastThreeSixNineData = null;
+let threeSixNineActiveAudio = null;
 const DEFAULT_DISPLAY_BRANDING = {
   titlePrefix: 'de slimste mens',
   titleSuffix: 'van twitch',
@@ -92,6 +95,118 @@ function updateScene(sceneName) {
     currentScene = sceneName;
 }
 
+function decodeEncodedOpenDeurVideoUrl(videoUrl) {
+  const value = String(videoUrl || '').trim();
+  const match = value.match(/^media\/opendeur\/((?:https?|http)___.+)\.mp4$/i);
+  if (!match) {
+    return '';
+  }
+
+  let decoded = match[1]
+    .replace(/^https?___/i, (m) => m.toLowerCase().startsWith('https') ? 'https://' : 'http://')
+    .replace(/__+/g, '/')
+    .replace(/_/g, '/');
+
+  if (!/^https?:\/\//i.test(decoded)) {
+    return '';
+  }
+
+  return `${decoded}.mp4`;
+}
+
+function prepareOpenDeurQuestionerVideo(videoEl, videoUrl) {
+  if (!videoEl || !videoUrl) {
+    return;
+  }
+
+  const container = videoEl.closest('.vragensteller-box');
+  const candidates = [String(videoUrl).trim()];
+  const fallbackUrl = decodeEncodedOpenDeurVideoUrl(videoUrl);
+  if (fallbackUrl && fallbackUrl !== candidates[0]) {
+    candidates.push(fallbackUrl);
+  }
+
+  videoEl.preload = 'auto';
+  videoEl.muted = true;
+  videoEl.playsInline = true;
+  videoEl.setAttribute('playsinline', '');
+  videoEl.setAttribute('muted', '');
+  videoEl.setAttribute('preload', 'auto');
+  videoEl.setAttribute('autoplay', '');
+  videoEl.setAttribute('loop', '');
+
+  const showFallbackState = () => {
+    if (container) {
+      container.classList.remove('has-video-thumb', 'loading-video-thumb');
+    }
+    videoEl.removeAttribute('src');
+    videoEl.removeAttribute('autoplay');
+    videoEl.removeAttribute('loop');
+    try {
+      videoEl.pause();
+    } catch (error) {
+      // Niets te doen.
+    }
+  };
+
+  let candidateIndex = 0;
+
+  const loadCandidate = () => {
+    const candidate = candidates[candidateIndex];
+    if (!candidate) {
+      showFallbackState();
+      return;
+    }
+
+    videoEl.onloadeddata = null;
+    videoEl.onseeked = null;
+    videoEl.onerror = () => {
+      candidateIndex += 1;
+      loadCandidate();
+    };
+
+    videoEl.onloadeddata = () => {
+      try {
+        const playResult = videoEl.play();
+        if (playResult && typeof playResult.then === 'function') {
+          playResult
+            .then(() => {
+              requestAnimationFrame(() => {
+                try {
+                  videoEl.pause();
+                } catch (error) {
+                  // Stilte is hier prima.
+                }
+              });
+            })
+            .catch(() => {
+              try {
+                videoEl.pause();
+              } catch (error) {
+                // Stilte is hier prima.
+              }
+            });
+        } else {
+          requestAnimationFrame(() => {
+            try {
+              videoEl.pause();
+            } catch (error) {
+              // Stilte is hier prima.
+            }
+          });
+        }
+      } catch (error) {
+        showFallbackState();
+      }
+    };
+
+    videoEl.src = candidate;
+    videoEl.load();
+  };
+
+  loadCandidate();
+}
+
 function applyOverlayPosition(overlayEl) {
   if (!overlayEl) return;
 
@@ -148,11 +263,20 @@ function applyOverlayPosition(overlayEl) {
 const WS_ADDRESS = 'ws://127.0.0.1:8081/';
 let ws = null;
 let __displayLoopAudio = null;
+const desktopBridge = typeof window !== 'undefined' ? window.slimstemensDesktopBridge : null;
+let desktopBridgeUnsubscribe = null;
 // Audio is altijd enabled voor OBS Studio - geen unlock nodig
 
 function connectWebSocket() {
-  updateScene('no-connection');
-  ws = new WebSocket(WS_ADDRESS);
+  if (desktopBridge && typeof desktopBridge.onMessage === 'function') {
+    updateScene('waiting-host');
+    ws = {
+      readyState: WebSocket.OPEN
+    };
+  } else {
+    updateScene('no-connection');
+    ws = new WebSocket(WS_ADDRESS);
+  }
 
   ws.onopen = () => updateScene('waiting-host');
 
@@ -300,7 +424,7 @@ function handleAudioMessage(data) {
 
         
         if (data.currentRoundName === 'threeSixNine' || data.scene === 'round-369') {
-          if (currentScene !== 'round-369') updateScene('round-369');
+          if (data.action !== 'playVideo' && currentScene !== 'round-369') updateScene('round-369');
           if (data.maxQuestions) perRoundState.max = data.maxQuestions;
           renderThreeSixNine(data);
           if (data.action === 'answer') {
@@ -463,6 +587,19 @@ function handleAudioMessage(data) {
     }
   };
 
+  if (desktopBridge && typeof desktopBridge.onMessage === 'function') {
+    if (desktopBridgeUnsubscribe) {
+      desktopBridgeUnsubscribe();
+    }
+
+    desktopBridgeUnsubscribe = desktopBridge.onMessage((message) => {
+      const payload = typeof message === 'string' ? message : JSON.stringify(message);
+      if (ws && typeof ws.onmessage === 'function') {
+        ws.onmessage({ data: payload });
+      }
+    });
+  }
+
   ws.onclose = () => {
     updateScene('no-connection');
     setTimeout(connectWebSocket, 3000);
@@ -554,12 +691,105 @@ function adjustQuestionFontSize(questionElement, text) {
   }
 
 function renderThreeSixNine(data){
+    lastThreeSixNineData = { ...(lastThreeSixNineData || {}), ...data };
+
     console.log('🎵 renderThreeSixNine aangeroepen met data.action:', data.action, 'audioUrl:', data.audioUrl);
+
+    const resolveMedia = (payload, phase = 'question') => {
+      if (phase === 'after') {
+        return {
+          photoUrl: payload.afterPhotoUrl || payload.revealPhotoUrl || null,
+          audioUrl: payload.afterAudioUrl || payload.revealAudioUrl || null,
+          videoUrl: payload.afterVideoUrl || payload.revealVideoUrl || null
+        };
+      }
+
+      return {
+        photoUrl: payload.questionPhotoUrl || payload.photoUrl || null,
+        audioUrl: payload.questionAudioUrl || payload.audioUrl || null,
+        videoUrl: payload.questionVideoUrl || payload.videoUrl || null
+      };
+    };
+
+    const playThreeSixNineFullscreenVideo = (videoUrl) => {
+      if (!videoUrl) return;
+
+      const videoPlayer = document.getElementById('threeSixNineVideoPlayer');
+      const videoSource = document.getElementById('threeSixNineVideoSource');
+      if (!videoPlayer || !videoSource) return;
+
+      threeSixNineVideoActive = true;
+      updateScene('round-369-video');
+
+      const finish = () => {
+        if (!threeSixNineVideoActive) return;
+        threeSixNineVideoActive = false;
+
+        videoPlayer.onended = null;
+        videoPlayer.onerror = null;
+        try {
+          videoPlayer.pause();
+          videoPlayer.currentTime = 0;
+        } catch (e) {}
+
+        if (videoSource) {
+          videoSource.src = '';
+          videoPlayer.load();
+        }
+
+        updateScene('round-369');
+        if (lastThreeSixNineData) {
+          renderThreeSixNine({ ...lastThreeSixNineData, action: null });
+        }
+      };
+
+      videoSource.src = videoUrl;
+      videoPlayer.load();
+      videoPlayer.onended = finish;
+      videoPlayer.onerror = finish;
+      videoPlayer.play().catch(() => finish());
+    };
+
+    const stopThreeSixNineFullscreenVideo = () => {
+      const videoPlayer = document.getElementById('threeSixNineVideoPlayer');
+      const videoSource = document.getElementById('threeSixNineVideoSource');
+      if (!videoPlayer || !videoSource) return;
+
+      threeSixNineVideoActive = false;
+      videoPlayer.onended = null;
+      videoPlayer.onerror = null;
+
+      try {
+        videoPlayer.pause();
+        videoPlayer.currentTime = 0;
+      } catch (e) {}
+
+      videoSource.src = '';
+      videoPlayer.load();
+
+      updateScene('round-369');
+      if (lastThreeSixNineData) {
+        renderThreeSixNine({ ...lastThreeSixNineData, action: null });
+      }
+    };
+
+    const stopThreeSixNineAudio = () => {
+      if (!threeSixNineActiveAudio) return;
+
+      try {
+        threeSixNineActiveAudio.pause();
+        threeSixNineActiveAudio.currentTime = 0;
+      } catch (e) {}
+
+      threeSixNineActiveAudio = null;
+    };
     
     // Audio afspelen EERST checken voordat we andere dingen doen
     if (data.action === 'playAudio' && data.audioUrl) {
         console.log('🔊 Poging audio af te spelen:', data.audioUrl);
-        const audio = new Audio(data.audioUrl);
+      stopThreeSixNineAudio();
+      const audio = new Audio(data.audioUrl);
+      threeSixNineActiveAudio = audio;
         
         // Event listeners voor betere debugging
         audio.addEventListener('error', (e) => {
@@ -577,8 +807,26 @@ function renderThreeSixNine(data){
         }).catch(err => {
             console.error('❌ Audio play() mislukt voor:', data.audioUrl);
             console.error('Error:', err);
+          if (threeSixNineActiveAudio === audio) {
+            threeSixNineActiveAudio = null;
+          }
         });
     }
+
+      if (data.action === 'stopAudio') {
+        stopThreeSixNineAudio();
+        return;
+      }
+
+      if (data.action === 'playVideo' && data.videoUrl) {
+        playThreeSixNineFullscreenVideo(data.videoUrl);
+        return;
+      }
+
+      if (data.action === 'stopVideo') {
+        stopThreeSixNineFullscreenVideo();
+        return;
+      }
     
     const roundStatusEl = document.getElementById('roundStatus');
     const roundQuestionEl = document.getElementById('roundQuestion');
@@ -602,6 +850,8 @@ function renderThreeSixNine(data){
         const qText = data.currentQuestionDisplay || "—";
         const activePlayerName = data.activePlayer || '-';
         const qType = data.questionType || 'classic';
+        const activeMediaPhase = data.activeMediaPhase || 'question';
+        const phaseMedia = resolveMedia(data, activeMediaPhase);
 
         roundStatusEl.textContent = `Beurt: ${activePlayerName} | Vraag ${data.currentQuestionIndex} van ${data.maxQuestions}`;
         
@@ -612,7 +862,7 @@ function renderThreeSixNine(data){
         questionHTML += `<div>${qText}</div>`;
         
         // Multiple choice opties
-        if ((qType === 'multiple-choice' || qType === 'photo-multiple-choice') && data.options) {
+        if (qType === 'multiple-choice' && data.options) {
             questionHTML += '<div class="multiple-choice-options">';
             for (const [key, value] of Object.entries(data.options)) {
                 questionHTML += `<div><strong>${key}:</strong> ${value}</div>`;
@@ -620,20 +870,18 @@ function renderThreeSixNine(data){
             questionHTML += '</div>';
         }
         
-        // Foto weergave - toon indicator in vraag, foto zelf in linkervlak
-        if (qType === 'photo' || qType === 'photo-multiple-choice') {
+        // Foto weergave in linkervlak (zonder extra status-tekst in de vraag).
+        if (phaseMedia.photoUrl) {
             if (data.photoVisible) {
-                questionHTML += '<div class="audio-indicator">📷 (Foto wordt getoond linksboven)</div>';
                 // Toon foto in linkervlak
                 setTimeout(() => {
                     const photoContainer = document.getElementById('threeSixNinePhotoContainer');
-                    if (photoContainer && data.photoUrl) {
-                        photoContainer.innerHTML = `<img src="${data.photoUrl}" alt="Vraagfoto" />`;
+              if (photoContainer && phaseMedia.photoUrl) {
+                photoContainer.innerHTML = `<img src="${phaseMedia.photoUrl}" alt="Vraagfoto" />`;
                         photoContainer.style.display = 'block';
                     }
                 }, 0);
             } else {
-                questionHTML += '<div class="audio-indicator">📷 (Foto verborgen)</div>';
                 // Verberg foto
                 setTimeout(() => {
                     const photoContainer = document.getElementById('threeSixNinePhotoContainer');
@@ -652,16 +900,11 @@ function renderThreeSixNine(data){
             }
           }, 0);
         }
-        
-        // Audio indicator
-        if (qType === 'audio' && data.audioUrl) {
-            questionHTML += '<div class="audio-indicator">🎵 (Audio wordt afgespeeld)</div>';
-        }
-        
+
         roundQuestionEl.innerHTML = questionHTML;
         
         // Pas font-size aan op basis van vraaglengte
-        if (qType === 'multiple-choice' || qType === 'photo-multiple-choice') {
+        if (qType === 'multiple-choice') {
           adjustQuestionFontSizeMultipleChoice(roundQuestionEl, qText);
         } else {
           adjustQuestionFontSize(roundQuestionEl, qText);
@@ -740,11 +983,31 @@ function renderOpenDeurVragensteller(data) {
     }
 
     
-    container.innerHTML = data.questioners.map(q => `
-        <div class="vragensteller-box${q.isChosen ? ' gespeeld' : ' beschikbaar'}">
-            <div class="vragensteller-name">${q.name}</div>
+    container.innerHTML = data.questioners.map(q => {
+      const videoMarkup = q.introVideoUrl
+        ? `<video class="vragensteller-thumb" muted playsinline preload="auto" aria-hidden="true"></video><div class="vragensteller-thumb-overlay" aria-hidden="true"></div>`
+        : '';
+
+      return `
+        <div class="vragensteller-box${q.isChosen ? ' gespeeld' : ' beschikbaar'}${q.introVideoUrl ? ' has-video-thumb' : ''}" data-questioner-index="${q.index}" data-video-url="${q.introVideoUrl || ''}">
+          ${videoMarkup}
+          <div class="vragensteller-name">${q.name}</div>
         </div>
-    `).join('');
+      `;
+    }).join('');
+
+    data.questioners.forEach((questioner) => {
+      if (!questioner.introVideoUrl) {
+        return;
+      }
+
+      const videoEl = container.querySelector(`.vragensteller-box[data-questioner-index="${questioner.index}"] .vragensteller-thumb`);
+      const box = videoEl?.closest('.vragensteller-box');
+      if (box) {
+        box.classList.add('loading-video-thumb');
+      }
+      prepareOpenDeurQuestionerVideo(videoEl, questioner.introVideoUrl);
+    });
 
     renderPlayersBarCompact(data.players, data.activeChoosingPlayerIndex, 'od-vragensteller-scores');
 }

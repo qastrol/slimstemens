@@ -5,6 +5,7 @@
 
 let gameConfig = null;
 let configLoaded = false;
+let activeConfigBlobUrls = [];
 
 const DEFAULT_BRANDING_SETTINGS = Object.freeze({
   titlePrefix: 'de slimste mens',
@@ -52,8 +53,461 @@ function setPendingUiConfig(config) {
   }
 }
 
+function clearActiveConfigBlobUrls() {
+  if (!Array.isArray(activeConfigBlobUrls) || activeConfigBlobUrls.length === 0) {
+    activeConfigBlobUrls = [];
+    return;
+  }
+
+  activeConfigBlobUrls.forEach((url) => {
+    try {
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      // Negeer ongeldige of al vrijgegeven blob-URL's.
+    }
+  });
+
+  activeConfigBlobUrls = [];
+}
+
+function setActiveConfigBlobUrls(urls) {
+  clearActiveConfigBlobUrls();
+  activeConfigBlobUrls = Array.isArray(urls) ? urls.slice() : [];
+}
+
+function normalizeZipPath(path) {
+  if (typeof path !== 'string') {
+    return '';
+  }
+
+  return path
+    .trim()
+    .replace(/\\/g, '/')
+    .replace(/^\.\//, '')
+    .replace(/^\/+/, '');
+}
+
+function guessMimeType(filePath) {
+  const normalized = normalizeZipPath(filePath).toLowerCase();
+
+  if (/(\.mp4)$/i.test(normalized)) return 'video/mp4';
+  if (/(\.webm)$/i.test(normalized)) return 'video/webm';
+  if (/(\.ogg)$/i.test(normalized)) return 'video/ogg';
+  if (/(\.mov)$/i.test(normalized)) return 'video/quicktime';
+  if (/(\.m4v)$/i.test(normalized)) return 'video/x-m4v';
+  if (/(\.mkv)$/i.test(normalized)) return 'video/x-matroska';
+  if (/(\.avi)$/i.test(normalized)) return 'video/x-msvideo';
+  if (/(\.jpg|\.jpeg)$/i.test(normalized)) return 'image/jpeg';
+  if (/(\.png)$/i.test(normalized)) return 'image/png';
+  if (/(\.gif)$/i.test(normalized)) return 'image/gif';
+  if (/(\.webp)$/i.test(normalized)) return 'image/webp';
+  if (/(\.svg)$/i.test(normalized)) return 'image/svg+xml';
+
+  return 'application/octet-stream';
+}
+
+function buildZipLookup(zip) {
+  const byLowerExactPath = new Map();
+  const byLowerBasename = new Map();
+
+  Object.values(zip.files).forEach((zipEntry) => {
+    if (!zipEntry || zipEntry.dir) {
+      return;
+    }
+
+    const normalizedPath = normalizeZipPath(zipEntry.name);
+    if (!normalizedPath) {
+      return;
+    }
+
+    const lowerPath = normalizedPath.toLowerCase();
+    byLowerExactPath.set(lowerPath, { path: normalizedPath, entry: zipEntry });
+
+    const basename = normalizedPath.split('/').pop();
+    if (!basename) {
+      return;
+    }
+
+    const lowerBasename = basename.toLowerCase();
+    const list = byLowerBasename.get(lowerBasename) || [];
+    list.push({ path: normalizedPath, entry: zipEntry });
+    byLowerBasename.set(lowerBasename, list);
+  });
+
+  return { byLowerExactPath, byLowerBasename };
+}
+
+function resolveZipMediaEntry(lookup, originalPath) {
+  const normalizedOriginal = normalizeZipPath(originalPath);
+  if (!normalizedOriginal) {
+    return null;
+  }
+
+  const candidates = new Set();
+  const basename = normalizedOriginal.split('/').pop();
+  const withoutMediaPrefix = normalizedOriginal.replace(/^(media|galerij|collectief_geheugen|opendeur)\//i, '');
+
+  candidates.add(normalizedOriginal);
+  candidates.add(withoutMediaPrefix);
+
+  if (basename) {
+    candidates.add(basename);
+    candidates.add(`media/${basename}`);
+    candidates.add(`galerij/${basename}`);
+    candidates.add(`collectief_geheugen/${basename}`);
+    candidates.add(`opendeur/${basename}`);
+  }
+
+  candidates.add(`media/${withoutMediaPrefix}`);
+  candidates.add(`galerij/${withoutMediaPrefix}`);
+  candidates.add(`collectief_geheugen/${withoutMediaPrefix}`);
+  candidates.add(`opendeur/${withoutMediaPrefix}`);
+
+  for (const candidate of candidates) {
+    const normalizedCandidate = normalizeZipPath(candidate);
+    if (!normalizedCandidate) {
+      continue;
+    }
+
+    const match = lookup.byLowerExactPath.get(normalizedCandidate.toLowerCase());
+    if (match) {
+      return match;
+    }
+  }
+
+  if (!basename) {
+    return null;
+  }
+
+  const basenameMatches = lookup.byLowerBasename.get(basename.toLowerCase()) || [];
+  if (basenameMatches.length === 0) {
+    return null;
+  }
+
+  // Kies de kortste match om onnodige diepe paden te vermijden.
+  return basenameMatches
+    .slice()
+    .sort((a, b) => a.path.length - b.path.length)[0];
+}
+
+function findConfigEntryInZip(zip) {
+  const files = Object.values(zip.files).filter(entry => entry && !entry.dir);
+  if (files.length === 0) {
+    return null;
+  }
+
+  const exact = files.find(entry => normalizeZipPath(entry.name).toLowerCase() === 'game-config.json');
+  if (exact) {
+    return exact;
+  }
+
+  const byName = files.find(entry => normalizeZipPath(entry.name).toLowerCase().endsWith('/game-config.json'));
+  if (byName) {
+    return byName;
+  }
+
+  return files.find(entry => normalizeZipPath(entry.name).toLowerCase().endsWith('.json')) || null;
+}
+
+async function remapConfigMediaFromZip(config, zip) {
+  const lookup = buildZipLookup(zip);
+  const mediaUrlByZipPath = new Map();
+  const generatedBlobUrls = [];
+  const unresolvedPaths = [];
+
+  const getMediaUrlForMatch = async (match) => {
+    if (!match || !match.path || !match.entry) {
+      return null;
+    }
+
+    if (mediaUrlByZipPath.has(match.path)) {
+      return mediaUrlByZipPath.get(match.path);
+    }
+
+    // Gebruik data-URL's i.p.v. blob-URL's zodat media ook in display.html werkt
+    // wanneer host en display als losse file:// documenten draaien.
+    const mimeType = guessMimeType(match.path);
+    const base64Data = await match.entry.async('base64');
+    const dataUrl = `data:${mimeType};base64,${base64Data}`;
+    mediaUrlByZipPath.set(match.path, dataUrl);
+    return dataUrl;
+  };
+
+  const tryMapPath = async (rawPath, label) => {
+    const path = typeof rawPath === 'string' ? rawPath.trim() : '';
+    if (!path || shouldSkipRemoteMediaPath(path)) {
+      return { mapped: path, found: true };
+    }
+
+    const match = resolveZipMediaEntry(lookup, path);
+    if (!match) {
+      unresolvedPaths.push(`${label}: ${path}`);
+      return { mapped: path, found: false };
+    }
+
+    const mediaUrl = await getMediaUrlForMatch(match);
+    return { mapped: mediaUrl, found: true };
+  };
+
+  if (Array.isArray(config?.galerij)) {
+    for (let galleryIndex = 0; galleryIndex < config.galerij.length; galleryIndex += 1) {
+      const gallery = config.galerij[galleryIndex];
+      if (!Array.isArray(gallery?.images)) {
+        continue;
+      }
+
+      for (let imageIndex = 0; imageIndex < gallery.images.length; imageIndex += 1) {
+        const image = gallery.images[imageIndex];
+        if (!image || typeof image !== 'object') {
+          continue;
+        }
+
+        const result = await tryMapPath(
+          image.src,
+          `Galerij \"${gallery.theme || `#${galleryIndex + 1}`}\" foto ${imageIndex + 1}`
+        );
+
+        if (result.found && result.mapped) {
+          image.src = result.mapped;
+        }
+      }
+    }
+  }
+
+  if (Array.isArray(config?.threeSixNine)) {
+    for (let questionIndex = 0; questionIndex < config.threeSixNine.length; questionIndex += 1) {
+      const question = config.threeSixNine[questionIndex];
+      if (!question || typeof question !== 'object') {
+        continue;
+      }
+
+      const questionPhotoResult = await tryMapPath(
+        question.questionPhotoUrl || question.photoUrl,
+        `3-6-9 vraag ${questionIndex + 1} vraagfoto`
+      );
+      if (questionPhotoResult.found && questionPhotoResult.mapped) {
+        question.questionPhotoUrl = questionPhotoResult.mapped;
+        question.photoUrl = questionPhotoResult.mapped;
+      }
+
+      const questionAudioResult = await tryMapPath(
+        question.questionAudioUrl || question.audioUrl,
+        `3-6-9 vraag ${questionIndex + 1} vraagaudio`
+      );
+      if (questionAudioResult.found && questionAudioResult.mapped) {
+        question.questionAudioUrl = questionAudioResult.mapped;
+        question.audioUrl = questionAudioResult.mapped;
+      }
+
+      const questionVideoResult = await tryMapPath(
+        question.questionVideoUrl || question.videoUrl || question.clip,
+        `3-6-9 vraag ${questionIndex + 1} vraagvideo`
+      );
+      if (questionVideoResult.found && questionVideoResult.mapped) {
+        question.questionVideoUrl = questionVideoResult.mapped;
+        question.videoUrl = questionVideoResult.mapped;
+      }
+
+      const afterPhotoResult = await tryMapPath(
+        question.afterPhotoUrl || question.revealPhotoUrl,
+        `3-6-9 vraag ${questionIndex + 1} na-vraag foto`
+      );
+      if (afterPhotoResult.found && afterPhotoResult.mapped) {
+        question.afterPhotoUrl = afterPhotoResult.mapped;
+      }
+
+      const afterAudioResult = await tryMapPath(
+        question.afterAudioUrl || question.revealAudioUrl,
+        `3-6-9 vraag ${questionIndex + 1} na-vraag audio`
+      );
+      if (afterAudioResult.found && afterAudioResult.mapped) {
+        question.afterAudioUrl = afterAudioResult.mapped;
+      }
+
+      const afterVideoResult = await tryMapPath(
+        question.afterVideoUrl || question.revealVideoUrl,
+        `3-6-9 vraag ${questionIndex + 1} na-vraag video`
+      );
+      if (afterVideoResult.found && afterVideoResult.mapped) {
+        question.afterVideoUrl = afterVideoResult.mapped;
+      }
+    }
+  }
+
+  if (Array.isArray(config?.opendeur)) {
+    for (let questionIndex = 0; questionIndex < config.opendeur.length; questionIndex += 1) {
+      const question = config.opendeur[questionIndex];
+      if (!question || typeof question !== 'object') {
+        continue;
+      }
+
+      const introVideoResult = await tryMapPath(
+        question.introVideoUrl || question.videoUrl || question.introVideo || question.video,
+        `Open Deur vraag ${questionIndex + 1} introvideo`
+      );
+
+      if (introVideoResult.found && introVideoResult.mapped) {
+        question.introVideoUrl = introVideoResult.mapped;
+        if (typeof question.videoUrl === 'string') {
+          question.videoUrl = introVideoResult.mapped;
+        }
+        if (typeof question.introVideo === 'string') {
+          question.introVideo = introVideoResult.mapped;
+        }
+        if (typeof question.video === 'string') {
+          question.video = introVideoResult.mapped;
+        }
+      }
+    }
+  }
+
+  if (Array.isArray(config?.collectief)) {
+    for (let entryIndex = 0; entryIndex < config.collectief.length; entryIndex += 1) {
+      const entry = config.collectief[entryIndex];
+      if (!entry || typeof entry !== 'object') {
+        continue;
+      }
+
+      const currentVideoPath = entry.video || entry.videoUrl || entry.clip;
+      const result = await tryMapPath(currentVideoPath, `Collectief Geheugen fragment ${entryIndex + 1}`);
+
+      if (result.found && result.mapped) {
+        if (typeof entry.video === 'string') entry.video = result.mapped;
+        if (typeof entry.videoUrl === 'string') entry.videoUrl = result.mapped;
+        if (typeof entry.clip === 'string') entry.clip = result.mapped;
+        if (!entry.video && !entry.videoUrl && !entry.clip) {
+          entry.video = result.mapped;
+        }
+      }
+    }
+  }
+
+  if (Array.isArray(config?.settings?.playerMode?.players)) {
+    for (let playerIndex = 0; playerIndex < config.settings.playerMode.players.length; playerIndex += 1) {
+      const player = config.settings.playerMode.players[playerIndex];
+      if (!player || typeof player !== 'object') {
+        continue;
+      }
+
+      const result = await tryMapPath(player.photoUrl, `Spelerfoto ${playerIndex + 1}`);
+      if (result.found && result.mapped) {
+        player.photoUrl = result.mapped;
+      }
+    }
+  }
+
+  config._generatedBlobUrls = generatedBlobUrls;
+  config._zipUnresolvedPaths = unresolvedPaths;
+
+  return config;
+}
+
+async function parseConfigFromZip(file) {
+  if (typeof JSZip === 'undefined') {
+    throw new Error('ZIP ondersteuning is niet beschikbaar (JSZip ontbreekt).');
+  }
+
+  const zip = await JSZip.loadAsync(file);
+  const configEntry = findConfigEntryInZip(zip);
+  if (!configEntry) {
+    throw new Error('Geen game-config.json gevonden in het ZIP bestand.');
+  }
+
+  const rawConfig = await configEntry.async('string');
+  const parsedConfig = JSON.parse(rawConfig);
+  return remapConfigMediaFromZip(parsedConfig, zip);
+}
+
+async function applyLoadedConfig(config) {
+  const mediaWarnings = await validateConfigMediaPaths(config);
+  if (mediaWarnings.length > 0) {
+    console.warn('⚠️ Config media-waarschuwingen:', mediaWarnings);
+  }
+
+  config._mediaWarnings = mediaWarnings;
+  setActiveConfigBlobUrls(config._generatedBlobUrls || []);
+  gameConfig = config;
+  configLoaded = true;
+  console.log('Configuratie succesvol geladen:', config);
+
+  // Update UI elementen a.d.h.v. config settings
+  if (config.settings?.bumpers?.enabled !== undefined) {
+    const bumperCheckbox = document.getElementById('bumpersEnabledCheckbox');
+    if (bumperCheckbox) {
+      bumperCheckbox.checked = config.settings.bumpers.enabled;
+    }
+  }
+
+  if (config.settings?.intro?.enabled !== undefined) {
+    const introCheckbox = document.getElementById('introEnabledCheckbox');
+    if (introCheckbox) {
+      introCheckbox.checked = config.settings.intro.enabled;
+      const introOptions = document.getElementById('introOptions');
+      if (introOptions) {
+        introOptions.style.display = config.settings.intro.enabled ? 'block' : 'none';
+      }
+    }
+  }
+
+  if (config.settings?.intro?.text) {
+    const introText = document.getElementById('introText');
+    if (introText) {
+      introText.value = config.settings.intro.text;
+    }
+  }
+
+  setPendingUiConfig(config);
+  storeConfigMediaWarnings(mediaWarnings);
+
+  return config;
+}
+
 function collectMediaPathChecks(config) {
   const checks = [];
+
+  if (Array.isArray(config?.threeSixNine)) {
+    config.threeSixNine.forEach((question, questionIndex) => {
+      const questionMedia = [
+        { label: 'vraagfoto', path: question?.questionPhotoUrl || question?.photoUrl },
+        { label: 'vraagaudio', path: question?.questionAudioUrl || question?.audioUrl },
+        { label: 'vraagvideo', path: question?.questionVideoUrl || question?.videoUrl || question?.clip },
+        { label: 'na-vraag foto', path: question?.afterPhotoUrl || question?.revealPhotoUrl },
+        { label: 'na-vraag audio', path: question?.afterAudioUrl || question?.revealAudioUrl },
+        { label: 'na-vraag video', path: question?.afterVideoUrl || question?.revealVideoUrl }
+      ];
+
+      questionMedia.forEach((entry) => {
+        const path = typeof entry.path === 'string' ? entry.path.trim() : '';
+        if (!path) {
+          return;
+        }
+
+        checks.push({
+          round: 'threeSixNine',
+          label: `3-6-9 vraag ${questionIndex + 1} ${entry.label}`,
+          path
+        });
+      });
+    });
+  }
+
+  if (Array.isArray(config?.opendeur)) {
+    config.opendeur.forEach((question, questionIndex) => {
+      const path = typeof (question?.introVideoUrl || question?.videoUrl || question?.introVideo || question?.video) === 'string'
+        ? (question.introVideoUrl || question.videoUrl || question.introVideo || question.video).trim()
+        : '';
+
+      if (!path) {
+        return;
+      }
+
+      checks.push({
+        round: 'opendeur',
+        label: `Open Deur vraag ${questionIndex + 1} introvideo`,
+        path
+      });
+    });
+  }
 
   if (Array.isArray(config?.galerij)) {
     config.galerij.forEach((gallery, galleryIndex) => {
@@ -239,18 +693,37 @@ function getQuestionsForRound(roundKey, defaultQuestions = []) {
     // Normaliseer 3-6-9 vragen: zorg dat 'text' property bestaat
     let normalizedQuestions = configQuestions;
     if (roundKey === 'threeSixNine') {
-      normalizedQuestions = configQuestions.map(q => ({
-        ...q, // Behoud alle originele properties
-        text: q.text || q.question || 'Placeholdervraag',
-        answers: q.answers || [],
-        type: q.type || 'classic'
-      }));
+      normalizedQuestions = configQuestions.map((q) => {
+        const rawType = q.type || 'classic';
+        const normalizedType = rawType === 'photo' || rawType === 'audio'
+          ? 'classic'
+          : rawType === 'photo-multiple-choice'
+            ? 'multiple-choice'
+            : rawType;
+
+        return {
+          ...q,
+          text: q.text || q.question || 'Placeholdervraag',
+          answers: Array.isArray(q.answers) ? q.answers : [],
+          type: normalizedType || 'classic',
+          questionPhotoUrl: q.questionPhotoUrl || q.photoUrl || undefined,
+          questionAudioUrl: q.questionAudioUrl || q.audioUrl || undefined,
+          questionVideoUrl: q.questionVideoUrl || q.videoUrl || q.clip || undefined,
+          afterPhotoUrl: q.afterPhotoUrl || q.revealPhotoUrl || undefined,
+          afterAudioUrl: q.afterAudioUrl || q.revealAudioUrl || undefined,
+          afterVideoUrl: q.afterVideoUrl || q.revealVideoUrl || undefined,
+          // Backward compatibility velden behouden voor oudere codepaden.
+          photoUrl: q.questionPhotoUrl || q.photoUrl || undefined,
+          audioUrl: q.questionAudioUrl || q.audioUrl || undefined,
+          videoUrl: q.questionVideoUrl || q.videoUrl || q.clip || undefined
+        };
+      });
 
       // Optioneel: shuffle multiple-choice opties (alleen voor JSON config)
       const shuffleMcOptions = !!(gameConfig.settings && gameConfig.settings.threeSixNine && gameConfig.settings.threeSixNine.shuffleMultipleChoiceOptions);
       if (shuffleMcOptions) {
         normalizedQuestions = normalizedQuestions.map(q => {
-          if ((q.type !== 'multiple-choice' && q.type !== 'photo-multiple-choice') || !q.options) {
+          if (q.type !== 'multiple-choice' || !q.options) {
             return q;
           }
 
@@ -483,51 +956,27 @@ function setQuestionsForRound(roundKey, questions) {
  */
 async function uploadConfigFile(file) {
   return new Promise((resolve, reject) => {
+    const fileName = String(file?.name || '').toLowerCase();
+    const isZip = fileName.endsWith('.zip') || file?.type === 'application/zip' || file?.type === 'application/x-zip-compressed';
+
+    if (isZip) {
+      parseConfigFromZip(file)
+        .then(config => applyLoadedConfig(config))
+        .then(resolve)
+        .catch((error) => {
+          console.error('Fout bij verwerken van ZIP configuratie:', error);
+          reject(error);
+        });
+      return;
+    }
+
     const reader = new FileReader();
     
     reader.onload = async (event) => {
       try {
         const config = JSON.parse(event.target.result);
-        const mediaWarnings = await validateConfigMediaPaths(config);
-        if (mediaWarnings.length > 0) {
-          console.warn('⚠️ Config media-waarschuwingen:', mediaWarnings);
-        }
-
-        config._mediaWarnings = mediaWarnings;
-        gameConfig = config;
-        configLoaded = true;
-        console.log('Configuratie succesvol geupload:', config);
-        
-        // Update UI elementen a.d.h.v. config settings
-        if (config.settings?.bumpers?.enabled !== undefined) {
-          const bumperCheckbox = document.getElementById('bumpersEnabledCheckbox');
-          if (bumperCheckbox) {
-            bumperCheckbox.checked = config.settings.bumpers.enabled;
-          }
-        }
-        
-        if (config.settings?.intro?.enabled !== undefined) {
-          const introCheckbox = document.getElementById('introEnabledCheckbox');
-          if (introCheckbox) {
-            introCheckbox.checked = config.settings.intro.enabled;
-            const introOptions = document.getElementById('introOptions');
-            if (introOptions) {
-              introOptions.style.display = config.settings.intro.enabled ? 'block' : 'none';
-            }
-          }
-        }
-        
-        if (config.settings?.intro?.text) {
-          const introText = document.getElementById('introText');
-          if (introText) {
-            introText.value = config.settings.intro.text;
-          }
-        }
-
-        setPendingUiConfig(config);
-        storeConfigMediaWarnings(mediaWarnings);
-        
-        resolve(config);
+        const loadedConfig = await applyLoadedConfig(config);
+        resolve(loadedConfig);
       } catch (error) {
         console.error('Fout bij parsen van config bestand:', error);
         reject(error);
