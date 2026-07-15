@@ -11,9 +11,8 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 desktop.ini
-game-config-example.json*
-game-config-full-dummy.json*
-game-config-with-settings-example*
+# Config files (sluit alle bestanden en mappen uit die beginnen met game-config)
+game-config*
 
 # Editor directories
 .vscode/
