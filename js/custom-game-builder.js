@@ -132,7 +132,7 @@
       `galerij/${themeSlug}`,
       {
         placeholder: `galerij/${themeSlug}/foto-${imageIndex}`,
-        helperText: 'Verplicht voor Galerij: elke foto moet een vast pad hebben zodat dit altijd geladen kan worden.',
+        helperText: 'Verplicht voor Galerij.',
         required: true,
         uploadAccept: 'image/*',
         uploadTitle: 'Kies een galerijafbeelding'
@@ -695,14 +695,18 @@
   }
 
   function addPuzzelItem(data = {}) {
-    const item = createItemShell(puzzelList, 'Puzzel link', { indexed: true });
+    const item = createItemShell(puzzelList, 'Puzzel', { indexed: true });
 
-    const linkField = createTextField('Linkwoord', data.link || '');
-    const answersField = createTextAreaField('Antwoorden (1 per regel)', stringifyAnswers(data.answers));
+    const linkField = createTextField('Antwoord', data.link || '');
+    const answersField = createFixedAnswerGroup(
+      'Puzzelwoord',
+      4,
+      Array.isArray(data.answers) ? data.answers : splitAnswers(data.answers),
+      'field-puzzel-answer'
+    );
     linkField.input.classList.add('field-puzzel-link');
-    answersField.textarea.classList.add('field-puzzel-answers');
 
-    item.append(linkField.label, answersField.label);
+    item.append(linkField.label, answersField);
   }
 
   function addGalerijTheme(data = {}) {
@@ -728,7 +732,7 @@
       'collectief_geheugen',
       {
         placeholder: 'collectief_geheugen/fragment-1',
-        helperText: 'Verplicht voor Collectief Geheugen: elk fragment moet een vast videopad hebben.',
+        helperText: 'Verplicht voor Collectief Geheugen.',
         required: true,
         uploadAccept: 'video/*',
         uploadTitle: 'Kies een collectief-videofragment'
@@ -993,13 +997,19 @@
 
   function buildPuzzel() {
     const items = [];
-    puzzelList.querySelectorAll('.item').forEach((item) => {
+    puzzelList.querySelectorAll('.item').forEach((item, index) => {
       const link = item.querySelector('.field-puzzel-link')?.value?.trim() || '';
-      if (!link) {
+      const answerValues = getFixedAnswerValues(item, 'field-puzzel-answer', 4);
+
+      if (!link && !hasAnyValue(answerValues)) {
         return;
       }
 
-      const answers = splitAnswers(item.querySelector('.field-puzzel-answers')?.value || '');
+      if (!link) {
+        throw new Error(`Puzzel ${index + 1}: antwoord is verplicht zodra dit item wordt gebruikt.`);
+      }
+
+      const answers = readFixedAnswers(item, 'field-puzzel-answer', 4, `Puzzel ${index + 1}`);
       items.push({ link, answers });
     });
 
