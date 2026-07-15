@@ -209,6 +209,9 @@
                     <div class="controls">
             <button id="openConfigBuilderBtn" class="secondary">Custom game maken</button>
           </div>
+          <div class="controls">
+            <button id="openDisplayBtn" class="secondary">Display openen</button>
+            </div>
           <div id="configStatus" style="font-size:0.85em;color:#666;margin-top:5px;"></div>
         </div>
 
@@ -296,11 +299,24 @@ if (openConfigBuilderBtn) {
   openConfigBuilderBtn.addEventListener('click', () => {
     const popup = window.open('custom-game-builder.html', '_blank', 'noopener,noreferrer,width=1400,height=900');
     if (!popup) {
-      alert('Kon builder venster niet openen. Controleer of popups zijn toegestaan.');
+      // alert('Kon builder venster niet openen. Controleer of popups zijn toegestaan.');
       return;
     }
 
     popup.focus();
+  });
+}
+
+const openDisplayBtn = document.getElementById('openDisplayBtn');
+if (openDisplayBtn) {
+  openDisplayBtn.addEventListener('click', () => {
+    const popup = window.open('display.html', 'width=1400,height=900');
+    if (!popup) {
+      alert('Kon display venster niet openen. Controleer of popups zijn toegestaan.');
+      return;
+    }
+
+    // popup.focus();
   });
 }
 
