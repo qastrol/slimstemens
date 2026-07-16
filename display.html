@@ -519,7 +519,6 @@
         </div>
       </div>
         
-      <!-- Rechterboven: Mini-lobby -->
       <div class="grid-part part2">
         <div class="mini-lobby">
           <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
@@ -527,7 +526,6 @@
         </div>
       </div>
         
-      <!-- Rechtsonder: Spelersbalk -->
       <div class="grid-part part4-status">
         <div id="finalePreInfo" class="round-status">
           <div class="round-name">Finalisten</div>
@@ -537,15 +535,12 @@
     </div>
 </div>
 
-  <!-- 🎬 SCENE: Finale - Main (Vraag actief) -->
 <div id="scene-round-finale-main" class="scene">
     <div id="finale-main-grid" class="galerij-round-grid">
-      <!-- Linkerhelft: Antwoorden (5 opties) -->
       <div class="grid-part part-left-full" id="finaleMainAnswersContainer">
         <div id="finaleMainAnswers" class="collectief-answers-list"></div>
       </div>
         
-      <!-- Rechterboven: Mini-lobby -->
       <div class="grid-part part2">
         <div class="mini-lobby">
           <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
@@ -553,7 +548,6 @@
         </div>
       </div>
         
-      <!-- Rechtsonder: Info en spelersbalk -->
       <div class="grid-part part4-status" id="finaleMainInfoContainer">
         <div id="finaleMainInfo" class="round-status"></div>
         <div id="finaleMainPlayersBar" class="players-bar-compact"></div>
@@ -561,12 +555,9 @@
     </div>
 </div>
 
-  <!-- 🎬 SCENE: Finale - End (Winnaar) -->
 <div id="scene-round-finale-end" class="scene">
-    <!-- Winner Content (StandaardView) -->
     <div class="finale-winner-content" style="display: block; width: 100%; height: 100%;">
       <div id="finale-end-grid" class="galerij-round-grid">
-        <!-- Linkerhelft: Winnaar bekendmaking -->
         <div class="grid-part part-left-full" id="finaleEndMainContainer">
           <div class="round-name" style="font-size: 5em; text-align: center; margin-top: 180px; color: #ffd17a;">
             <span id="finaleWinnerName"></span>
@@ -579,7 +570,6 @@
           </div>
         </div>
           
-        <!-- Rechterboven: Mini-lobby -->
         <div class="grid-part part2">
           <div class="mini-lobby">
             <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
@@ -587,7 +577,6 @@
           </div>
         </div>
           
-        <!-- Rechtsonder: Eindstand -->
         <div class="grid-part part4-status">
           <div id="finaleEndInfo" class="round-status">
             <div class="round-name">Finale Afgelopen</div>
@@ -597,7 +586,6 @@
       </div>
     </div>
 
-    <!-- Fullscreen Lobby Content (Toggle View) -->
     <div class="finale-lobby-content" style="display: none; width: 100%; height: 100%;">
       <div style="width: 100%; height: 100%; background-color: #bd321d; background-image: url('assets/kandidatenstoelen.jpg'); background-size: cover; background-position: center center; background-repeat: no-repeat; position: relative;">
         <div style="position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
@@ -612,10 +600,8 @@
     </div>
 </div>
 
-  <!-- 🎬 SCENE: Solo Game End (1 Speler Eindstand) -->
 <div id="scene-solo-game-end" class="scene">
     <div id="solo-end-grid" class="galerij-round-grid">
-      <!-- Linkerhelft: Eindstand -->
       <div class="grid-part part-left-full" id="soloEndMainContainer">
         <div class="round-name" style="font-size: 5em; text-align: center; margin-top: 180px; color: #ffd17a;">
           <span id="soloPlayerName"></span>
@@ -628,7 +614,6 @@
         </div>
       </div>
         
-      <!-- Rechterboven: Mini-lobby -->
       <div class="grid-part part2">
         <div class="mini-lobby">
           <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
@@ -636,7 +621,6 @@
         </div>
       </div>
         
-      <!-- Rechtsonder: Status -->
       <div class="grid-part part4-status">
         <div id="soloEndInfo" class="round-status">
           <div class="round-name">Solo Modus</div>
@@ -646,10 +630,8 @@
     </div>
 </div>
 
-    <!-- 🎬 SCENE: Outro -->
     <div id="scene-outro" class="scene" style="background: #000000;">
         <div id="outroContainer" class="outro-container">
-            <!-- Fullscreen Lobby met fade-out -->
             <div id="outroLobbyView" class="outro-lobby-view">
                 <div class="initial-title-bar" id="outroTitleBar">
                     de slimste mens
@@ -659,10 +641,8 @@
                 <div id="outroLobbyPlayerImages"></div>
             </div>
             
-            <!-- Fade-out overlay naar zwart -->
             <div id="outroFadeOut" class="outro-fade-overlay" style="display:none;"></div>
             
-            <!-- Outro video (na fade uit zwart) -->
             <video id="outroVideoPlayer" class="outro-video" muted style="display:none;">
                 <source src="assets/Outro.mp4" type="video/mp4">
                 Your browser does not support the video tag.
@@ -670,7 +650,6 @@
         </div>
     </div>
 
-    <!-- Presentator Overlay -->
     <div id="presenterOverlay" style="display:none;">
       <div class="presenter-container">
         <img src="assets/presentator.png" alt="Presentator achtergrond" class="presenter-background" />
