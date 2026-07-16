@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="nl">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -9,14 +10,14 @@
   <style>
   </style>
 </head>
+
 <body>
   <div class="container">
     <h1>De Slimste Mens</h1>
     <div class="grid">
-      <!-- Links: instellingen / basis -->
       <div class="card">
         <div style="height:8px"></div>
-        
+
         <div>
           <label>Aantal spelers</label>
           <select id="playerCountSelect">
@@ -25,7 +26,7 @@
             <option value="3" selected>3 spelers (standaard)</option>
           </select>
         </div>
-        
+
         <div id="singlePlayerOptions" style="display:none;margin-top:10px;">
           <label>Vragen per ronde (alleen 1 speler)</label>
           <select id="questionsPerRoundSelect">
@@ -33,7 +34,7 @@
             <option value="3">3 vragen per ronde</option>
           </select>
         </div>
-        
+
         <div style="margin-top:10px;">
           <label>
             <input type="checkbox" id="bumpersEnabledCheckbox" checked />
@@ -47,9 +48,9 @@
             Veilige rondeknoppen (voorkom vroegtijdig afkappen)
           </label>
         </div>
-        
+
         <hr class="divider" />
-        
+
         <div>
           <label>
             <input type="checkbox" id="presenterEnabledCheckbox" />
@@ -82,27 +83,27 @@
             <div style="font-size:0.85em;color:#666;margin-top:5px;">Dit tekst verschijnt tijdens de intro video</div>
           </div>
         </div>
-        
+
         <hr class="divider" />
-        
+
         <label>Voer kandidaatnamen in</label>
-<div id="playersInputs" class="players-list">
-  <div class="player-entry">
-    <input class="playerName" data-index="0" value="Kandidaat A" />
-    <input class="playerPhoto" type="file" accept="image/*" data-index="0" />
-    <div class="playerPhotoStatus" data-index="0" style="font-size:0.8em;color:#666;"></div>
-  </div>
-  <div class="player-entry">
-    <input class="playerName" data-index="1" value="Kandidaat B" />
-    <input class="playerPhoto" type="file" accept="image/*" data-index="1" />
-    <div class="playerPhotoStatus" data-index="1" style="font-size:0.8em;color:#666;"></div>
-  </div>
-  <div class="player-entry">
-    <input class="playerName" data-index="2" value="Kandidaat C" />
-    <input class="playerPhoto" type="file" accept="image/*" data-index="2" />
-    <div class="playerPhotoStatus" data-index="2" style="font-size:0.8em;color:#666;"></div>
-  </div>
-</div>
+        <div id="playersInputs" class="players-list">
+          <div class="player-entry">
+            <input class="playerName" data-index="0" value="Kandidaat A" />
+            <input class="playerPhoto" type="file" accept="image/*" data-index="0" />
+            <div class="playerPhotoStatus" data-index="0" style="font-size:0.8em;color:#666;"></div>
+          </div>
+          <div class="player-entry">
+            <input class="playerName" data-index="1" value="Kandidaat B" />
+            <input class="playerPhoto" type="file" accept="image/*" data-index="1" />
+            <div class="playerPhotoStatus" data-index="1" style="font-size:0.8em;color:#666;"></div>
+          </div>
+          <div class="player-entry">
+            <input class="playerName" data-index="2" value="Kandidaat C" />
+            <input class="playerPhoto" type="file" accept="image/*" data-index="2" />
+            <div class="playerPhotoStatus" data-index="2" style="font-size:0.8em;color:#666;"></div>
+          </div>
+        </div>
 
         <div class="controls">
           <button id="applyBtn">Maak spel</button>
@@ -116,31 +117,31 @@
         </div>
 
         <hr class="divider" />
-<div>
-  <label>Aantal vragen 3-6-9 (standaard 12)</label>
-  <input id="threeSixNineCount" type="number" min="1" max="50" value="12" />
-  <div class="controls">
-    <button id="setThreeSixNineCountBtn" class="secondary">Aantal vragen instellen</button>
-  </div>
-</div>
+        <div>
+          <label>Aantal vragen 3-6-9 (standaard 12)</label>
+          <input id="threeSixNineCount" type="number" min="1" max="50" value="12" />
+          <div class="controls">
+            <button id="setThreeSixNineCountBtn" class="secondary">Aantal vragen instellen</button>
+          </div>
+        </div>
 
         <div style="height:8px"></div>
-          <div>
-            <label>Foto's in Galerij-ronde</label>
-            <select id="galerijPhotoCount">
-              <option value="10" selected>10 (standaard)</option>
-              <option value="8">8</option>
-            </select>
-          </div>
+        <div>
+          <label>Foto's in Galerij-ronde</label>
+          <select id="galerijPhotoCount">
+            <option value="10" selected>10 (standaard)</option>
+            <option value="8">8</option>
+          </select>
+        </div>
 
-<hr class="divider" />
-<div>
-  <label>Collectief Geheugen eindinstelling:</label>
-  <select id="collectiefEndOption">
-    <option value="lowestOut">Laagste score valt af, overige gaan naar finale</option>
-    <option value="highestWinner">Hoogste score Slimste van de Dag, overige naar finale</option>
-  </select>
-</div>
+        <hr class="divider" />
+        <div>
+          <label>Collectief Geheugen eindinstelling:</label>
+          <select id="collectiefEndOption">
+            <option value="lowestOut">Laagste score valt af, overige gaan naar finale</option>
+            <option value="highestWinner">Hoogste score Slimste van de Dag, overige naar finale</option>
+          </select>
+        </div>
 
       </div>
 
@@ -173,7 +174,8 @@
           <button id="stopIntroBtn" class="secondary" style="display:none;">⏹️ Stop Intro</button>
         </div>
 
-        <div id="introScriptArea" style="display:none;margin-top:10px;padding:15px;background:#2a2a2a;border-radius:8px;border:2px solid #ffd17a;">
+        <div id="introScriptArea"
+          style="display:none;margin-top:10px;padding:15px;background:#2a2a2a;border-radius:8px;border:2px solid #ffd17a;">
           <strong style="color:#ffd17a;display:block;margin-bottom:8px;">📝 Presentator script:</strong>
           <div id="introScriptText" style="color:#fff;font-size:1.1em;line-height:1.5;"></div>
         </div>
@@ -206,12 +208,12 @@
             <button id="uploadConfigBtn" class="secondary">Configuratie laden</button>
             <button id="downloadConfigBtn" class="secondary">Huidige config downloaden</button>
           </div>
-                    <div class="controls">
+          <div class="controls">
             <button id="openConfigBuilderBtn" class="secondary">Custom game maken</button>
           </div>
           <div class="controls">
             <button id="openDisplayBtn" class="secondary">Display openen</button>
-            </div>
+          </div>
           <div id="configStatus" style="font-size:0.85em;color:#666;margin-top:5px;"></div>
         </div>
 
@@ -230,529 +232,530 @@
 
     </div>
   </div>
-<script src="node_modules/jszip/dist/jszip.min.js"></script>
-<script src="js/config-manager.js"></script>
-<script src="js/369vragen.js"></script>
-<script src="js/round-3-6-9.js"></script>
-<script src="js/vragen-opendeur.js"></script>
-<script src="js/round-opendeur.js"></script>
-<script src="js/vragen-puzzel.js"></script>
-<script src="js/round-puzzel.js"></script>
-<script src="js/vragen-galerij.js"></script>
-<script src="js/round-galerij.js"></script>
-<script src="js/core.js"></script>
-<script src="js/vragen-collectiefgeheugen.js"></script>
-<script src="js/round-collectiefgeheugen.js"></script>
-<script src="js/vragen-finale.js"></script>
-<script src="js/round-finale.js"></script>
-<script>
-// Wrap alle event listeners in DOMContentLoaded voor betere null-safety
-document.addEventListener('DOMContentLoaded', function() {
+  <script src="node_modules/jszip/dist/jszip.min.js"></script>
+  <script src="js/config-manager.js"></script>
+  <script src="js/369vragen.js"></script>
+  <script src="js/round-3-6-9.js"></script>
+  <script src="js/vragen-opendeur.js"></script>
+  <script src="js/round-opendeur.js"></script>
+  <script src="js/vragen-puzzel.js"></script>
+  <script src="js/round-puzzel.js"></script>
+  <script src="js/vragen-galerij.js"></script>
+  <script src="js/round-galerij.js"></script>
+  <script src="js/core.js"></script>
+  <script src="js/vragen-collectiefgeheugen.js"></script>
+  <script src="js/round-collectiefgeheugen.js"></script>
+  <script src="js/vragen-finale.js"></script>
+  <script src="js/round-finale.js"></script>
+  <script>
+    // Wrap alle event listeners in DOMContentLoaded voor betere null-safety
+    document.addEventListener('DOMContentLoaded', function () {
 
-// Config Upload/Download Event Listeners
-const uploadConfigBtn = document.getElementById('uploadConfigBtn');
-if (uploadConfigBtn) {
-  uploadConfigBtn.addEventListener('click', async () => {
-    const fileInput = document.getElementById('configUpload');
-    if (!fileInput.files.length) {
-      alert('Selecteer eerst een JSON of ZIP bestand');
-      return;
-    }
-    
-    try {
-      const file = fileInput.files[0];
-      const loadedConfig = await uploadConfigFile(file);
-      const warnings = Array.isArray(loadedConfig?._mediaWarnings) ? loadedConfig._mediaWarnings : [];
-      const zipUnresolved = Array.isArray(loadedConfig?._zipUnresolvedPaths) ? loadedConfig._zipUnresolvedPaths : [];
-      const configStatusEl = document.getElementById('configStatus');
+      // Config Upload/Download Event Listeners
+      const uploadConfigBtn = document.getElementById('uploadConfigBtn');
+      if (uploadConfigBtn) {
+        uploadConfigBtn.addEventListener('click', async () => {
+          const fileInput = document.getElementById('configUpload');
+          if (!fileInput.files.length) {
+            alert('Selecteer eerst een JSON of ZIP bestand');
+            return;
+          }
 
-      if (warnings.length > 0) {
-        const warningPreview = warnings.slice(0, 2).join(' | ');
-        configStatusEl.textContent =
-          `⚠ Configuratie geladen met ${warnings.length} media-waarschuwing(en). Voorbeeld: ${warningPreview}`;
-        flash(`Configuratie geladen, maar ${warnings.length} media-pad(en) zijn ongeldig. Controleer Galerij/Collectief.`, 'wrong');
-      } else {
-        if (zipUnresolved.length > 0) {
-          console.warn('ZIP media niet gevonden:', zipUnresolved);
-        }
-        configStatusEl.textContent =
-          `✓ Configuratie geladen: "${gameConfig.metadata?.name || 'Onbekend'}"`;
-        flash('Configuratie succesvol geladen!', 'good');
+          try {
+            const file = fileInput.files[0];
+            const loadedConfig = await uploadConfigFile(file);
+            const warnings = Array.isArray(loadedConfig?._mediaWarnings) ? loadedConfig._mediaWarnings : [];
+            const zipUnresolved = Array.isArray(loadedConfig?._zipUnresolvedPaths) ? loadedConfig._zipUnresolvedPaths : [];
+            const configStatusEl = document.getElementById('configStatus');
+
+            if (warnings.length > 0) {
+              const warningPreview = warnings.slice(0, 2).join(' | ');
+              configStatusEl.textContent =
+                `⚠ Configuratie geladen met ${warnings.length} media-waarschuwing(en). Voorbeeld: ${warningPreview}`;
+              flash(`Configuratie geladen, maar ${warnings.length} media-pad(en) zijn ongeldig. Controleer Galerij/Collectief.`, 'wrong');
+            } else {
+              if (zipUnresolved.length > 0) {
+                console.warn('ZIP media niet gevonden:', zipUnresolved);
+              }
+              configStatusEl.textContent =
+                `✓ Configuratie geladen: "${gameConfig.metadata?.name || 'Onbekend'}"`;
+              flash('Configuratie succesvol geladen!', 'good');
+            }
+          } catch (error) {
+            document.getElementById('configStatus').textContent = `✗ Fout: ${error.message}`;
+            flash(`Fout bij laden: ${error.message}`, 'wrong');
+          }
+        });
       }
-    } catch (error) {
-      document.getElementById('configStatus').textContent = `✗ Fout: ${error.message}`;
-      flash(`Fout bij laden: ${error.message}`, 'wrong');
-    }
-  });
-}
 
-const downloadConfigBtn = document.getElementById('downloadConfigBtn');
-if (downloadConfigBtn) {
-  downloadConfigBtn.addEventListener('click', () => {
-    downloadConfigFile();
-    flash('Configuratie gedownload!', 'good');
-  });
-}
-
-const openConfigBuilderBtn = document.getElementById('openConfigBuilderBtn');
-if (openConfigBuilderBtn) {
-  openConfigBuilderBtn.addEventListener('click', () => {
-    const popup = window.open('custom-game-builder.html', '_blank', 'noopener,noreferrer,width=1400,height=900');
-    if (!popup) {
-      // alert('Kon builder venster niet openen. Controleer of popups zijn toegestaan.');
-      return;
-    }
-
-    popup.focus();
-  });
-}
-
-const openDisplayBtn = document.getElementById('openDisplayBtn');
-if (openDisplayBtn) {
-  openDisplayBtn.addEventListener('click', () => {
-    const popup = window.open('display.html', 'width=1400,height=900');
-    if (!popup) {
-      alert('Kon display venster niet openen. Controleer of popups zijn toegestaan.');
-      return;
-    }
-
-    // popup.focus();
-  });
-}
-
-// Player count selector logic
-const playerCountSelect = document.getElementById('playerCountSelect');
-if (playerCountSelect) {
-  playerCountSelect.addEventListener('change', function() {
-    const count = parseInt(this.value);
-    const playerEntries = document.querySelectorAll('.player-entry');
-    const singlePlayerOptions = document.getElementById('singlePlayerOptions');
-    
-    // Toon/verberg solo opties
-    if (count === 1) {
-      singlePlayerOptions.style.display = 'block';
-    } else {
-      singlePlayerOptions.style.display = 'none';
-    }
-    
-    // Toon/verberg speler inputs
-    playerEntries.forEach((entry, i) => {
-      if (i < count) {
-      entry.style.display = 'flex';
-    } else {
-      entry.style.display = 'none';
-    }
-  });
-  });
-}
-
-// Presentator functie event listeners
-let presenterEnabled = false;
-let presenterPhotoData = null;
-let showingPresenter = false;
-let juryEnabled = false;
-let showingJury = false;
-
-const presenterCheckbox = document.getElementById('presenterEnabledCheckbox');
-if (presenterCheckbox) {
-  presenterCheckbox.addEventListener('change', function() {
-    presenterEnabled = this.checked;
-    const presenterOptions = document.getElementById('presenterOptions');
-    const presenterControlArea = document.getElementById('presenterControlArea');
-    
-    if (presenterEnabled) {
-      presenterOptions.style.display = 'block';
-    } else {
-      presenterOptions.style.display = 'none';
-      presenterControlArea.style.display = 'none';
-      presenterPhotoData = null;
-      document.getElementById('presenterPhotoStatus').textContent = '';
-      showingPresenter = false;
-      const togglePresenterBtn = document.getElementById('togglePresenterView');
-      if (togglePresenterBtn) togglePresenterBtn.textContent = 'Wissel naar Presentator';
-      if (typeof sendDisplayUpdate !== 'undefined') {
-        sendDisplayUpdate({ type: 'presenter_toggle', showing: false, photoData: null });
+      const downloadConfigBtn = document.getElementById('downloadConfigBtn');
+      if (downloadConfigBtn) {
+        downloadConfigBtn.addEventListener('click', () => {
+          downloadConfigFile();
+          flash('Configuratie gedownload!', 'good');
+        });
       }
-    }
-  });
-}
 
-const juryCheckbox = document.getElementById('juryEnabledCheckbox');
-if (juryCheckbox) {
-  juryCheckbox.addEventListener('change', function() {
-    juryEnabled = this.checked;
-    const juryControlArea = document.getElementById('juryControlArea');
+      const openConfigBuilderBtn = document.getElementById('openConfigBuilderBtn');
+      if (openConfigBuilderBtn) {
+        openConfigBuilderBtn.addEventListener('click', () => {
+          const popup = window.open('custom-game-builder.html', '_blank', 'noopener,noreferrer,width=1400,height=900');
+          if (!popup) {
+            // alert('Kon builder venster niet openen. Controleer of popups zijn toegestaan.');
+            return;
+          }
 
-    if (juryEnabled) {
-      juryControlArea.style.display = 'flex';
-    } else {
-      juryControlArea.style.display = 'none';
-      showingJury = false;
-      const toggleJuryBtn = document.getElementById('toggleJuryView');
-      if (toggleJuryBtn) toggleJuryBtn.textContent = 'Wissel naar Jury';
-      if (typeof sendDisplayUpdate !== 'undefined') {
-        sendDisplayUpdate({ type: 'jury_toggle', showing: false });
+          popup.focus();
+        });
       }
-    }
-  });
-}
 
-// Intro functie event listeners
-const introCheckbox = document.getElementById('introEnabledCheckbox');
-if (introCheckbox) {
-  introCheckbox.addEventListener('change', function() {
-    introEnabled = this.checked;
-    outroEnabled = this.checked; // Outro volgt intro instelling
-    console.log('🎬 Intro/Outro checkbox changed:', { intro: introEnabled, outro: outroEnabled });
-    
-    const introOptions = document.getElementById('introOptions');
-    
-    if (introEnabled) {
-      introOptions.style.display = 'block';
-    } else {
-      introOptions.style.display = 'none';
-      introText = '';
-    }
-  });
-}
+      const openDisplayBtn = document.getElementById('openDisplayBtn');
+      if (openDisplayBtn) {
+        openDisplayBtn.addEventListener('click', () => {
+          const popup = window.open('display.html', 'width=1400,height=900');
+          if (!popup) {
+            alert('Kon display venster niet openen. Controleer of popups zijn toegestaan.');
+            return;
+          }
 
-const introTextInput = document.getElementById('introText');
-if (introTextInput) {
-  introTextInput.addEventListener('change', function() {
-    introText = this.value || '';
-    console.log('🎬 Intro tekst gewijzigd:', introText);
-  });
-}
-
-const presenterPhotoInput = document.getElementById('presenterPhoto');
-if (presenterPhotoInput) {
-  presenterPhotoInput.addEventListener('change', function() {
-    const file = this.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      presenterPhotoData = e.target.result;
-      document.getElementById('presenterPhotoStatus').textContent = '✓ Foto geladen: ' + file.name;
-      document.getElementById('presenterPhotoStatus').style.color = '#4ade80';
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
-// Helper functie om presentator controls te tonen/verbergen
-function updatePresenterControls() {
-  const presenterControlArea = document.getElementById('presenterControlArea');
-  if (presenterEnabled && presenterPhotoData) {
-    presenterControlArea.style.display = 'flex';
-  } else {
-    presenterControlArea.style.display = 'none';
-  }
-}
-
-function updateJuryControls() {
-  const juryControlArea = document.getElementById('juryControlArea');
-  if (juryControlArea) {
-    juryControlArea.style.display = juryEnabled ? 'flex' : 'none';
-  }
-}
-
-function applyUiSettingsFromConfig(config) {
-  if (!config || !config.settings) {
-    return;
-  }
-
-  console.log('⚙️ Laden config instellingen...');
-
-  // Presentator instellingen
-  const presenterSettings = config.settings.presenter;
-  if (presenterSettings) {
-    if (presenterCheckbox && presenterSettings.enabled !== undefined) {
-      presenterCheckbox.checked = !!presenterSettings.enabled;
-      presenterCheckbox.dispatchEvent(new Event('change'));
-    }
-
-    const presenterPhotoValue = presenterSettings.photoData || presenterSettings.photoUrl;
-    if (presenterPhotoValue) {
-      presenterPhotoData = presenterPhotoValue;
-      const status = document.getElementById('presenterPhotoStatus');
-      if (status) {
-        const presenterValueText = String(presenterPhotoValue);
-        const label = presenterValueText.startsWith('data:')
-          ? 'Data URI'
-          : presenterValueText.split('/').pop();
-        status.textContent = '✓ Foto vastgezet via config: ' + label;
-        status.style.color = '#4ade80';
+          // popup.focus();
+        });
       }
-    }
-  }
 
-  // Jury instellingen
-  const jurySettings = config.settings.jury;
-  if (jurySettings && juryCheckbox && jurySettings.enabled !== undefined) {
-    juryCheckbox.checked = !!jurySettings.enabled;
-    juryCheckbox.dispatchEvent(new Event('change'));
-  }
+      // Player count selector logic
+      const playerCountSelect = document.getElementById('playerCountSelect');
+      if (playerCountSelect) {
+        playerCountSelect.addEventListener('change', function () {
+          const count = parseInt(this.value);
+          const playerEntries = document.querySelectorAll('.player-entry');
+          const singlePlayerOptions = document.getElementById('singlePlayerOptions');
 
-  // Bumpers instelling
-  const bumpersSettings = config.settings.bumpers;
-  if (bumpersSettings && bumpersSettings.enabled !== undefined) {
-    const bumpersCheckbox = document.getElementById('bumpersEnabledCheckbox');
-    if (bumpersCheckbox) {
-      bumpersCheckbox.checked = !!bumpersSettings.enabled;
-    }
-  }
+          // Toon/verberg solo opties
+          if (count === 1) {
+            singlePlayerOptions.style.display = 'block';
+          } else {
+            singlePlayerOptions.style.display = 'none';
+          }
 
-  // Veilige rondeknoppen
-  const safeRoundNavigationSettings = config.settings.safeRoundNavigation;
-  if (safeRoundNavigationSettings && safeRoundNavigationSettings.enabled !== undefined) {
-    const safeCheckbox = document.getElementById('safeRoundNavigationCheckbox');
-    if (safeCheckbox) {
-      safeCheckbox.checked = !!safeRoundNavigationSettings.enabled;
-      safeCheckbox.dispatchEvent(new Event('change'));
-    }
-  }
+          // Toon/verberg speler inputs
+          playerEntries.forEach((entry, i) => {
+            if (i < count) {
+              entry.style.display = 'flex';
+            } else {
+              entry.style.display = 'none';
+            }
+          });
+        });
+      }
 
-  // Intro / Outro instellingen
-  const introSettings = config.settings.intro;
-  if (introSettings) {
-    if (introCheckbox && introSettings.enabled !== undefined) {
-      introCheckbox.checked = !!introSettings.enabled;
-      introCheckbox.dispatchEvent(new Event('change'));
-    }
+      // Presentator functie event listeners
+      let presenterEnabled = false;
+      let presenterPhotoData = null;
+      let showingPresenter = false;
+      let juryEnabled = false;
+      let showingJury = false;
 
-    if (typeof introSettings.text === 'string') {
+      const presenterCheckbox = document.getElementById('presenterEnabledCheckbox');
+      if (presenterCheckbox) {
+        presenterCheckbox.addEventListener('change', function () {
+          presenterEnabled = this.checked;
+          const presenterOptions = document.getElementById('presenterOptions');
+          const presenterControlArea = document.getElementById('presenterControlArea');
+
+          if (presenterEnabled) {
+            presenterOptions.style.display = 'block';
+          } else {
+            presenterOptions.style.display = 'none';
+            presenterControlArea.style.display = 'none';
+            presenterPhotoData = null;
+            document.getElementById('presenterPhotoStatus').textContent = '';
+            showingPresenter = false;
+            const togglePresenterBtn = document.getElementById('togglePresenterView');
+            if (togglePresenterBtn) togglePresenterBtn.textContent = 'Wissel naar Presentator';
+            if (typeof sendDisplayUpdate !== 'undefined') {
+              sendDisplayUpdate({ type: 'presenter_toggle', showing: false, photoData: null });
+            }
+          }
+        });
+      }
+
+      const juryCheckbox = document.getElementById('juryEnabledCheckbox');
+      if (juryCheckbox) {
+        juryCheckbox.addEventListener('change', function () {
+          juryEnabled = this.checked;
+          const juryControlArea = document.getElementById('juryControlArea');
+
+          if (juryEnabled) {
+            juryControlArea.style.display = 'flex';
+          } else {
+            juryControlArea.style.display = 'none';
+            showingJury = false;
+            const toggleJuryBtn = document.getElementById('toggleJuryView');
+            if (toggleJuryBtn) toggleJuryBtn.textContent = 'Wissel naar Jury';
+            if (typeof sendDisplayUpdate !== 'undefined') {
+              sendDisplayUpdate({ type: 'jury_toggle', showing: false });
+            }
+          }
+        });
+      }
+
+      // Intro functie event listeners
+      const introCheckbox = document.getElementById('introEnabledCheckbox');
+      if (introCheckbox) {
+        introCheckbox.addEventListener('change', function () {
+          introEnabled = this.checked;
+          outroEnabled = this.checked; // Outro volgt intro instelling
+          console.log('🎬 Intro/Outro checkbox changed:', { intro: introEnabled, outro: outroEnabled });
+
+          const introOptions = document.getElementById('introOptions');
+
+          if (introEnabled) {
+            introOptions.style.display = 'block';
+          } else {
+            introOptions.style.display = 'none';
+            introText = '';
+          }
+        });
+      }
+
       const introTextInput = document.getElementById('introText');
       if (introTextInput) {
-        introTextInput.value = introSettings.text;
+        introTextInput.addEventListener('change', function () {
+          introText = this.value || '';
+          console.log('🎬 Intro tekst gewijzigd:', introText);
+        });
       }
-      introText = introSettings.text;
-    }
-  }
 
-  const outroSettings = config.settings.outro;
-  if (outroSettings && outroSettings.enabled !== undefined) {
-    outroEnabled = !!outroSettings.enabled;
-  }
+      const presenterPhotoInput = document.getElementById('presenterPhoto');
+      if (presenterPhotoInput) {
+        presenterPhotoInput.addEventListener('change', function () {
+          const file = this.files[0];
+          if (!file) return;
 
-  // Startseconden
-  if (config.settings.game && config.settings.game.startSeconds !== undefined) {
-    const startSecondsInput = document.getElementById('startSeconds');
-    const parsedStartSeconds = parseInt(config.settings.game.startSeconds, 10);
-    if (startSecondsInput && !isNaN(parsedStartSeconds) && parsedStartSeconds >= 10) {
-      startSecondsInput.value = parsedStartSeconds;
-    }
-  }
-
-  // Collectief Geheugen eindinstelling
-  if (config.settings.collectief && config.settings.collectief.endOption) {
-    const collectiefEndSelect = document.getElementById('collectiefEndOption');
-    if (collectiefEndSelect) {
-      collectiefEndSelect.value = config.settings.collectief.endOption;
-      collectiefEndSelect.dispatchEvent(new Event('change'));
-    }
-  }
-
-  // Kandidaten instellingen
-  const playerModeSettings = config.settings.playerMode;
-  if (playerModeSettings) {
-    // Zet playerCount
-    const playerCountSelect = document.getElementById('playerCountSelect');
-    if (playerCountSelect && playerModeSettings.playerCount) {
-      playerCountSelect.value = playerModeSettings.playerCount;
-      playerCountSelect.dispatchEvent(new Event('change'));
-    }
-
-    // Zet questionsPerRound voor solo modus
-    if (playerModeSettings.questionsPerRound) {
-      const questionsPerRoundSelect = document.getElementById('questionsPerRoundSelect');
-      if (questionsPerRoundSelect) {
-        questionsPerRoundSelect.value = playerModeSettings.questionsPerRound;
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            presenterPhotoData = e.target.result;
+            document.getElementById('presenterPhotoStatus').textContent = '✓ Foto geladen: ' + file.name;
+            document.getElementById('presenterPhotoStatus').style.color = '#4ade80';
+          };
+          reader.readAsDataURL(file);
+        });
       }
-    }
 
-    // Vul kandidaten namen en foto's automatisch in
-    if (Array.isArray(playerModeSettings.players)) {
-      for (const [index, player] of playerModeSettings.players.entries()) {
-        if (index >= 3) continue; // Maximum 3 spelers
-        
-        // Vul naam in
-        const nameInput = document.querySelector(`.playerName[data-index="${index}"]`);
-        if (nameInput && player.name) {
-          nameInput.value = player.name;
-          console.log(`✓ Kandidaat ${index}: "${player.name}"`);
-        }
-
-        // Sla foto-path direct op (geen fetch nodig!)
-        if (player.photoUrl) {
-          // Controleer of het een data-URL is (base64)
-          if (player.photoUrl.startsWith('data:')) {
-            storePlayerPhotoData(index, player.photoUrl);
-            console.log(`✓ Kandidaat ${index}: foto van data-URL`);
-          } else {
-            // Pad naar bestand — opslaan zonder fetch
-            storePlayerPhotoData(index, player.photoUrl);
-            console.log(`✓ Kandidaat ${index}: foto-pad vastgezet (${player.photoUrl})`);
-          }
+      // Helper functie om presentator controls te tonen/verbergen
+      function updatePresenterControls() {
+        const presenterControlArea = document.getElementById('presenterControlArea');
+        if (presenterEnabled && presenterPhotoData) {
+          presenterControlArea.style.display = 'flex';
+        } else {
+          presenterControlArea.style.display = 'none';
         }
       }
-    }
-  }
 
-  setTimeout(updatePresenterControls, 0);
-  setTimeout(updateJuryControls, 0);
-  console.log('✅ Config instellingen voltooid');
-}
+      function updateJuryControls() {
+        const juryControlArea = document.getElementById('juryControlArea');
+        if (juryControlArea) {
+          juryControlArea.style.display = juryEnabled ? 'flex' : 'none';
+        }
+      }
 
-// Helper: sla foto-data op voor kandidaat
-function storePlayerPhotoData(index, photoData) {
-  // Dit zal later gebruikt worden wanneer de speler gemaakt wordt
-  if (!window.playerPhotosFromConfig) {
-    window.playerPhotosFromConfig = {};
-  }
-  window.playerPhotosFromConfig[index] = photoData;
-  
-  // Update status display
-  const statusEl = document.querySelector(`.playerPhotoStatus[data-index="${index}"]`);
-  if (statusEl) {
-    const photoDataText = String(photoData);
-    const label = photoDataText.startsWith('data:') ? 'Data URI' : photoDataText.split('/').pop();
-    statusEl.textContent = '✓ Foto via config: ' + label;
-    statusEl.style.color = '#4ade80';
-  }
-}
-
-// Helper: laad foto van pad en sla op (wacht tot FileReader klaar is)
-function loadAndStorePlayerPhoto(index, photoPath) {
-  return new Promise((resolve) => {
-    fetch(photoPath)
-      .then((response) => {
-        if (!response.ok) {
-          console.error(`❌ Kandidaat ${index}: HTTP ${response.status} - ${photoPath}`);
-          resolve();
+      function applyUiSettingsFromConfig(config) {
+        if (!config || !config.settings) {
           return;
         }
-        return response.blob();
-      })
-      .then((blob) => {
-        if (!blob) return;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          storePlayerPhotoData(index, e.target.result);
-          console.log(`✓ Kandidaat ${index}: foto voor config ingeladen`);
-          resolve();
-        };
-        reader.onerror = () => {
-          console.error(`❌ Kandidaat ${index}: FileReader fout`);
-          resolve();
-        };
-        reader.readAsDataURL(blob);
-      })
-      .catch((error) => {
-        console.error(`❌ Kandidaat ${index}: Kon foto niet laden van "${photoPath}":`, error.message);
-        resolve();
-      });
-  });
-}
 
-window.applyUiSettingsFromConfig = applyUiSettingsFromConfig;
-if (window.pendingUiConfig) {
-  applyUiSettingsFromConfig(window.pendingUiConfig);
-}
+        console.log('⚙️ Laden config instellingen...');
 
-// Helper functie om intro controls te tonen/verbergen
-function updateIntroControls() {
-  const introControlArea = document.getElementById('introControlArea');
-  if (introEnabled) {
-    introControlArea.style.display = 'flex';
-  } else {
-    introControlArea.style.display = 'none';
-  }
-}
+        // Presentator instellingen
+        const presenterSettings = config.settings.presenter;
+        if (presenterSettings) {
+          if (presenterCheckbox && presenterSettings.enabled !== undefined) {
+            presenterCheckbox.checked = !!presenterSettings.enabled;
+            presenterCheckbox.dispatchEvent(new Event('change'));
+          }
 
-// Listener om presentator controls te updaten na het maken van een spel
-const applyBtn = document.getElementById('applyBtn');
-if (applyBtn) {
-  applyBtn.addEventListener('click', function() {
-    // Wacht even zodat het spel eerst gemaakt wordt
-    setTimeout(updatePresenterControls, 100);
-    setTimeout(updateIntroControls, 100);
-    setTimeout(updateJuryControls, 100);
-  });
-}
+          const presenterPhotoValue = presenterSettings.photoData || presenterSettings.photoUrl;
+          if (presenterPhotoValue) {
+            presenterPhotoData = presenterPhotoValue;
+            const status = document.getElementById('presenterPhotoStatus');
+            if (status) {
+              const presenterValueText = String(presenterPhotoValue);
+              const label = presenterValueText.startsWith('data:')
+                ? 'Data URI'
+                : presenterValueText.split('/').pop();
+              status.textContent = '✓ Foto vastgezet via config: ' + label;
+              status.style.color = '#4ade80';
+            }
+          }
+        }
 
-const togglePresenterBtn = document.getElementById('togglePresenterView');
-if (togglePresenterBtn) {
-  togglePresenterBtn.addEventListener('click', function() {
-    if (!presenterEnabled || !presenterPhotoData) {
-      alert('Upload eerst een presentatorfoto!');
-      return;
-    }
-    
-    showingPresenter = !showingPresenter;
-    const btn = document.getElementById('togglePresenterView');
-    btn.textContent = showingPresenter ? 'Wissel naar Kandidaten' : 'Wissel naar Presentator';
+        // Jury instellingen
+        const jurySettings = config.settings.jury;
+        if (jurySettings && juryCheckbox && jurySettings.enabled !== undefined) {
+          juryCheckbox.checked = !!jurySettings.enabled;
+          juryCheckbox.dispatchEvent(new Event('change'));
+        }
 
-    if (showingPresenter) {
-      showingJury = false;
-      const juryBtn = document.getElementById('toggleJuryView');
-      if (juryBtn) juryBtn.textContent = 'Wissel naar Jury';
-    }
-    
-    // Stuur WebSocket bericht naar display
-    if (typeof sendDisplayUpdate !== 'undefined') {
-      sendDisplayUpdate({
-        type: 'presenter_toggle',
-        showing: showingPresenter,
-        photoData: presenterPhotoData
-      });
+        // Bumpers instelling
+        const bumpersSettings = config.settings.bumpers;
+        if (bumpersSettings && bumpersSettings.enabled !== undefined) {
+          const bumpersCheckbox = document.getElementById('bumpersEnabledCheckbox');
+          if (bumpersCheckbox) {
+            bumpersCheckbox.checked = !!bumpersSettings.enabled;
+          }
+        }
 
-      if (showingPresenter) {
-        sendDisplayUpdate({
-          type: 'jury_toggle',
-          showing: false
+        // Veilige rondeknoppen
+        const safeRoundNavigationSettings = config.settings.safeRoundNavigation;
+        if (safeRoundNavigationSettings && safeRoundNavigationSettings.enabled !== undefined) {
+          const safeCheckbox = document.getElementById('safeRoundNavigationCheckbox');
+          if (safeCheckbox) {
+            safeCheckbox.checked = !!safeRoundNavigationSettings.enabled;
+            safeCheckbox.dispatchEvent(new Event('change'));
+          }
+        }
+
+        // Intro / Outro instellingen
+        const introSettings = config.settings.intro;
+        if (introSettings) {
+          if (introCheckbox && introSettings.enabled !== undefined) {
+            introCheckbox.checked = !!introSettings.enabled;
+            introCheckbox.dispatchEvent(new Event('change'));
+          }
+
+          if (typeof introSettings.text === 'string') {
+            const introTextInput = document.getElementById('introText');
+            if (introTextInput) {
+              introTextInput.value = introSettings.text;
+            }
+            introText = introSettings.text;
+          }
+        }
+
+        const outroSettings = config.settings.outro;
+        if (outroSettings && outroSettings.enabled !== undefined) {
+          outroEnabled = !!outroSettings.enabled;
+        }
+
+        // Startseconden
+        if (config.settings.game && config.settings.game.startSeconds !== undefined) {
+          const startSecondsInput = document.getElementById('startSeconds');
+          const parsedStartSeconds = parseInt(config.settings.game.startSeconds, 10);
+          if (startSecondsInput && !isNaN(parsedStartSeconds) && parsedStartSeconds >= 10) {
+            startSecondsInput.value = parsedStartSeconds;
+          }
+        }
+
+        // Collectief Geheugen eindinstelling
+        if (config.settings.collectief && config.settings.collectief.endOption) {
+          const collectiefEndSelect = document.getElementById('collectiefEndOption');
+          if (collectiefEndSelect) {
+            collectiefEndSelect.value = config.settings.collectief.endOption;
+            collectiefEndSelect.dispatchEvent(new Event('change'));
+          }
+        }
+
+        // Kandidaten instellingen
+        const playerModeSettings = config.settings.playerMode;
+        if (playerModeSettings) {
+          // Zet playerCount
+          const playerCountSelect = document.getElementById('playerCountSelect');
+          if (playerCountSelect && playerModeSettings.playerCount) {
+            playerCountSelect.value = playerModeSettings.playerCount;
+            playerCountSelect.dispatchEvent(new Event('change'));
+          }
+
+          // Zet questionsPerRound voor solo modus
+          if (playerModeSettings.questionsPerRound) {
+            const questionsPerRoundSelect = document.getElementById('questionsPerRoundSelect');
+            if (questionsPerRoundSelect) {
+              questionsPerRoundSelect.value = playerModeSettings.questionsPerRound;
+            }
+          }
+
+          // Vul kandidaten namen en foto's automatisch in
+          if (Array.isArray(playerModeSettings.players)) {
+            for (const [index, player] of playerModeSettings.players.entries()) {
+              if (index >= 3) continue; // Maximum 3 spelers
+
+              // Vul naam in
+              const nameInput = document.querySelector(`.playerName[data-index="${index}"]`);
+              if (nameInput && player.name) {
+                nameInput.value = player.name;
+                console.log(`✓ Kandidaat ${index}: "${player.name}"`);
+              }
+
+              // Sla foto-path direct op (geen fetch nodig!)
+              if (player.photoUrl) {
+                // Controleer of het een data-URL is (base64)
+                if (player.photoUrl.startsWith('data:')) {
+                  storePlayerPhotoData(index, player.photoUrl);
+                  console.log(`✓ Kandidaat ${index}: foto van data-URL`);
+                } else {
+                  // Pad naar bestand — opslaan zonder fetch
+                  storePlayerPhotoData(index, player.photoUrl);
+                  console.log(`✓ Kandidaat ${index}: foto-pad vastgezet (${player.photoUrl})`);
+                }
+              }
+            }
+          }
+        }
+
+        setTimeout(updatePresenterControls, 0);
+        setTimeout(updateJuryControls, 0);
+        console.log('✅ Config instellingen voltooid');
+      }
+
+      // Helper: sla foto-data op voor kandidaat
+      function storePlayerPhotoData(index, photoData) {
+        // Dit zal later gebruikt worden wanneer de speler gemaakt wordt
+        if (!window.playerPhotosFromConfig) {
+          window.playerPhotosFromConfig = {};
+        }
+        window.playerPhotosFromConfig[index] = photoData;
+
+        // Update status display
+        const statusEl = document.querySelector(`.playerPhotoStatus[data-index="${index}"]`);
+        if (statusEl) {
+          const photoDataText = String(photoData);
+          const label = photoDataText.startsWith('data:') ? 'Data URI' : photoDataText.split('/').pop();
+          statusEl.textContent = '✓ Foto via config: ' + label;
+          statusEl.style.color = '#4ade80';
+        }
+      }
+
+      // Helper: laad foto van pad en sla op (wacht tot FileReader klaar is)
+      function loadAndStorePlayerPhoto(index, photoPath) {
+        return new Promise((resolve) => {
+          fetch(photoPath)
+            .then((response) => {
+              if (!response.ok) {
+                console.error(`❌ Kandidaat ${index}: HTTP ${response.status} - ${photoPath}`);
+                resolve();
+                return;
+              }
+              return response.blob();
+            })
+            .then((blob) => {
+              if (!blob) return;
+              const reader = new FileReader();
+              reader.onload = (e) => {
+                storePlayerPhotoData(index, e.target.result);
+                console.log(`✓ Kandidaat ${index}: foto voor config ingeladen`);
+                resolve();
+              };
+              reader.onerror = () => {
+                console.error(`❌ Kandidaat ${index}: FileReader fout`);
+                resolve();
+              };
+              reader.readAsDataURL(blob);
+            })
+            .catch((error) => {
+              console.error(`❌ Kandidaat ${index}: Kon foto niet laden van "${photoPath}":`, error.message);
+              resolve();
+            });
         });
       }
-    }
-  });
-}
 
-const toggleJuryBtn = document.getElementById('toggleJuryView');
-if (toggleJuryBtn) {
-  toggleJuryBtn.addEventListener('click', function() {
-    if (!juryEnabled) {
-      alert('Zet eerst "Jury tonen" aan.');
-      return;
-    }
+      window.applyUiSettingsFromConfig = applyUiSettingsFromConfig;
+      if (window.pendingUiConfig) {
+        applyUiSettingsFromConfig(window.pendingUiConfig);
+      }
 
-    showingJury = !showingJury;
-    const btn = document.getElementById('toggleJuryView');
-    btn.textContent = showingJury ? 'Wissel naar Kandidaten' : 'Wissel naar Jury';
+      // Helper functie om intro controls te tonen/verbergen
+      function updateIntroControls() {
+        const introControlArea = document.getElementById('introControlArea');
+        if (introEnabled) {
+          introControlArea.style.display = 'flex';
+        } else {
+          introControlArea.style.display = 'none';
+        }
+      }
 
-    if (showingJury) {
-      showingPresenter = false;
-      const presenterBtn = document.getElementById('togglePresenterView');
-      if (presenterBtn) presenterBtn.textContent = 'Wissel naar Presentator';
-    }
-
-    if (typeof sendDisplayUpdate !== 'undefined') {
-      sendDisplayUpdate({
-        type: 'jury_toggle',
-        showing: showingJury
-      });
-
-      if (showingJury) {
-        sendDisplayUpdate({
-          type: 'presenter_toggle',
-          showing: false,
-          photoData: null
+      // Listener om presentator controls te updaten na het maken van een spel
+      const applyBtn = document.getElementById('applyBtn');
+      if (applyBtn) {
+        applyBtn.addEventListener('click', function () {
+          // Wacht even zodat het spel eerst gemaakt wordt
+          setTimeout(updatePresenterControls, 100);
+          setTimeout(updateIntroControls, 100);
+          setTimeout(updateJuryControls, 100);
         });
       }
-    }
-  });
-}
 
-}); // Einde DOMContentLoaded
-</script>
+      const togglePresenterBtn = document.getElementById('togglePresenterView');
+      if (togglePresenterBtn) {
+        togglePresenterBtn.addEventListener('click', function () {
+          if (!presenterEnabled || !presenterPhotoData) {
+            alert('Upload eerst een presentatorfoto!');
+            return;
+          }
+
+          showingPresenter = !showingPresenter;
+          const btn = document.getElementById('togglePresenterView');
+          btn.textContent = showingPresenter ? 'Wissel naar Kandidaten' : 'Wissel naar Presentator';
+
+          if (showingPresenter) {
+            showingJury = false;
+            const juryBtn = document.getElementById('toggleJuryView');
+            if (juryBtn) juryBtn.textContent = 'Wissel naar Jury';
+          }
+
+          // Stuur WebSocket bericht naar display
+          if (typeof sendDisplayUpdate !== 'undefined') {
+            sendDisplayUpdate({
+              type: 'presenter_toggle',
+              showing: showingPresenter,
+              photoData: presenterPhotoData
+            });
+
+            if (showingPresenter) {
+              sendDisplayUpdate({
+                type: 'jury_toggle',
+                showing: false
+              });
+            }
+          }
+        });
+      }
+
+      const toggleJuryBtn = document.getElementById('toggleJuryView');
+      if (toggleJuryBtn) {
+        toggleJuryBtn.addEventListener('click', function () {
+          if (!juryEnabled) {
+            alert('Zet eerst "Jury tonen" aan.');
+            return;
+          }
+
+          showingJury = !showingJury;
+          const btn = document.getElementById('toggleJuryView');
+          btn.textContent = showingJury ? 'Wissel naar Kandidaten' : 'Wissel naar Jury';
+
+          if (showingJury) {
+            showingPresenter = false;
+            const presenterBtn = document.getElementById('togglePresenterView');
+            if (presenterBtn) presenterBtn.textContent = 'Wissel naar Presentator';
+          }
+
+          if (typeof sendDisplayUpdate !== 'undefined') {
+            sendDisplayUpdate({
+              type: 'jury_toggle',
+              showing: showingJury
+            });
+
+            if (showingJury) {
+              sendDisplayUpdate({
+                type: 'presenter_toggle',
+                showing: false,
+                photoData: null
+              });
+            }
+          }
+        });
+      }
+
+    }); // Einde DOMContentLoaded
+  </script>
 </body>
+
 </html>
