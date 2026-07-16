@@ -619,14 +619,12 @@
 
     const doeDescriptionField = createTextField('Omschrijving (voor type doe)', data.description || '');
     const estimationAnswerField = createTextField('Schatting correct antwoord', data.correctAnswer || '');
-    const estimationUnitField = createTextField('Schatting eenheid', data.unit || '');
     doeDescriptionField.input.classList.add('field-369-doe-description');
     estimationAnswerField.input.classList.add('field-369-estimation-answer');
-    estimationUnitField.input.classList.add('field-369-estimation-unit');
 
     const advancedWrapper = document.createElement('div');
     advancedWrapper.className = 'compact-grid';
-    advancedWrapper.append(doeDescriptionField.label, estimationAnswerField.label, estimationUnitField.label);
+    advancedWrapper.append(doeDescriptionField.label, estimationAnswerField.label);
 
     function updateMediaVisibility() {
       const showMedia = mediaToggle.checked;
@@ -639,7 +637,6 @@
       mcWrapper.style.display = type === 'multiple-choice' ? 'grid' : 'none';
       doeDescriptionField.label.style.display = type === 'doe' ? 'grid' : 'none';
       estimationAnswerField.label.style.display = type === 'estimation' ? 'grid' : 'none';
-      estimationUnitField.label.style.display = type === 'estimation' ? 'grid' : 'none';
 
       answersField.label.style.display = type === 'classic' ? 'grid' : 'none';
 
@@ -942,7 +939,6 @@
 
       const doeDescription = item.querySelector('.field-369-doe-description')?.value?.trim();
       const estimationAnswer = item.querySelector('.field-369-estimation-answer')?.value?.trim();
-      const estimationUnit = item.querySelector('.field-369-estimation-unit')?.value?.trim();
 
       if (type === 'doe' && doeDescription) {
         q.description = doeDescription;
@@ -951,9 +947,6 @@
       if (type === 'estimation') {
         if (estimationAnswer) {
           q.correctAnswer = estimationAnswer;
-        }
-        if (estimationUnit) {
-          q.unit = estimationUnit;
         }
       }
 
