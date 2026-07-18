@@ -58,6 +58,11 @@
       .filter(Boolean);
   }
 
+  function getOptionalRemark(data = {}) {
+    const remark = data.remarks || data.opmerking || data.comment || data.note || '';
+    return String(remark || '').trim();
+  }
+
   function stringifyAnswers(answers) {
     if (!Array.isArray(answers)) {
       return '';
@@ -126,6 +131,9 @@
     const answerField = createTextField('Antwoord', imageData.answer || '');
     answerField.input.classList.add('field-galerij-answer');
 
+    const remarksField = createTextAreaField('Opmerking (optioneel)', getOptionalRemark(imageData));
+    remarksField.textarea.classList.add('field-galerij-remarks');
+
     const mediaField = createMediaInput(
       'Afbeelding pad',
       imageData.src || '',
@@ -140,14 +148,15 @@
     );
     mediaField.pathInput.classList.add('field-galerij-src');
 
-    imageItem.append(title, answerField.label, mediaField.wrapper);
+    imageItem.append(title, answerField.label, mediaField.wrapper, remarksField.label);
     return imageItem;
   }
 
   function getGalleryImageValues(themeItem) {
     return Array.from(themeItem.querySelectorAll(':scope .list > .item')).map((imageItem) => ({
       answer: imageItem.querySelector('.field-galerij-answer')?.value?.trim() || '',
-      src: imageItem.querySelector('.field-galerij-src')?.value?.trim() || ''
+      src: imageItem.querySelector('.field-galerij-src')?.value?.trim() || '',
+      remarks: imageItem.querySelector('.field-galerij-remarks')?.value?.trim() || ''
     }));
   }
 
@@ -336,8 +345,46 @@
       }
     });
 
+    const actions = document.createElement('div');
+    actions.className = 'item-actions';
+
+    if (indexed) {
+      const moveUpBtn = document.createElement('button');
+      moveUpBtn.className = 'secondary';
+      moveUpBtn.type = 'button';
+      moveUpBtn.textContent = 'Omhoog';
+      moveUpBtn.addEventListener('click', () => {
+        const previous = item.previousElementSibling;
+        if (!previous) {
+          return;
+        }
+
+        list.insertBefore(item, previous);
+        renumberItemShells(list);
+      });
+
+      const moveDownBtn = document.createElement('button');
+      moveDownBtn.className = 'secondary';
+      moveDownBtn.type = 'button';
+      moveDownBtn.textContent = 'Omlaag';
+      moveDownBtn.addEventListener('click', () => {
+        const next = item.nextElementSibling;
+        if (!next) {
+          return;
+        }
+
+        list.insertBefore(next, item);
+        renumberItemShells(list);
+      });
+
+      actions.appendChild(moveUpBtn);
+      actions.appendChild(moveDownBtn);
+    }
+
+    actions.appendChild(removeBtn);
+
     title.appendChild(strong);
-    title.appendChild(removeBtn);
+    title.appendChild(actions);
 
     if (indexed) {
       item.dataset.titleBase = titleText;
@@ -500,8 +547,67 @@
     const typeHelp = document.createElement('p');
     typeHelp.className = 'helper type-help field-369-type-help';
 
-    const answersField = createTextAreaField('Antwoorden (1 per regel)', stringifyAnswers(data.answers), 'bijv. Parijs');
-    answersField.textarea.classList.add('field-369-answers');
+    const answerValues = Array.isArray(data.answers) && data.answers.length > 0
+      ? data.answers.map((answer) => String(answer || '').trim()).filter(Boolean)
+      : [''];
+
+    const classicAnswersWrapper = document.createElement('div');
+    classicAnswersWrapper.className = 'list field-369-classic-answers';
+
+    const classicAnswersList = document.createElement('div');
+    classicAnswersList.className = 'list field-369-answers-list';
+
+    function renumberClassicAnswerFields() {
+      classicAnswersList.querySelectorAll(':scope > .field-369-answer-row').forEach((row, index) => {
+        const labelNode = row.querySelector('label');
+        const removeBtn = row.querySelector('.field-369-answer-remove');
+
+        if (labelNode && labelNode.firstChild) {
+          labelNode.firstChild.textContent = `Antwoord ${index + 1}`;
+        }
+
+        if (removeBtn) {
+          removeBtn.disabled = classicAnswersList.children.length <= 1;
+        }
+      });
+    }
+
+    function addClassicAnswerField(defaultValue = '') {
+      const row = document.createElement('div');
+      row.className = 'field-369-answer-row';
+
+      const answerField = createTextField('Antwoord', defaultValue, 'bijv. Parijs');
+      answerField.input.classList.add('field-369-answer');
+
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'secondary field-369-answer-remove';
+      removeBtn.textContent = 'Verwijder';
+      removeBtn.addEventListener('click', () => {
+        if (classicAnswersList.children.length <= 1) {
+          return;
+        }
+
+        row.remove();
+        renumberClassicAnswerFields();
+      });
+
+      row.append(answerField.label, removeBtn);
+      classicAnswersList.appendChild(row);
+      renumberClassicAnswerFields();
+    }
+
+    answerValues.forEach((value) => addClassicAnswerField(value));
+
+    const addAlternativeAnswerBtn = document.createElement('button');
+    addAlternativeAnswerBtn.type = 'button';
+    addAlternativeAnswerBtn.className = 'secondary';
+    addAlternativeAnswerBtn.textContent = '+ Alternatief antwoord';
+    addAlternativeAnswerBtn.addEventListener('click', () => {
+      addClassicAnswerField('');
+    });
+
+    classicAnswersWrapper.append(classicAnswersList, addAlternativeAnswerBtn);
 
     const mcWrapper = document.createElement('div');
     mcWrapper.className = 'compact-grid';
@@ -617,14 +723,15 @@
     afterMediaGroup.className = 'compact-grid';
     afterMediaGroup.append(afterPhotoField.wrapper, afterAudioField.wrapper, afterVideoField.wrapper);
 
-    const doeDescriptionField = createTextField('Omschrijving (voor type doe)', data.description || '');
     const estimationAnswerField = createTextField('Schatting correct antwoord', data.correctAnswer || '');
-    doeDescriptionField.input.classList.add('field-369-doe-description');
     estimationAnswerField.input.classList.add('field-369-estimation-answer');
 
-    const advancedWrapper = document.createElement('div');
-    advancedWrapper.className = 'compact-grid';
-    advancedWrapper.append(doeDescriptionField.label, estimationAnswerField.label);
+    const estimationWrapper = document.createElement('div');
+    estimationWrapper.className = 'list';
+    estimationWrapper.append(estimationAnswerField.label);
+
+    const remarksField = createTextAreaField('Opmerking (optioneel)', getOptionalRemark(data));
+    remarksField.textarea.classList.add('field-369-remarks');
 
     function updateMediaVisibility() {
       const showMedia = mediaToggle.checked;
@@ -635,15 +742,14 @@
     function updateByType() {
       const type = typeSelect.value;
       mcWrapper.style.display = type === 'multiple-choice' ? 'grid' : 'none';
-      doeDescriptionField.label.style.display = type === 'doe' ? 'grid' : 'none';
-      estimationAnswerField.label.style.display = type === 'estimation' ? 'grid' : 'none';
+      estimationWrapper.style.display = type === 'estimation' ? 'grid' : 'none';
 
-      answersField.label.style.display = type === 'classic' ? 'grid' : 'none';
+      classicAnswersWrapper.style.display = type === 'classic' ? 'grid' : 'none';
 
       const typeDescriptions = {
         classic: 'classic: standaard open vraag.',
         'multiple-choice': 'multiple-choice: gesloten vraag met vier opties (ABCD). Optioneel met foto/audio/video.',
-        doe: 'doe: Een doevraag, de kandidaten krijgen een opdracht en er wordt bepaald wie de opdracht het beste heeft uitgevoerd (bijvoorbeeld door een jury of chat).',
+        doe: 'doe: Een doevraag, de kandidaten krijgen een opdracht en de presentator / jury / chat bepaald wie de opdracht het beste heeft uitgevoerd.',
         estimation: 'estimation: Schattingsvraag, de kandidaat die het dichtste bij het juiste antwoord zit wint de vraag.'
       };
       typeHelp.textContent = typeDescriptions[type] || '';
@@ -658,11 +764,12 @@
       mediaToggleLabel,
       typeLabel,
       typeHelp,
-      answersField.label,
+      classicAnswersWrapper,
       mcWrapper,
       questionMediaGroup,
       afterMediaGroup,
-      advancedWrapper
+      estimationWrapper,
+      remarksField.label
     );
     updateByType();
   }
@@ -672,29 +779,32 @@
 
     const fromField = createTextField('Van (vragensteller)', data.from || data.questioner || '');
     const questionField = createTextField('Vraag', data.question || data.text || '');
+    const remarksField = createTextAreaField('Opmerking (optioneel)', getOptionalRemark(data));
     const answersField = createFixedAnswerGroup('Antwoord', 4, Array.isArray(data.answers) ? data.answers : splitAnswers(data.answers), 'field-open-answer');
     const mediaField = createMediaInput(
-      'Intro video pad',
+      'Vragensteller introvideo',
       data.introVideoUrl || data.videoUrl || data.video || '',
       'media/opendeur',
       {
-        placeholder: 'opendeur/intro-video',
-        helperText: 'Optioneel voor Open Deur: gebruik een video per vraagsteller (waarin bijvoorbeeld de vraagsteller een vraag stelt).',
+        placeholder: 'Vragensteller introvideo',
+        helperText: 'Optioneel voor Open Deur: gebruik een intro-video voor de vraagsteller en de vraag (waarin bijvoorbeeld de vraag door iemand gesteld wordt).',
         uploadAccept: 'video/*',
         uploadTitle: 'Kies een video'
       }
     );
     fromField.input.classList.add('field-open-from');
     questionField.input.classList.add('field-open-question');
+    remarksField.textarea.classList.add('field-open-remarks');
     mediaField.pathInput.classList.add('field-open-video');
 
-    item.append(fromField.label, questionField.label, answersField, mediaField.wrapper);
+    item.append(fromField.label, questionField.label, answersField, mediaField.wrapper, remarksField.label);
   }
 
   function addPuzzelItem(data = {}) {
-    const item = createItemShell(puzzelList, 'Puzzel', { indexed: true });
+    const item = createItemShell(puzzelList, 'Puzzel-link', { indexed: true });
 
     const linkField = createTextField('Antwoord', data.link || '');
+    const remarksField = createTextAreaField('Opmerking (optioneel)', getOptionalRemark(data));
     const answersField = createFixedAnswerGroup(
       'Puzzelwoord',
       4,
@@ -702,8 +812,9 @@
       'field-puzzel-answer'
     );
     linkField.input.classList.add('field-puzzel-link');
+    remarksField.textarea.classList.add('field-puzzel-remarks');
 
-    item.append(linkField.label, answersField);
+    item.append(linkField.label, answersField, remarksField.label);
   }
 
   function addGalerijTheme(data = {}) {
@@ -723,6 +834,7 @@
     const item = createItemShell(collectiefList, 'Collectief Geheugen vraag', { indexed: true });
 
     const answersField = createFixedAnswerGroup('Antwoord', 5, Array.isArray(data.answers) ? data.answers : splitAnswers(data.answers), 'field-collectief-answer');
+    const remarksField = createTextAreaField('Opmerking (optioneel)', getOptionalRemark(data));
     const mediaField = createMediaInput(
       'Video pad',
       data.video || data.videoUrl || data.clip || '',
@@ -735,19 +847,22 @@
         uploadTitle: 'Kies een collectief-videofragment'
       }
     );
+    remarksField.textarea.classList.add('field-collectief-remarks');
     mediaField.pathInput.classList.add('field-collectief-video');
 
-    item.append(answersField, mediaField.wrapper);
+    item.append(answersField, mediaField.wrapper, remarksField.label);
   }
 
   function addFinaleItem(data = {}) {
     const item = createItemShell(finaleList, 'Finale vraag', { indexed: true });
 
     const questionField = createTextField('Vraag', data.question || data.text || '');
+    const remarksField = createTextAreaField('Opmerking (optioneel)', getOptionalRemark(data));
     const answersField = createFixedAnswerGroup('Antwoord', 5, Array.isArray(data.answers) ? data.answers : splitAnswers(data.answers), 'field-finale-answer');
     questionField.input.classList.add('field-finale-question');
+    remarksField.textarea.classList.add('field-finale-remarks');
 
-    item.append(questionField.label, answersField);
+    item.append(questionField.label, answersField, remarksField.label);
   }
 
   function addPrefillPlayerItem(index, data = {}) {
@@ -836,7 +951,8 @@
       },
       collectief: {
         shuffle: !!document.getElementById('shuffleCollectief').checked,
-        endOption: document.getElementById('settingCollectiefEndOption')?.value || 'lowestOut'
+        endOption: document.getElementById('settingCollectiefEndOption')?.value || 'lowestOut',
+        manualAssignment: !!document.getElementById('manualAssignmentCollectief')?.checked
       },
       finale: {
         shuffle: !!document.getElementById('shuffleFinale').checked
@@ -902,6 +1018,7 @@
       }
 
       const q = { text: question, type };
+      const remarks = item.querySelector('.field-369-remarks')?.value?.trim();
 
       if (type === 'multiple-choice') {
         const options = {
@@ -915,7 +1032,9 @@
       }
 
       if (type === 'classic') {
-        q.answers = splitAnswers(item.querySelector('.field-369-answers')?.value || '');
+        q.answers = Array.from(item.querySelectorAll('.field-369-answer'))
+          .map((input) => input.value.trim())
+          .filter(Boolean);
       }
 
       const questionPhotoPath = item.querySelector('.field-369-question-photo')?.value?.trim() || '';
@@ -937,17 +1056,16 @@
       if (q.questionAudioUrl) q.audioUrl = q.questionAudioUrl;
       if (q.questionVideoUrl) q.videoUrl = q.questionVideoUrl;
 
-      const doeDescription = item.querySelector('.field-369-doe-description')?.value?.trim();
       const estimationAnswer = item.querySelector('.field-369-estimation-answer')?.value?.trim();
-
-      if (type === 'doe' && doeDescription) {
-        q.description = doeDescription;
-      }
 
       if (type === 'estimation') {
         if (estimationAnswer) {
           q.correctAnswer = estimationAnswer;
         }
+      }
+
+      if (remarks) {
+        q.remarks = remarks;
       }
 
       items.push(q);
@@ -963,6 +1081,7 @@
       const question = item.querySelector('.field-open-question')?.value?.trim() || '';
       const answerValues = getFixedAnswerValues(item, 'field-open-answer', 4);
       const introVideo = item.querySelector('.field-open-video')?.value?.trim() || '';
+      const remarks = item.querySelector('.field-open-remarks')?.value?.trim() || '';
 
       if (!from && !question && !introVideo && !hasAnyValue(answerValues)) {
         return;
@@ -982,6 +1101,10 @@
         entry.introVideoUrl = normalizePath(introVideo);
       }
 
+      if (remarks) {
+        entry.remarks = remarks;
+      }
+
       items.push(entry);
     });
 
@@ -993,6 +1116,7 @@
     puzzelList.querySelectorAll('.item').forEach((item, index) => {
       const link = item.querySelector('.field-puzzel-link')?.value?.trim() || '';
       const answerValues = getFixedAnswerValues(item, 'field-puzzel-answer', 4);
+      const remarks = item.querySelector('.field-puzzel-remarks')?.value?.trim() || '';
 
       if (!link && !hasAnyValue(answerValues)) {
         return;
@@ -1003,7 +1127,11 @@
       }
 
       const answers = readFixedAnswers(item, 'field-puzzel-answer', 4, `Puzzel ${index + 1}`);
-      items.push({ link, answers });
+      const entry = { link, answers };
+      if (remarks) {
+        entry.remarks = remarks;
+      }
+      items.push(entry);
     });
 
     return items;
@@ -1025,6 +1153,7 @@
       imageItems.forEach((imgItem, imageIndex) => {
         const answer = imgItem.querySelector('.field-galerij-answer')?.value?.trim() || '';
         const src = imgItem.querySelector('.field-galerij-src')?.value?.trim() || '';
+        const remarks = imgItem.querySelector('.field-galerij-remarks')?.value?.trim() || '';
 
         if (!answer && !src) {
           return;
@@ -1034,10 +1163,16 @@
           throw new Error(`Galerij \"${theme || `#${themeIndex + 1}`}\" foto ${imageIndex + 1}: afbeelding-pad is verplicht.`);
         }
 
-        images.push({
+        const imageEntry = {
           src: normalizePath(src),
           answer: answer || 'Onbekend'
-        });
+        };
+
+        if (remarks) {
+          imageEntry.remarks = remarks;
+        }
+
+        images.push(imageEntry);
       });
 
       if (images.length > 0) {
@@ -1053,6 +1188,7 @@
     collectiefList.querySelectorAll('.item').forEach((item, index) => {
       const video = item.querySelector('.field-collectief-video')?.value?.trim() || '';
       const answerValues = getFixedAnswerValues(item, 'field-collectief-answer', 5);
+      const remarks = item.querySelector('.field-collectief-remarks')?.value?.trim() || '';
 
       if (!video && !hasAnyValue(answerValues)) {
         return;
@@ -1069,6 +1205,10 @@
         answers
       };
 
+      if (remarks) {
+        entry.remarks = remarks;
+      }
+
       items.push(entry);
     });
 
@@ -1079,14 +1219,21 @@
     const items = [];
     finaleList.querySelectorAll('.item').forEach((item) => {
       const question = item.querySelector('.field-finale-question')?.value?.trim() || '';
+      const remarks = item.querySelector('.field-finale-remarks')?.value?.trim() || '';
       if (!question) {
         return;
       }
 
-      items.push({
+      const entry = {
         question,
         answers: readFixedAnswers(item, 'field-finale-answer', 5, 'Finale')
-      });
+      };
+
+      if (remarks) {
+        entry.remarks = remarks;
+      }
+
+      items.push(entry);
     });
 
     return items;
@@ -1202,6 +1349,7 @@
       photoCountInput.value = config?.settings?.galerij?.photoCount || 10;
     }
     setCheckboxValue('manualAssignmentGalerij', !!config?.settings?.galerij?.manualAssignment);
+    setCheckboxValue('manualAssignmentCollectief', !!config?.settings?.collectief?.manualAssignment);
 
     const importedPlayerMode = config?.settings?.playerMode || {};
     const importedPlayers = Array.isArray(importedPlayerMode.players) ? importedPlayerMode.players : [];

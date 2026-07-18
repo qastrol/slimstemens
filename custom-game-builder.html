@@ -58,12 +58,12 @@
             </label>
             <label>Aantal startseconden per kandidaat
               <input id="settingStartSeconds" type="number" min="10" value="60" />
+            </label><br></br>
+            <label class="checkbox-label-align">
+              <input id="settingSafeRoundNavigation" type="checkbox" /> Veilige rondeknoppen (volgende ronde kan pas gestart worden aan het eind van de vorige ronde)
             </label>
             <label class="checkbox-label-align">
-              <input id="settingSafeRoundNavigation" type="checkbox" /> Veilige rondeknoppen
-            </label>
-            <label class="checkbox-label-align">
-              <input id="settingBumpersEnabled" type="checkbox" checked /> Rondebumpers tonen
+              <input id="settingBumpersEnabled" type="checkbox" checked /> Ronde-intro's / bumpers tonen
             </label>
           </div>
         </div>
@@ -95,10 +95,13 @@
             </label>
             <label>Aantal foto's per galerij
               <input id="photoCountGalerij" type="number" min="1" value="10" />
-            </label>
+            </label><br>
             <label class="checkbox-label-align">
               <input id="manualAssignmentGalerij" type="checkbox" /> Handmatig galerij-thema toewijzen aan kandidaat
             </label>
+            <label class="checkbox-label-align">
+              <input id="manualAssignmentCollectief" type="checkbox" /> Handmatig Collectief Geheugen-fragment toewijzen aan kandidaat
+            </label><br>
             <label>Collectief Geheugen einde-gedrag
               <select id="settingCollectiefEndOption">
                 <option value="lowestOut" selected>Kandidaat met laagste score valt af, overige kandidaten gaan naar finale</option>
@@ -187,6 +190,7 @@
       <section class="card">
         <div class="card-header">
           <h2>Open Deur</h2>
+          <p class="block-description">De ronde Open Deur bestaat uit drie vragen (één voor elke kandidaat), waarbij de vraag door een vragensteller wordt gesteld. Elke vraag heeft vier antwoorden</p>
           <button class="secondary" id="addOpenDeurBtn" type="button">+ Vraag</button>
         </div>
         <div id="openDeurList" class="list"></div>
@@ -195,6 +199,9 @@
       <section class="card">
         <div class="card-header">
           <h2>Puzzel</h2>
+          <div>
+          <p class="block-description">De ronde Puzzel bestaat uit drie puzzels (één voor elke kandidaat), die eruit zien als een tabel met 12 woorden, in een vlak van 3x4. De kandidaten moeten de rode draad vinden tussen vier woorden om één antwoord te vinden. Elke puzzel bestaat uit drie puzzel-links.</p>
+          </div>
           <button class="secondary" id="addPuzzelBtn" type="button">+ Link</button>
         </div>
         <div id="puzzelList" class="list"></div>
@@ -203,6 +210,7 @@
       <section class="card">
         <div class="card-header">
           <h2>Galerij</h2>
+          <p class="block-description">De ronde Puzzel bestaat uit drie galerijen, één voor elke kandidaat, die standaard uit 10 afbeeldingen bestaat. De afbeeldingen hebben één gedeeld thema.</p>
           <button class="secondary" id="addGalerijBtn" type="button">+ Thema</button>
         </div>
         <div id="galerijList" class="list"></div>
@@ -211,6 +219,7 @@
       <section class="card">
         <div class="card-header">
           <h2>Collectief Geheugen</h2>
+          <p class="block-description">De ronde Puzzel bestaat uit drie video's, één voor elke kandidaat. De vraag is telkens "Wat weet je over deze video?", waarop vijf antwoorden zijn.</p>
           <button class="secondary" id="addCollectiefBtn" type="button">+ Fragment</button>
         </div>
         <div id="collectiefList" class="list"></div>

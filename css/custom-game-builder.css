@@ -210,6 +210,13 @@ button.remove {
   margin-bottom: 8px;
 }
 
+.item-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .item-title strong {
   font-size: 0.94rem;
 }
@@ -218,6 +225,13 @@ button.remove {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
+}
+
+.field-369-answer-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: end;
 }
 
 .media-row {
@@ -259,7 +273,8 @@ button.remove {
   .grid.two,
   .grid.three,
   .compact-grid,
-  .media-row {
+  .media-row,
+  .field-369-answer-row {
     grid-template-columns: 1fr;
   }
 

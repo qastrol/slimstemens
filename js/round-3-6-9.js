@@ -468,7 +468,11 @@ function toggleThreeSixNinePhoto(phase = 'question') {
   if (!media.photoUrl) return;
 
   const visibilityKey = phase === 'after' ? 'mediaAfterPhotoVisible' : 'mediaQuestionPhotoVisible';
-  perRoundState[visibilityKey] = !perRoundState[visibilityKey];
+  const otherVisibilityKey = phase === 'after' ? 'mediaQuestionPhotoVisible' : 'mediaAfterPhotoVisible';
+  const nextVisibleState = !perRoundState[visibilityKey];
+
+  perRoundState[visibilityKey] = nextVisibleState;
+  perRoundState[otherVisibilityKey] = false;
     
     const activePlayerName = players[activePlayerIndex]?.name || '-';
     

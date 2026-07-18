@@ -87,6 +87,37 @@ function normalizeZipPath(path) {
     .replace(/^\/+/, '');
 }
 
+function pickFirstNonEmptyString(...values) {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+  }
+  return '';
+}
+
+function normalizeAnswerList(value) {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => String(item || '').trim())
+      .filter(Boolean);
+  }
+
+  if (typeof value === 'string') {
+    return value
+      .split(/\r?\n|,|;/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
+function normalizeRemarksValue(...values) {
+  const remark = pickFirstNonEmptyString(...values);
+  return remark || undefined;
+}
+
 function guessMimeType(filePath) {
   const normalized = normalizeZipPath(filePath).toLowerCase();
 
@@ -704,8 +735,9 @@ function getQuestionsForRound(roundKey, defaultQuestions = []) {
         return {
           ...q,
           text: q.text || q.question || 'Placeholdervraag',
-          answers: Array.isArray(q.answers) ? q.answers : [],
+          answers: normalizeAnswerList(q.answers),
           type: normalizedType || 'classic',
+          remarks: normalizeRemarksValue(q.remarks, q.opmerking, q.comment, q.note),
           questionPhotoUrl: q.questionPhotoUrl || q.photoUrl || undefined,
           questionAudioUrl: q.questionAudioUrl || q.audioUrl || undefined,
           questionVideoUrl: q.questionVideoUrl || q.videoUrl || q.clip || undefined,
@@ -743,8 +775,18 @@ function getQuestionsForRound(roundKey, defaultQuestions = []) {
         ...q,
         from: q.from || q.questioner || q.vragensteller || `Vragensteller ${index + 1}`,
         question: q.question || q.text || 'Open Deur vraag',
-        answers: Array.isArray(q.answers) ? q.answers : [],
-        introVideoUrl: q.introVideoUrl || q.videoUrl || q.introVideo || q.video || null
+        answers: normalizeAnswerList(q.answers),
+        introVideoUrl: q.introVideoUrl || q.videoUrl || q.introVideo || q.video || null,
+        remarks: normalizeRemarksValue(q.remarks, q.opmerking, q.comment, q.note)
+      }));
+    }
+
+    if (roundKey === 'puzzel') {
+      normalizedQuestions = configQuestions.map((q, index) => ({
+        ...q,
+        link: pickFirstNonEmptyString(q.link, q.answer, q.question, q.text) || `Puzzel ${index + 1}`,
+        answers: normalizeAnswerList(q.answers),
+        remarks: normalizeRemarksValue(q.remarks, q.opmerking, q.comment, q.note)
       }));
     }
     
@@ -763,12 +805,30 @@ function getQuestionsForRound(roundKey, defaultQuestions = []) {
           images: gallery.images.map(img => ({
             src: img.src,
             answer: img.answer,
-            remarks: img.remarks || undefined
+            remarks: normalizeRemarksValue(img.remarks, img.opmerking, img.comment, img.note)
           }))
         };
       }).filter(g => g !== null); // Verwijder ongeldige galerijen
       
       console.log(`✅ Galerij genormaliseerd: ${normalizedQuestions.length} galerijen met images`);
+    }
+
+    if (roundKey === 'collectief') {
+      normalizedQuestions = configQuestions.map((q) => ({
+        ...q,
+        video: pickFirstNonEmptyString(q.video, q.videoUrl, q.clip),
+        answers: normalizeAnswerList(q.answers),
+        remarks: normalizeRemarksValue(q.remarks, q.opmerking, q.comment, q.note)
+      }));
+    }
+
+    if (roundKey === 'finale') {
+      normalizedQuestions = configQuestions.map((q) => ({
+        ...q,
+        question: pickFirstNonEmptyString(q.question, q.text),
+        answers: normalizeAnswerList(q.answers),
+        remarks: normalizeRemarksValue(q.remarks, q.opmerking, q.comment, q.note)
+      })).filter((q) => q.question);
     }
     
     // Bepaal minimaal benodigde vragen per ronde (geen limiet voor finale)

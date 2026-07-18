@@ -828,6 +828,20 @@ function renderThreeSixNine(data){
         return;
       }
     
+    if (data.action === 'togglePhoto' && data.photoUrl) {
+      const photoContainer = document.getElementById('threeSixNinePhotoContainer');
+      if (photoContainer) {
+        if (data.photoVisible) {
+          photoContainer.innerHTML = `<img src="${data.photoUrl}" alt="Vraagfoto" />`;
+          photoContainer.style.display = 'block';
+        } else {
+          photoContainer.style.display = 'none';
+          photoContainer.innerHTML = '';
+        }
+      }
+      return;
+    }
+
     const roundStatusEl = document.getElementById('roundStatus');
     const roundQuestionEl = document.getElementById('roundQuestion');
     const questionNumbersContainer = document.getElementById('questionNumbersContainer');
@@ -924,18 +938,6 @@ function renderThreeSixNine(data){
     
     renderMiniLobby(data.players, 'miniLobbyPlayers');
     
-    // Toggle photo action - toon foto in linkerbovenvlak
-    if (data.action === 'togglePhoto' && data.photoUrl) {
-        const photoContainer = document.getElementById('threeSixNinePhotoContainer');
-        
-        if (data.photoVisible) {
-            photoContainer.innerHTML = `<img src="${data.photoUrl}" alt="Vraagfoto" />`;
-            photoContainer.style.display = 'block';
-        } else {
-            photoContainer.style.display = 'none';
-            photoContainer.innerHTML = '';
-        }
-    }
 }
 
 function normalizeActiveIndex(playersData, activeIndex) {

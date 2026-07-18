@@ -5,6 +5,126 @@ let collectiefEndOption = 'lowestOut';
 
 
 let collectiefTimerRunning = false;
+let collectiefManualAssignmentEnabled = false;
+let collectiefAvailableQuestions = [];
+let collectiefAssignedQuestionsByTurn = {};
+
+function getCollectiefFragmentLabel(question, fallbackIndex = 0) {
+    if (!question || typeof question !== 'object') {
+        return `Fragment ${fallbackIndex + 1}`;
+    }
+
+    if (typeof question.title === 'string' && question.title.trim()) {
+        return question.title.trim();
+    }
+
+    if (typeof question.label === 'string' && question.label.trim()) {
+        return question.label.trim();
+    }
+
+    const videoPath = (question.video || question.videoUrl || question.clip || '').toString();
+    if (videoPath.trim()) {
+        const fileName = videoPath.split('/').pop() || videoPath;
+        return fileName;
+    }
+
+    return `Fragment ${fallbackIndex + 1}`;
+}
+
+function isManualCollectiefAssignmentEnabled(questionsToUse) {
+    const hasCustomCollectief = typeof gameConfig !== 'undefined' && Array.isArray(gameConfig?.collectief) && gameConfig.collectief.length > 0;
+    const manualEnabled = typeof getRoundSetting === 'function'
+        ? getRoundSetting('collectief', 'manualAssignment', false) === true
+        : false;
+    const hasQuestions = Array.isArray(questionsToUse) && questionsToUse.length > 0;
+
+    return manualEnabled && hasCustomCollectief && hasQuestions;
+}
+
+function buildCollectiefSelectOptions() {
+    if (!collectiefAvailableQuestions.length) {
+        return '<option value="">Geen fragmenten beschikbaar</option>';
+    }
+
+    return collectiefAvailableQuestions.map((question, index) => {
+        const label = getCollectiefFragmentLabel(question, index);
+        return `<option value="${index}">${label}</option>`;
+    }).join('');
+}
+
+function assignCollectiefQuestionForTurn(turnIndex) {
+    const select = document.getElementById('collectief-select');
+    if (!select) return null;
+
+    const selectedIndex = parseInt(select.value, 10);
+    if (Number.isNaN(selectedIndex)) return null;
+
+    const selectedQuestion = collectiefAvailableQuestions[selectedIndex];
+    if (!selectedQuestion) return null;
+
+    collectiefAssignedQuestionsByTurn[turnIndex] = selectedQuestion;
+    collectiefAvailableQuestions.splice(selectedIndex, 1);
+
+    return selectedQuestion;
+}
+
+function renderCollectiefAssignmentControls(playerIndex, turnIndex) {
+    if (!collectiefManualAssignmentEnabled) return '';
+
+    const playerName = players[playerIndex] ? players[playerIndex].name : 'kandidaat';
+    const alreadyAssigned = collectiefAssignedQuestionsByTurn[turnIndex];
+
+    if (alreadyAssigned) {
+        return `
+            <div style="margin-top:8px;">
+                <div class="small muted">Geselecteerd fragment voor ${playerName}: <strong>${getCollectiefFragmentLabel(alreadyAssigned, turnIndex)}</strong></div>
+            </div>
+        `;
+    }
+
+    const selectOptions = buildCollectiefSelectOptions();
+    const disabled = collectiefAvailableQuestions.length === 0 ? 'disabled' : '';
+
+    return `
+        <div style="margin-top:8px;">
+            <div class="small muted">Kies Collectief Geheugen-fragment voor ${playerName}</div>
+            <select id="collectief-select" ${disabled}>
+                ${selectOptions}
+            </select>
+        </div>
+    `;
+}
+
+function ensureCollectiefQuestionForCurrentTurn() {
+    if (!collectiefManualAssignmentEnabled) {
+        return true;
+    }
+
+    const qIndex = perRoundState.collectief.currentQuestionIndex;
+    if (perRoundState.collectief.questions[qIndex]) {
+        return true;
+    }
+
+    const turnIndex = perRoundState.collectief.currentStarterTurn || 0;
+    let selectedQuestion = collectiefAssignedQuestionsByTurn[turnIndex] || null;
+
+    if (!selectedQuestion) {
+        selectedQuestion = assignCollectiefQuestionForTurn(turnIndex);
+    }
+
+    if (!selectedQuestion) {
+        flash('Kies eerst een Collectief Geheugen-fragment voor deze kandidaat.', 'error');
+        return false;
+    }
+
+    perRoundState.collectief.questions[qIndex] = {
+        ...selectedQuestion,
+        foundAnswers: [],
+        playersWhoAnswered: []
+    };
+
+    return true;
+}
 
 
 function startLoopTimer() {
@@ -74,14 +194,28 @@ function setupCollectiefRound() {
     
     // Check of shuffle aan of uit staat
     const shouldShuffle = shouldShuffleRound('collectief');
-    const orderedQuestions = shouldShuffle
+    const questionPool = shouldShuffle
         ? (typeof shuffleArrayShared === 'function' ? shuffleArrayShared(questionsToUse) : questionsToUse.slice())
         : questionsToUse.slice();
-    perRoundState.collectief.questions = orderedQuestions.slice(0, questionsCount).map(q => ({
-        ...q,
-        foundAnswers: [],        
-        playersWhoAnswered: []   
-    }));
+
+    collectiefManualAssignmentEnabled = isManualCollectiefAssignmentEnabled(questionsToUse);
+    collectiefAssignedQuestionsByTurn = {};
+
+    if (collectiefManualAssignmentEnabled) {
+        collectiefAvailableQuestions = questionPool.slice();
+        perRoundState.collectief.questions = Array.from({ length: questionsCount }, () => null);
+
+        if (collectiefAvailableQuestions.length < questionsCount) {
+            flash('Let op: te weinig Collectief Geheugen-fragmenten beschikbaar voor alle beurten.');
+        }
+    } else {
+        collectiefAvailableQuestions = [];
+        perRoundState.collectief.questions = questionPool.slice(0, questionsCount).map(q => ({
+            ...q,
+            foundAnswers: [],
+            playersWhoAnswered: []
+        }));
+    }
     
     perRoundState.collectief.currentQuestionIndex = 0;
     perRoundState.collectief.starterOrder = (typeof getStarterOrderByLowestSeconds === 'function')
@@ -111,6 +245,11 @@ function setupCollectiefRound() {
 function startCollectiefVideo() {
     stopGlobalTimer(); 
     stopLoopTimer(); 
+
+    if (!ensureCollectiefQuestionForCurrentTurn()) {
+        renderCollectiefHostUI('pre');
+        return;
+    }
 
     const currentQuestion = perRoundState.collectief.questions[perRoundState.collectief.currentQuestionIndex];
     
@@ -293,8 +432,13 @@ function nextCollectiefQuestion() {
         highlightActive();
 
         flash(`Start Fragment ${perRoundState.collectief.currentQuestionIndex + 1} voor ${players[activePlayerIndex].name}.`);
-        
-        startCollectiefVideo(); 
+
+        if (collectiefManualAssignmentEnabled) {
+            renderCollectiefHostUI('pre');
+            sendCollectiefDisplayUpdate('update', 'scene-round-collectief-pre');
+        } else {
+            startCollectiefVideo();
+        }
         
     } else {
         
@@ -428,11 +572,36 @@ function renderCollectiefHostUI(phase = 'pre') {
     const controlsEl = document.getElementById('roundControls');
     const qIndex = perRoundState.collectief.currentQuestionIndex;
     const currentQuestion = perRoundState.collectief.questions[qIndex];
-    
-    if (!controlsEl || !currentQuestion) return;
+
+    if (!controlsEl) return;
     
     let html = '';
-    const activePlayerName = players[activePlayerIndex].name;
+    const activePlayerName = players[activePlayerIndex]?.name || '-';
+
+    if (phase === 'pre') {
+        const turnIndex = perRoundState.collectief.currentStarterTurn || 0;
+        const assignmentControls = renderCollectiefAssignmentControls(activePlayerIndex, turnIndex);
+        const assignedQuestion = currentQuestion || collectiefAssignedQuestionsByTurn[turnIndex] || null;
+        const assignedLabel = assignedQuestion ? getCollectiefFragmentLabel(assignedQuestion, qIndex) : 'Nog niet gekozen';
+
+        currentQuestionEl.innerHTML = `
+            <em>Fragment ${qIndex + 1}/${perRoundState.collectief.questions.length}: ${activePlayerName} is aan de beurt.</em>
+            ${assignmentControls}
+            <div class="small muted" style="margin-top:8px;">Gekozen fragment: <strong>${assignedLabel}</strong></div>
+            ${assignedQuestion?.remarks ? `<div class="host-remarks">💬 ${assignedQuestion.remarks}</div>` : ''}
+        `;
+
+        html = `<button onclick="startCollectiefVideo()">Start Fragment ${qIndex + 1} Video (V)</button>`;
+        controlsEl.innerHTML = html;
+        return;
+    }
+
+    if (!currentQuestion) {
+        currentQuestionEl.innerHTML = `<em>Geen Collectief Geheugen-fragment geselecteerd.</em>`;
+        controlsEl.innerHTML = '';
+        return;
+    }
+
     const answers = currentQuestion.answers;
     const foundAnswers = currentQuestion.foundAnswers;
     const allFound = foundAnswers.length === answers.length;
@@ -465,13 +634,7 @@ currentQuestionEl.innerHTML = `
 
 `;
 
-
-
-    if (phase === 'pre') {
-        
-        html = `<button onclick="startCollectiefVideo()">Start Fragment ${qIndex + 1} Video (V)</button>`;
-    } 
-    else if (phase === 'video') {
+    if (phase === 'video') {
         
         html = `
             <button onclick="startCollectiefTimer()" id="collectiefStartTimer">Start Klok (T) voor ${activePlayerName}</button>
@@ -505,27 +668,29 @@ currentQuestionEl.innerHTML = `
 function sendCollectiefDisplayUpdate(action, scene) {
     const qIndex = perRoundState.collectief.currentQuestionIndex;
     const currentQuestion = perRoundState.collectief.questions[qIndex];
-    
-    
-    const answersData = currentQuestion.answers.map(ans => {
-        const found = currentQuestion.foundAnswers.find(fa => fa.answer === ans);
-        return {
-            answer: ans,
-            isFound: !!found,
-            points: found ? found.points : 0,
-            finderName: found ? players[found.finderIndex].name : null,
-            order: found ? found.order : null 
-        };
-    });
+
+    const hasCurrentQuestion = !!currentQuestion;
+    const answersData = hasCurrentQuestion
+        ? currentQuestion.answers.map(ans => {
+            const found = currentQuestion.foundAnswers.find(fa => fa.answer === ans);
+            return {
+                answer: ans,
+                isFound: !!found,
+                points: found ? found.points : 0,
+                finderName: found && players[found.finderIndex] ? players[found.finderIndex].name : null,
+                order: found ? found.order : null
+            };
+        })
+        : [];
 
     const extraData = {
         currentQuestionIndex: qIndex + 1,
         maxQuestions: perRoundState.collectief.questions.length,
         activePlayer: players[activePlayerIndex]?.name || '-',
         answers: answersData,
-        videoSrc: currentQuestion.video,
-        allAnswersFound: currentQuestion.foundAnswers.length === currentQuestion.answers.length,
-        allPlayersAnswered: currentQuestion.playersWhoAnswered.length === players.length
+        videoSrc: hasCurrentQuestion ? currentQuestion.video : null,
+        allAnswersFound: hasCurrentQuestion ? currentQuestion.foundAnswers.length === currentQuestion.answers.length : false,
+        allPlayersAnswered: hasCurrentQuestion ? currentQuestion.playersWhoAnswered.length === players.length : false
     };
 
     if (typeof sendRoundDisplayUpdate === 'function') {
