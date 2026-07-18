@@ -1899,7 +1899,7 @@ function handleIntroPlayVideo() {
   console.log('✅ Video hervat vanaf begin');
   
   // Start audio (generiek.mp3)
-  introState.audioPlaying = new Audio('SFX/generiek.mp3');
+  introState.audioPlaying = new Audio('SFX/generiek-lang.mp3');
   introState.audioPlaying.play().catch(e => {
     console.warn('Intro audio afspelen mislukt:', e);
   });
