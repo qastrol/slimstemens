@@ -445,6 +445,18 @@ async function remapConfigMediaFromZip(config, zip) {
     }
   }
 
+  if (config?.settings?.presenter && typeof config.settings.presenter === 'object') {
+    const presenterPhotoResult = await tryMapPath(
+      config.settings.presenter.photoUrl || config.settings.presenter.photoData,
+      'Presentatorfoto'
+    );
+
+    if (presenterPhotoResult.found && presenterPhotoResult.mapped) {
+      config.settings.presenter.photoUrl = presenterPhotoResult.mapped;
+      config.settings.presenter.photoData = presenterPhotoResult.mapped;
+    }
+  }
+
   config._generatedBlobUrls = generatedBlobUrls;
   config._zipUnresolvedPaths = unresolvedPaths;
 

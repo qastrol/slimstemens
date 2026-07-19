@@ -177,6 +177,14 @@ function playSFX(file) {
   try { sendDisplayUpdate({ type: 'audio', action: 'play', src: file }); } catch(e) {}
 }
 
+function playLoopSFX(file, channel = 'default') {
+  try { sendDisplayUpdate({ type: 'audio', action: 'loopStart', src: file, channel }); } catch(e) {}
+}
+
+function stopLoopSFX(channel = 'default') {
+  try { sendDisplayUpdate({ type: 'audio', action: 'loopStop', channel }); } catch(e) {}
+}
+
 
 const Q_3_6_9 = (typeof quizQuestions!=='undefined'?quizQuestions.slice(0,30):[]).map(q=>({
   text: q.question || 'Placeholdervraag',
@@ -282,7 +290,7 @@ function stopLoopTimerSFX() {
     loopTimerAudio = null;
   }
   
-  try { sendDisplayUpdate({ type: 'audio', action: 'loopStop' }); } catch(e) {}
+  stopLoopSFX('timer');
 }
 
 function stopThinkingCountdownTimer(playEndSound = false) {
@@ -320,7 +328,7 @@ function startThinkingCountdownTimer(options = {}) {
   }
 
   if (startAudio) {
-    try { sendDisplayUpdate({ type: 'audio', action: 'loopStart', src: 'SFX/klok2.mp3' }); } catch(e) {}
+    playLoopSFX('SFX/klok2.mp3', 'timer');
   }
 
   if (onStartMessage) {
@@ -723,7 +731,7 @@ if (applauseBtn) {
 const klokBtn = document.getElementById('playKlok');
 if (klokBtn) {
   klokBtn.addEventListener('click', () => {
-    sendDisplayUpdate({ type: 'audio', action: 'loopStart', src: 'SFX/klok2.mp3' });
+    playLoopSFX('SFX/klok2.mp3', 'timer');
     startLoopTimer();
   });
 }

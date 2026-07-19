@@ -697,35 +697,37 @@ function startSlideshowPhase() {
 }
 
 function showNextSlideshow() {
-    galleryIndex++;
-    const isLastImage = galleryIndex >= galleryImages.length;
     const isLastGallery = galerijStarterTurn >= galerijStarterOrder.length - 1;
 
-    if (isLastImage) {
+    // Check of we al op de allerlaatste afbeelding van de huidige galerij staan
+    if (galleryIndex >= galleryImages.length - 1) {
         if (isLastGallery) {
-            endGalerijRound();
+            endGalerijRound(); // Echte einde van de ronde
             return;
         } else {
-            galleryPhase = 'done';
-            flash(`Galerij van ${players[galleryPlayerIndex].name} besproken. Start volgende.`);
+            // Voorkom dat de fase op 'done' wordt gezet en dat de index out-of-bounds gaat
+            flash(`Galerij van ${players[galleryPlayerIndex].name} besproken. Start de volgende galerij (S).`);
+            return;
         }
-  } else {
-        const currentImage = galleryImages[galleryIndex]; 
-
-        sendDisplayUpdate({
-            type: 'update',
-            key: 'galerij',
-            scene: 'scene-round-galerij-slideshow',
-            galleryTheme: currentGallery.theme,
-            imageSrc: currentImage?.src,
-            imageAnswer: currentImage?.answer, 
-            players: players,
-            activePlayer: players[galleryPlayerIndex],
-            activeIndex: galleryPlayerIndex,
-            imageIndex: galleryIndex, 
-            totalImages: galleryImages.length 
-        });
     }
+
+    // Alleen ophogen als er daadwerkelijk een volgende afbeelding is
+    galleryIndex++;
+    const currentImage = galleryImages[galleryIndex]; 
+
+    sendDisplayUpdate({
+        type: 'update',
+        key: 'galerij',
+        scene: 'scene-round-galerij-slideshow',
+        galleryTheme: currentGallery.theme,
+        imageSrc: currentImage?.src,
+        imageAnswer: currentImage?.answer, 
+        players: players,
+        activePlayer: players[galleryPlayerIndex],
+        activeIndex: galleryPlayerIndex,
+        imageIndex: galleryIndex, 
+        totalImages: galleryImages.length 
+    });
 
     renderGalerijHostUI();
 }

@@ -96,6 +96,7 @@ function updateScene(sceneName) {
         s.style.display = (s.id === `scene-${sceneName}`) ? 'flex' : 'none';
     });
     currentScene = sceneName;
+  refreshVisibleOverlaysPosition();
 }
 
 function decodeEncodedOpenDeurVideoUrl(videoUrl) {
@@ -216,62 +217,107 @@ function prepareOpenDeurQuestionerVideo(videoEl, videoUrl) {
   loadCandidate();
 }
 
+function getAbsoluteLayoutBox(el) {
+  if (!el) {
+    return null;
+  }
+
+  let left = 0;
+  let top = 0;
+  let current = el;
+
+  while (current && current !== document.body) {
+    left += current.offsetLeft;
+    top += current.offsetTop;
+    current = current.offsetParent;
+  }
+
+  return {
+    left,
+    top,
+    width: el.offsetWidth,
+    height: el.offsetHeight
+  };
+}
+
+function findMiniLobbyAnchorBounds() {
+  if (!currentScene) {
+    return null;
+  }
+
+  const activeScene = document.getElementById(`scene-${currentScene}`);
+  if (!activeScene) {
+    return null;
+  }
+
+  const miniLobby = activeScene.querySelector('.mini-lobby');
+  if (!miniLobby) {
+    return null;
+  }
+
+  const anchor = miniLobby.closest('.grid-part') || miniLobby;
+  const bounds = getAbsoluteLayoutBox(anchor);
+
+  if (!bounds || bounds.width <= 0 || bounds.height <= 0) {
+    return null;
+  }
+
+  return bounds;
+}
+
+function applyOverlayBounds(overlayEl, bounds) {
+  overlayEl.style.left = `${bounds.left}px`;
+  overlayEl.style.top = `${bounds.top}px`;
+  overlayEl.style.width = `${bounds.width}px`;
+  overlayEl.style.height = `${bounds.height}px`;
+}
+
 function applyOverlayPosition(overlayEl) {
   if (!overlayEl) return;
 
-  const isLobbyScene = currentScene === 'lobby' ||
-                      currentScene === 'waiting-game' ||
-                      currentScene === 'round-opendeur-lobby' ||
-                      currentScene === 'round-opendeur-video';
+  const fullscreenScenes = new Set([
+    'lobby',
+    'waiting-game',
+    'round-opendeur-lobby',
+    'round-opendeur-video'
+  ]);
 
-  const is369Scene = currentScene === 'round-369';
+  overlayEl.classList.remove('mini-lobby-mode', 'mini-right', 'mini-369');
 
-  const rightSideScenes = [
-    'round-opendeur-vraag',
-    'round-puzzel-waiting',
-    'round-puzzel-active',
-    'scene-round-puzzel-done',
-    'scene-round-galerij-pre',
-    'scene-round-galerij-main',
-    'scene-round-galerij-aanvul',
-    'scene-round-galerij-slideshow',
-    'scene-round-galerij-done',
-    'scene-round-collectief-pre',
-    'scene-round-collectief-main',
-    'scene-round-collectief-tussenstand',
-    'scene-round-collectief-done',
-    'scene-round-finale-pre',
-    'scene-round-finale-main',
-    'scene-round-finale-end',
-    'solo-game-end'
-  ];
-
-  const isRightSide = rightSideScenes.includes(currentScene);
-
-  if (isLobbyScene) {
+  if (fullscreenScenes.has(currentScene)) {
     overlayEl.classList.add('fullscreen');
-    overlayEl.classList.remove('mini-lobby-mode', 'mini-right', 'mini-369');
-  } else {
-    overlayEl.classList.add('mini-lobby-mode');
+    applyOverlayBounds(overlayEl, { left: 0, top: 0, width: 1920, height: 1080 });
+    return;
+  }
+
+  const miniLobbyBounds = findMiniLobbyAnchorBounds();
+  if (miniLobbyBounds) {
     overlayEl.classList.remove('fullscreen');
+    applyOverlayBounds(overlayEl, miniLobbyBounds);
+    return;
+  }
 
-    if (is369Scene) {
-      overlayEl.classList.add('mini-369');
-    } else {
-      overlayEl.classList.remove('mini-369');
-    }
+  // Fallback: veilige standaard in de linkerbovenhelft als er geen mini-lobby bekend is.
+  overlayEl.classList.remove('fullscreen');
+  applyOverlayBounds(overlayEl, { left: 0, top: 0, width: 960, height: 540 });
+}
 
-    if (isRightSide) {
-      overlayEl.classList.add('mini-right');
-    } else {
-      overlayEl.classList.remove('mini-right');
-    }
+function refreshVisibleOverlaysPosition() {
+  const presenterOverlay = document.getElementById('presenterOverlay');
+  const juryOverlay = document.getElementById('juryOverlay');
+
+  if (presenterOverlay && presenterOverlay.style.display !== 'none') {
+    applyOverlayPosition(presenterOverlay);
+  }
+
+  if (juryOverlay && juryOverlay.style.display !== 'none') {
+    applyOverlayPosition(juryOverlay);
   }
 }
 
 const WS_ADDRESS = 'ws://127.0.0.1:8081/';
 let ws = null;
-let __displayLoopAudio = null;
+let __displayLoopAudioChannels = {};
 const desktopBridge = typeof window !== 'undefined' ? window.slimstemensDesktopBridge : null;
 let desktopBridgeUnsubscribe = null;
 // Audio is altijd enabled voor OBS Studio - geen unlock nodig
@@ -386,6 +432,8 @@ if (data.key === 'galerij') {
 
 function handleAudioMessage(data) {
   try {
+    const loopChannel = data.channel || 'default';
+
     if (data.action === 'play' && data.src) {
       const a = new Audio(data.src);
       a.currentTime = 0;
@@ -395,24 +443,27 @@ function handleAudioMessage(data) {
       return;
     }
     if (data.action === 'loopStart' && data.src) {
-      if (__displayLoopAudio) {
-        try { __displayLoopAudio.pause(); } catch(e) {}
+      if (__displayLoopAudioChannels[loopChannel]) {
+        try {
+          __displayLoopAudioChannels[loopChannel].pause();
+        } catch(e) {}
       }
-      __displayLoopAudio = new Audio(data.src);
-      __displayLoopAudio.loop = true;
-      __displayLoopAudio.currentTime = 0;
-      __displayLoopAudio.play().catch((err) => {
+      const loopAudio = new Audio(data.src);
+      loopAudio.loop = true;
+      loopAudio.currentTime = 0;
+      __displayLoopAudioChannels[loopChannel] = loopAudio;
+      loopAudio.play().catch((err) => {
         console.warn('Loop audio afspelen mislukt:', err);
       });
       return;
     }
     if (data.action === 'loopStop') {
-      if (__displayLoopAudio) {
+      if (__displayLoopAudioChannels[loopChannel]) {
         try {
-          __displayLoopAudio.pause();
-          __displayLoopAudio.currentTime = 0;
+          __displayLoopAudioChannels[loopChannel].pause();
+          __displayLoopAudioChannels[loopChannel].currentTime = 0;
         } catch(e) {}
-        __displayLoopAudio = null;
+        delete __displayLoopAudioChannels[loopChannel];
       }
       return;
     }
@@ -1245,7 +1296,13 @@ function renderPlayersBarCompact(players, activeIndex, containerId) {
 
 
 function handlePuzzelDisplayUpdate(data) {
-    const playersData = data.players || [];
+    const incomingPlayers = Array.isArray(data.players)
+      ? data.players
+      : (Array.isArray(data.playersData) ? data.playersData : []);
+    if (incomingPlayers.length > 0) {
+      players = incomingPlayers;
+    }
+    const playersData = incomingPlayers.length > 0 ? incomingPlayers : players;
     const activeIndex = data.activeIndex ?? -1;
   const scene = data.scene || (Array.isArray(data.puzzelWords) ? 'scene-round-puzzel-active' : 'scene-round-puzzel-waiting');
 

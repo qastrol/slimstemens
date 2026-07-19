@@ -7,11 +7,25 @@
 
 
 const FINALE_POINTS_DEDUCTION = 20;
+const FINALE_AMBIENCE_FILE = 'SFX/finaleambience.mp3';
+const FINALE_AMBIENCE_CHANNEL = 'finale-ambience';
 
 perRoundState.finale = perRoundState.finale || {};
 let finaleTimerInterval = null;
 let finaleTimerRunning = false;
 let finaleLoopTimerSeconds = 0; 
+
+function startFinaleAmbience() {
+    if (typeof playLoopSFX === 'function') {
+        playLoopSFX(FINALE_AMBIENCE_FILE, FINALE_AMBIENCE_CHANNEL);
+    }
+}
+
+function stopFinaleAmbience() {
+    if (typeof stopLoopSFX === 'function') {
+        stopLoopSFX(FINALE_AMBIENCE_CHANNEL);
+    }
+}
 
 function getOpponentIndex(currentPlayerOriginalIndex) {
     
@@ -127,6 +141,8 @@ function setupFinaleRound() {
       klok369_stopLoop();
       klok369_resetTimer();
     }
+
+        stopFinaleAmbience();
     
     perRoundState.finale = perRoundState.finale || {};
     perRoundState.finale.gameEnded = false;
@@ -205,6 +221,10 @@ function nextFinaleQuestion() {
     }
 
     const currentQuestion = perRoundState.finale.questions[qIndex];
+
+    if (qIndex === 0) {
+        startFinaleAmbience();
+    }
     
     
     perRoundState.finale.currentQuestion = currentQuestion; 
@@ -472,6 +492,7 @@ function checkFinaleEnd() {
 function endFinaleGame(winner) {
     
     stopFinaleTimer(false); 
+    stopFinaleAmbience();
 
     playSFX('SFX/finale.mp3');
 
@@ -687,6 +708,7 @@ function endFinaleRound() {
     roundRunning = false;
     stopAllTimers();
     stopFinaleTimer(false); 
+    stopFinaleAmbience();
     playSFX('SFX/finale.mp3');
     perRoundState.finale = perRoundState.finale || {};
     perRoundState.finale.gameEnded = true;
@@ -850,6 +872,7 @@ function sendFinaleDisplayUpdate(action, scene, extraData = {}) {
 
     
     const playersToSend = players.map(p => ({
+        index: p.index,
         name: p.name,
         seconds: p.seconds,
         photoUrl: p.photoUrl,
@@ -872,6 +895,7 @@ function sendFinaleDisplayUpdate(action, scene, extraData = {}) {
             } else if (p.index === extraData.afvallerIndex) {
                 
                 return {
+                    index: p.index,
                     name: p.name,
                     seconds: p.seconds,
                     photoUrl: p.photoUrl,
