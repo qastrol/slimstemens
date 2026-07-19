@@ -792,12 +792,24 @@
         uploadTitle: 'Kies een video'
       }
     );
+    const thumbnailField = createMediaInput(
+      'Thumbnail afbeelding (optioneel)',
+      data.introThumbnailUrl || data.thumbnailUrl || data.introImageUrl || data.posterUrl || '',
+      'media/opendeur',
+      {
+        placeholder: 'Pad naar thumbnail afbeelding',
+        helperText: 'Optioneel: handmatige thumbnail voor de vragensteller. Dit kan de laadtijd van het vragenstelleroverzicht verbeteren.',
+        uploadAccept: 'image/*',
+        uploadTitle: 'Kies een afbeelding'
+      }
+    );
     fromField.input.classList.add('field-open-from');
     questionField.input.classList.add('field-open-question');
     remarksField.textarea.classList.add('field-open-remarks');
     mediaField.pathInput.classList.add('field-open-video');
+    thumbnailField.pathInput.classList.add('field-open-thumbnail');
 
-    item.append(fromField.label, questionField.label, answersField, mediaField.wrapper, remarksField.label);
+    item.append(fromField.label, questionField.label, answersField, mediaField.wrapper, thumbnailField.wrapper, remarksField.label);
   }
 
   function addPuzzelItem(data = {}) {
@@ -1081,9 +1093,10 @@
       const question = item.querySelector('.field-open-question')?.value?.trim() || '';
       const answerValues = getFixedAnswerValues(item, 'field-open-answer', 4);
       const introVideo = item.querySelector('.field-open-video')?.value?.trim() || '';
+      const introThumbnail = item.querySelector('.field-open-thumbnail')?.value?.trim() || '';
       const remarks = item.querySelector('.field-open-remarks')?.value?.trim() || '';
 
-      if (!from && !question && !introVideo && !hasAnyValue(answerValues)) {
+      if (!from && !question && !introVideo && !introThumbnail && !hasAnyValue(answerValues)) {
         return;
       }
 
@@ -1099,6 +1112,10 @@
 
       if (introVideo) {
         entry.introVideoUrl = normalizePath(introVideo);
+      }
+
+      if (introThumbnail) {
+        entry.introThumbnailUrl = normalizePath(introThumbnail);
       }
 
       if (remarks) {

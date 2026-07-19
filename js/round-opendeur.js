@@ -3,6 +3,17 @@ function getOpenDeurIntroVideoUrl(question) {
   return question.introVideoUrl || question.videoUrl || question.introVideo || question.video || '';
 }
 
+function getOpenDeurIntroThumbnailUrl(question) {
+  if (!question) return '';
+  return (
+    question.introThumbnailUrl ||
+    question.thumbnailUrl ||
+    question.introImageUrl ||
+    question.posterUrl ||
+    ''
+  );
+}
+
 function setupOpenDeurRound() {
   // Stop klok als deze loopt (exclusief voor 3-6-9)
   if (typeof klok369_stopLoop === 'function') {
@@ -176,7 +187,6 @@ function startOpenDeurTimer(){
     onStartMessage: `Tijd gestart voor ${players[activePlayerIndex].name}`,
     onTick: () => {
       renderPlayers();
-      sendOpenDeurDisplayUpdate('update', 'scene-round-opendeur-vraag');
     },
     onTimeout: (player) => {
       flash(`${player.name} is door zijn tijd heen!`);
@@ -345,6 +355,7 @@ function sendOpenDeurDisplayUpdate(type, scene) {
             index: p.index,
             name: p.name,
             seconds: p.seconds,
+          photoUrl: p.photoUrl || 'assets/avatar.png',
             isActive: p.index === activePlayerIndex
         }))
     };
@@ -358,7 +369,8 @@ if (scene === 'scene-round-opendeur-vragensteller') {
         index: idx,
         name: q.from,
     isChosen: q.played,
-    introVideoUrl: getOpenDeurIntroVideoUrl(q) || null
+  introVideoUrl: getOpenDeurIntroVideoUrl(q) || null,
+  introThumbnailUrl: getOpenDeurIntroThumbnailUrl(q) || null
     }));
 
     data.activeChoosingPlayerIndex = activePlayerIndex;
@@ -370,6 +382,8 @@ if (scene === 'scene-round-opendeur-vragensteller') {
         const q = perRoundState.currentQuestion;
         const introVideoUrl = getOpenDeurIntroVideoUrl(q);
         const showIntroVideo = !!introVideoUrl && !q.introVideoPlayed;
+        const introThumbnailUrl = getOpenDeurIntroThumbnailUrl(q) || null;
+        const introVideoPayload = showIntroVideo ? (introVideoUrl || null) : null;
         if (showIntroVideo) {
           q.introVideoPlayed = true;
         }
@@ -385,11 +399,14 @@ if (scene === 'scene-round-opendeur-vragensteller') {
                 isAnswered: q.answered[i]
             })),
           timeGain: 20,
-          introVideoUrl: introVideoUrl || null
+          introVideoUrl: introVideoPayload,
+          introThumbnailUrl: introThumbnailUrl
         };
 
-        data.introVideoUrl = introVideoUrl || null;
+        data.introVideoUrl = introVideoPayload;
         data.showIntroVideo = showIntroVideo;
+        data.hasIntroVideo = !!introVideoUrl;
+        data.introThumbnailUrl = introThumbnailUrl;
 
         data.activeAnsweringPlayer = currentAnswerPlayerIndex !== undefined ? players[currentAnswerPlayerIndex].name : '—';
         data.activeAnsweringPlayerIndex = currentAnswerPlayerIndex;

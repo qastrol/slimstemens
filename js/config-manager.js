@@ -389,6 +389,24 @@ async function remapConfigMediaFromZip(config, zip) {
           question.video = introVideoResult.mapped;
         }
       }
+
+      const introThumbnailResult = await tryMapPath(
+        question.introThumbnailUrl || question.thumbnailUrl || question.introImageUrl || question.posterUrl,
+        `Open Deur vraag ${questionIndex + 1} thumbnail`
+      );
+
+      if (introThumbnailResult.found && introThumbnailResult.mapped) {
+        question.introThumbnailUrl = introThumbnailResult.mapped;
+        if (typeof question.thumbnailUrl === 'string') {
+          question.thumbnailUrl = introThumbnailResult.mapped;
+        }
+        if (typeof question.introImageUrl === 'string') {
+          question.introImageUrl = introThumbnailResult.mapped;
+        }
+        if (typeof question.posterUrl === 'string') {
+          question.posterUrl = introThumbnailResult.mapped;
+        }
+      }
     }
   }
 
@@ -524,19 +542,29 @@ function collectMediaPathChecks(config) {
 
   if (Array.isArray(config?.opendeur)) {
     config.opendeur.forEach((question, questionIndex) => {
-      const path = typeof (question?.introVideoUrl || question?.videoUrl || question?.introVideo || question?.video) === 'string'
+      const introVideoPath = typeof (question?.introVideoUrl || question?.videoUrl || question?.introVideo || question?.video) === 'string'
         ? (question.introVideoUrl || question.videoUrl || question.introVideo || question.video).trim()
         : '';
 
-      if (!path) {
-        return;
+      const introThumbnailPath = typeof (question?.introThumbnailUrl || question?.thumbnailUrl || question?.introImageUrl || question?.posterUrl) === 'string'
+        ? (question.introThumbnailUrl || question.thumbnailUrl || question.introImageUrl || question.posterUrl).trim()
+        : '';
+
+      if (introVideoPath) {
+        checks.push({
+          round: 'opendeur',
+          label: `Open Deur vraag ${questionIndex + 1} introvideo`,
+          path: introVideoPath
+        });
       }
 
-      checks.push({
-        round: 'opendeur',
-        label: `Open Deur vraag ${questionIndex + 1} introvideo`,
-        path
-      });
+      if (introThumbnailPath) {
+        checks.push({
+          round: 'opendeur',
+          label: `Open Deur vraag ${questionIndex + 1} thumbnail`,
+          path: introThumbnailPath
+        });
+      }
     });
   }
 
@@ -777,6 +805,7 @@ function getQuestionsForRound(roundKey, defaultQuestions = []) {
         question: q.question || q.text || 'Open Deur vraag',
         answers: normalizeAnswerList(q.answers),
         introVideoUrl: q.introVideoUrl || q.videoUrl || q.introVideo || q.video || null,
+        introThumbnailUrl: q.introThumbnailUrl || q.thumbnailUrl || q.introImageUrl || q.posterUrl || null,
         remarks: normalizeRemarksValue(q.remarks, q.opmerking, q.comment, q.note)
       }));
     }

@@ -740,6 +740,14 @@ if (stopKlokBtn) {
   });
 }
 
+const klokEindBtn = document.getElementById('playKlokEind');
+if (klokEindBtn) {
+  klokEindBtn.addEventListener('click', () => {
+    playSFX('SFX/klokeind.mp3');
+  });
+}
+
+
 const finalBumperBtn = document.getElementById('playFinaleBumper');
 if (finalBumperBtn) {
   finalBumperBtn.addEventListener('click', () => {
