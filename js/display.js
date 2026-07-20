@@ -1016,16 +1016,20 @@ function normalizeActiveIndex(playersData, activeIndex) {
   if (!Array.isArray(playersData) || activeIndex === null || activeIndex === undefined) {
     return activeIndex;
   }
+  
+  // 1. Zoek eerst of activeIndex overeenkomt met de unieke speler-index (p.index)
+  const resolvedIndex = playersData.findIndex(p => p && p.index === activeIndex);
+  if (resolvedIndex !== -1) {
+    return resolvedIndex;
+  }
+
+  // 2. Fallback: als p.index niet gevonden is, controleer of activeIndex al een geldige array-index is
   if (activeIndex >= 0 && activeIndex < playersData.length) {
     return activeIndex;
   }
-  const resolvedIndex = playersData.findIndex(p => p.index === activeIndex);
-  return resolvedIndex !== -1 ? resolvedIndex : activeIndex;
+
+  return activeIndex;
 }
-
-
-
-
 
 function renderOpenDeurLobby(data) {
     

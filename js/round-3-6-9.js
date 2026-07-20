@@ -120,6 +120,10 @@ function setupThreeSixNineRound() {
   
 currentQuestionEl.innerHTML = `<em>3-6-9 ronde: ${perRoundState.max} vragen. Druk op Volgende vraag om te starten.</em>`;
 
+  if (typeof showPresenterScriptForPhase === 'function') {
+    showPresenterScriptForPhase('threeSixNineFirstQuestion');
+  }
+
   renderThreeSixNineControls();
 
   
@@ -200,6 +204,10 @@ function nextThreeSixNineQuestion() {
   const q = perRoundState.questions[currentQuestionIndex] || { text: 'Placeholdervraag', answers: [], type: 'classic' };
   perRoundState.currentQuestion = q; 
   currentQuestionIndex++;
+
+  if (currentQuestionIndex === 1 && typeof hidePresenterScript === 'function') {
+    hidePresenterScript();
+  }
 
   const activePlayerName = players[activePlayerIndex]?.name || '-';
   const questionMedia = getThreeSixNineMediaUrls(q, 'question');

@@ -147,6 +147,7 @@ function setupFinaleRound() {
     perRoundState.finale = perRoundState.finale || {};
     perRoundState.finale.gameEnded = false;
     perRoundState.finale.awaitingHostNext = false;
+    perRoundState.finale.firstQuestionReached = false;
     
     // Bewaar ALLE originele spelers in originele volgorde voor outro
     perRoundState.finale.allOriginalPlayersForOutro = [...players].map(p => ({...p}));
@@ -194,6 +195,10 @@ function setupFinaleRound() {
         roundRunning = false;
         return;
     }
+
+    if (typeof showPresenterScriptForPhase === 'function') {
+        showPresenterScriptForPhase('finaleFirstQuestion');
+    }
     
     perRoundState.finale.currentQuestionIndex = -1; 
 
@@ -221,6 +226,13 @@ function nextFinaleQuestion() {
     }
 
     const currentQuestion = perRoundState.finale.questions[qIndex];
+
+    if (qIndex === 0 && !perRoundState.finale.firstQuestionReached) {
+        if (typeof hidePresenterScript === 'function') {
+            hidePresenterScript();
+        }
+        perRoundState.finale.firstQuestionReached = true;
+    }
 
     if (qIndex === 0) {
         startFinaleAmbience();

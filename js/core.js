@@ -18,6 +18,78 @@ let thinkingTimerInterval = null;
 let activePlayerIndex = 0;
 let loopTimerAudio = null;
 let loopTimerSeconds = 0;       
+let presenterScriptsEnabled = false;
+let presenterScriptsPhases = {};
+let activePresenterScriptPhase = null;
+
+const PRESENTER_SCRIPT_LABELS = {
+  lobbyBeforeThreeSixNine: 'Presentatorscript - Lobby (voor 3-6-9)',
+  threeSixNineFirstQuestion: 'Presentatorscript - 3-6-9 (eerste vraag)',
+  openDeurFirstQuestion: 'Presentatorscript - Open Deur (eerste vraag)',
+  puzzelFirstQuestion: 'Presentatorscript - Puzzel (eerste vraag)',
+  galerijFirstQuestion: 'Presentatorscript - Galerij (eerste vraag)',
+  collectiefFirstQuestion: 'Presentatorscript - Collectief Geheugen (eerste vraag)',
+  finaleFirstQuestion: 'Presentatorscript - Finale (eerste vraag)'
+};
+
+function normalizePresenterScriptsSettings(settings) {
+  const source = settings && typeof settings === 'object' ? settings : {};
+  const phasesSource = source.phases && typeof source.phases === 'object' ? source.phases : {};
+
+  const normalizedPhases = {};
+  Object.keys(PRESENTER_SCRIPT_LABELS).forEach((phaseKey) => {
+    const value = phasesSource[phaseKey];
+    normalizedPhases[phaseKey] = typeof value === 'string' ? value.trim() : '';
+  });
+
+  return {
+    enabled: !!source.enabled,
+    phases: normalizedPhases
+  };
+}
+
+function hidePresenterScript() {
+  const area = document.getElementById('introScriptArea');
+  if (area) {
+    area.style.display = 'none';
+  }
+  activePresenterScriptPhase = null;
+}
+
+function showPresenterScriptForPhase(phaseKey) {
+  const text = presenterScriptsPhases[phaseKey];
+  if (!presenterScriptsEnabled || !text) {
+    return false;
+  }
+
+  const area = document.getElementById('introScriptArea');
+  const title = document.getElementById('introScriptTitle');
+  const textEl = document.getElementById('introScriptText');
+  if (!area || !textEl) {
+    return false;
+  }
+
+  if (title) {
+    title.textContent = PRESENTER_SCRIPT_LABELS[phaseKey] || 'Presentator script:';
+  }
+
+  textEl.textContent = text;
+  area.style.display = 'block';
+  activePresenterScriptPhase = phaseKey;
+  return true;
+}
+
+function applyPresenterScriptsSettings(settings) {
+  const normalized = normalizePresenterScriptsSettings(settings);
+  presenterScriptsEnabled = normalized.enabled;
+  presenterScriptsPhases = normalized.phases;
+
+  if (!presenterScriptsEnabled) {
+    hidePresenterScript();
+  }
+}
+
+window.applyPresenterScriptsSettings = applyPresenterScriptsSettings;
 
 
 let galerijPhotoCount = 10;
@@ -433,6 +505,7 @@ function startRoundAfterBumper(roundKey) {
   activePlayerIndex = 0;
   currentRoundEl.textContent = niceRoundName(roundKey);
   currentQuestionEl.innerHTML = '<em>Ronde gestart — druk op Volgende vraag om te beginnen.</em>';
+  hidePresenterScript();
   stopAllTimers();
   clearPreFinaleBonusControls();
 
@@ -617,6 +690,10 @@ document.getElementById('applyBtn').addEventListener('click', async ()=>{
       scene: 'lobby',
       players: players 
   });
+
+  if (!showPresenterScriptForPhase('lobbyBeforeThreeSixNine')) {
+    hidePresenterScript();
+  }
   
   const modeText = playerCountSelect === 1 ? `${questionsPerRound} vraag/vragen per ronde` : '';
   flash(`Spel aangemaakt met ${playerCountSelect} speler(s) ${modeText} — klaar om te starten`);
@@ -631,6 +708,7 @@ document.getElementById('resetBtn').addEventListener('click', ()=>{
   roundRunning = false;
   currentRoundEl.textContent = '—';
   currentQuestionEl.innerHTML = '<em>Spel gereset</em>';
+  hidePresenterScript();
   stopAllTimers();
   updateRoundNavigationButtons();
   flash('Spel gereset');
@@ -840,9 +918,13 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // Toon intro script voor presentator
       const introScriptArea = document.getElementById('introScriptArea');
+      const introScriptTitle = document.getElementById('introScriptTitle');
       const introScriptText = document.getElementById('introScriptText');
       if (introScriptArea && introScriptText) {
         if (finalIntroText) {
+          if (introScriptTitle) {
+            introScriptTitle.textContent = 'Presentatorscript - Intro';
+          }
           introScriptText.textContent = finalIntroText;
           introScriptArea.style.display = 'block';
         } else {

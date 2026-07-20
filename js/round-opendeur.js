@@ -55,6 +55,7 @@ function setupOpenDeurRound() {
   perRoundState.openDeurStarterOrder = [...perRoundState.remainingPlayers];
   perRoundState.playersWhoChoseQuestion = []; 
   perRoundState.currentQuestion = null;
+  perRoundState.openDeurFirstQuestionReached = false;
   currentQuestionIndex = 0;
 
 
@@ -68,6 +69,10 @@ currentQuestionEl.innerHTML = `
 `;
 
 renderOpenDeurChoices();
+
+  if (typeof showPresenterScriptForPhase === 'function') {
+    showPresenterScriptForPhase('openDeurFirstQuestion');
+  }
 
 
   
@@ -111,6 +116,13 @@ function chooseOpenDeurQuestion(index){
   q.played = true;
   q.introVideoPlayed = false;
   perRoundState.currentQuestion = q;
+
+  if (!perRoundState.openDeurFirstQuestionReached) {
+    if (typeof hidePresenterScript === 'function') {
+      hidePresenterScript();
+    }
+    perRoundState.openDeurFirstQuestionReached = true;
+  }
   
   q.answersDisplay = q.answers.slice(0, 4); 
   q.answered = Array(q.answersDisplay.length).fill(false);

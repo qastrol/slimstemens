@@ -226,6 +226,7 @@ function setupCollectiefRound() {
     }
     
     perRoundState.collectief.currentQuestionIndex = 0;
+    perRoundState.collectief.firstQuestionReached = false;
     perRoundState.collectief.starterOrder = (typeof getStarterOrderByLowestSeconds === 'function')
         ? getStarterOrderByLowestSeconds(questionsCount)
         : players
@@ -242,6 +243,10 @@ function setupCollectiefRound() {
     
     renderCollectiefHostUI('pre');
 
+    if (typeof showPresenterScriptForPhase === 'function') {
+        showPresenterScriptForPhase('collectiefFirstQuestion');
+    }
+
     
     sendCollectiefDisplayUpdate('round_start', 'scene-round-collectief-pre');
 
@@ -253,6 +258,13 @@ function setupCollectiefRound() {
 function startCollectiefVideo() {
     stopGlobalTimer(); 
     stopLoopTimer(); 
+
+    if (!perRoundState.collectief.firstQuestionReached) {
+        if (typeof hidePresenterScript === 'function') {
+            hidePresenterScript();
+        }
+        perRoundState.collectief.firstQuestionReached = true;
+    }
 
     if (!ensureCollectiefQuestionForCurrentTurn()) {
         renderCollectiefHostUI('pre');

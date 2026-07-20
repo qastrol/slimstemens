@@ -154,6 +154,7 @@ function setupGalerijRound() {
   galleryImages = [];
   galleryIndex = 0;
   passedImages = [];
+  perRoundState.galerijFirstQuestionReached = false;
   aanvulQueue = [];
   currentAanvulPlayer = null;
   stopGalerijTimer(false); 
@@ -217,6 +218,11 @@ function setupGalerijRound() {
   }
 
   renderGalerijHostUI();
+
+  if (typeof showPresenterScriptForPhase === 'function') {
+    showPresenterScriptForPhase('galerijFirstQuestion');
+  }
+
   flash('Galerijronde klaar om te starten.');
   
   sendDisplayUpdate({
@@ -513,6 +519,13 @@ function startGalerijForPlayer(playerIndex) {
   galleryIndex = 0;
   passedImages = [];
   galleryPhase = 'main';
+
+  if (!perRoundState.galerijFirstQuestionReached) {
+    if (typeof hidePresenterScript === 'function') {
+      hidePresenterScript();
+    }
+    perRoundState.galerijFirstQuestionReached = true;
+  }
 
   console.log(`✅ Galerij gestart: ${currentGallery.theme} met ${galleryImages.length} afbeeldingen`);
   flash(`Start galerij: ${currentGallery.theme}`);

@@ -165,6 +165,7 @@ function setupPuzzelRound() {
   perRoundState.originalPlayer = null; 
   perRoundState.timerRunning = false; 
   perRoundState.playersWhoStartedPuzzel = [];
+  perRoundState.puzzelFirstQuestionReached = false;
   perRoundState.puzzelStarterOrder = (typeof getStarterOrderByLowestSeconds === 'function')
     ? getStarterOrderByLowestSeconds()
     : players
@@ -184,6 +185,11 @@ function setupPuzzelRound() {
   `;
   highlightActive();
   document.getElementById('roundControls').innerHTML = '<button id="startPuzzelBtn" onclick="nextPuzzelQuestion()">Start Eerste Puzzel</button>';
+
+  if (typeof showPresenterScriptForPhase === 'function') {
+    showPresenterScriptForPhase('puzzelFirstQuestion');
+  }
+
   sendPuzzelDisplayUpdate('scene-round-puzzel-waiting');
 }
 
@@ -214,6 +220,13 @@ function nextPuzzelQuestion() {
 
     
     puzzel.remainingWords = [...puzzel.currentWords];
+  }
+
+  if (!perRoundState.puzzelFirstQuestionReached) {
+    if (typeof hidePresenterScript === 'function') {
+      hidePresenterScript();
+    }
+    perRoundState.puzzelFirstQuestionReached = true;
   }
 
 highlightActive();

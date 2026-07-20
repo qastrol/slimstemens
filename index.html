@@ -176,7 +176,7 @@
 
         <div id="introScriptArea"
           style="display:none;margin-top:10px;padding:15px;background:#2a2a2a;border-radius:8px;border:2px solid #ffd17a;">
-          <strong style="color:#ffd17a;display:block;margin-bottom:8px;">📝 Presentator script:</strong>
+          <strong id="introScriptTitle" style="color:#ffd17a;display:block;margin-bottom:8px;">Presentator script:</strong>
           <div id="introScriptText" style="color:#fff;font-size:1.1em;line-height:1.5;"></div>
         </div>
 
@@ -541,6 +541,10 @@
         const outroSettings = config.settings.outro;
         if (outroSettings && outroSettings.enabled !== undefined) {
           outroEnabled = !!outroSettings.enabled;
+        }
+
+        if (typeof window.applyPresenterScriptsSettings === 'function') {
+          window.applyPresenterScriptsSettings(config.settings.presenterScripts || null);
         }
 
         // Startseconden

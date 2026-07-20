@@ -19,6 +19,7 @@
   const builderImportInput = document.getElementById('builderImportInput');
   const builderStatus = document.getElementById('builderStatus');
   const introTextOptions = document.getElementById('introTextOptions');
+  const presenterScriptsOptions = document.getElementById('presenterScriptsOptions');
   const presenterPhotoOptions = document.getElementById('presenterPhotoOptions');
   const prefillOptions = document.getElementById('prefillOptions');
   const settingPresenterPhotoPath = document.getElementById('settingPresenterPhotoPath');
@@ -213,6 +214,10 @@
 
     if (presenterPhotoOptions) {
       presenterPhotoOptions.style.display = document.getElementById('settingPresenterEnabled')?.checked ? '' : 'none';
+    }
+
+    if (presenterScriptsOptions) {
+      presenterScriptsOptions.style.display = document.getElementById('settingPresenterScriptsEnabled')?.checked ? '' : 'none';
     }
 
     updatePrefillVisibility();
@@ -943,6 +948,18 @@
         enabled: !!document.getElementById('settingIntroEnabled')?.checked,
         text: document.getElementById('settingIntroText')?.value?.trim() || ''
       },
+      presenterScripts: {
+        enabled: !!document.getElementById('settingPresenterScriptsEnabled')?.checked,
+        phases: {
+          lobbyBeforeThreeSixNine: document.getElementById('settingPresenterScriptLobby')?.value?.trim() || '',
+          threeSixNineFirstQuestion: document.getElementById('settingPresenterScript369')?.value?.trim() || '',
+          openDeurFirstQuestion: document.getElementById('settingPresenterScriptOpenDeur')?.value?.trim() || '',
+          puzzelFirstQuestion: document.getElementById('settingPresenterScriptPuzzel')?.value?.trim() || '',
+          galerijFirstQuestion: document.getElementById('settingPresenterScriptGalerij')?.value?.trim() || '',
+          collectiefFirstQuestion: document.getElementById('settingPresenterScriptCollectief')?.value?.trim() || '',
+          finaleFirstQuestion: document.getElementById('settingPresenterScriptFinale')?.value?.trim() || ''
+        }
+      },
       outro: {
         enabled: !!document.getElementById('settingIntroEnabled')?.checked
       },
@@ -978,6 +995,14 @@
 
     if (!settings.intro.text) {
       delete settings.intro.text;
+    }
+
+    const presenterScriptPhaseValues = settings.presenterScripts?.phases
+      ? Object.values(settings.presenterScripts.phases).filter(Boolean)
+      : [];
+
+    if (!settings.presenterScripts.enabled && presenterScriptPhaseValues.length === 0) {
+      delete settings.presenterScripts;
     }
 
     const playerMode = buildPlayerModeSettings();
@@ -1342,6 +1367,36 @@
     if (introTextInput) {
       introTextInput.value = config?.settings?.intro?.text || '';
     }
+    setCheckboxValue('settingPresenterScriptsEnabled', !!config?.settings?.presenterScripts?.enabled);
+    const presenterScriptPhases = config?.settings?.presenterScripts?.phases || {};
+    const scriptLobbyInput = document.getElementById('settingPresenterScriptLobby');
+    if (scriptLobbyInput) {
+      scriptLobbyInput.value = presenterScriptPhases.lobbyBeforeThreeSixNine || '';
+    }
+    const script369Input = document.getElementById('settingPresenterScript369');
+    if (script369Input) {
+      script369Input.value = presenterScriptPhases.threeSixNineFirstQuestion || '';
+    }
+    const scriptOpenDeurInput = document.getElementById('settingPresenterScriptOpenDeur');
+    if (scriptOpenDeurInput) {
+      scriptOpenDeurInput.value = presenterScriptPhases.openDeurFirstQuestion || '';
+    }
+    const scriptPuzzelInput = document.getElementById('settingPresenterScriptPuzzel');
+    if (scriptPuzzelInput) {
+      scriptPuzzelInput.value = presenterScriptPhases.puzzelFirstQuestion || '';
+    }
+    const scriptGalerijInput = document.getElementById('settingPresenterScriptGalerij');
+    if (scriptGalerijInput) {
+      scriptGalerijInput.value = presenterScriptPhases.galerijFirstQuestion || '';
+    }
+    const scriptCollectiefInput = document.getElementById('settingPresenterScriptCollectief');
+    if (scriptCollectiefInput) {
+      scriptCollectiefInput.value = presenterScriptPhases.collectiefFirstQuestion || '';
+    }
+    const scriptFinaleInput = document.getElementById('settingPresenterScriptFinale');
+    if (scriptFinaleInput) {
+      scriptFinaleInput.value = presenterScriptPhases.finaleFirstQuestion || '';
+    }
     const collectiefEndOption = document.getElementById('settingCollectiefEndOption');
     if (collectiefEndOption) {
       collectiefEndOption.value = config?.settings?.collectief?.endOption || 'lowestOut';
@@ -1422,6 +1477,7 @@
   document.getElementById('photoCountGalerij')?.addEventListener('change', syncAllGalerijThemes);
   document.getElementById('settingIntroEnabled')?.addEventListener('change', updateSettingsVisibility);
   document.getElementById('settingPresenterEnabled')?.addEventListener('change', updateSettingsVisibility);
+  document.getElementById('settingPresenterScriptsEnabled')?.addEventListener('change', updateSettingsVisibility);
   document.getElementById('prefillPlayersEnabled')?.addEventListener('change', updateSettingsVisibility);
   document.getElementById('prefillPlayerCount')?.addEventListener('change', updateSettingsVisibility);
 
