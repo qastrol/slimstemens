@@ -121,6 +121,12 @@ function normalizeRemarksValue(...values) {
 function guessMimeType(filePath) {
   const normalized = normalizeZipPath(filePath).toLowerCase();
 
+    if (/\.mp3$/i.test(normalized)) return 'audio/mpeg';
+    if (/\.wav$/i.test(normalized)) return 'audio/wav';
+    if (/\.ogg$/i.test(normalized)) return 'audio/ogg';
+    if (/\.m4a$/i.test(normalized)) return 'audio/mp4';
+    if (/\.aac$/i.test(normalized)) return 'audio/aac';
+    if (/\.flac$/i.test(normalized)) return 'audio/flac';
   if (/(\.mp4)$/i.test(normalized)) return 'video/mp4';
   if (/(\.webm)$/i.test(normalized)) return 'video/webm';
   if (/(\.ogg)$/i.test(normalized)) return 'video/ogg';

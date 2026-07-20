@@ -4,6 +4,22 @@ const path = require('path');
 let hostWindow = null;
 let displayWindow = null;
 
+// Electron-only media performance hints (heeft geen effect op webserver-versie).
+app.commandLine.appendSwitch('ignore-gpu-blocklist');
+app.commandLine.appendSwitch('enable-accelerated-video-decode');
+app.commandLine.appendSwitch('enable-zero-copy');
+app.commandLine.appendSwitch('disable-renderer-backgrounding');
+
+function applyWindowChromeDefaults(window) {
+  if (!window || window.isDestroyed()) {
+    return;
+  }
+
+  window.setAutoHideMenuBar(true);
+  window.setMenuBarVisibility(false);
+  window.removeMenu();
+}
+
 ipcMain.on('quiz-message', (event, message) => {
   [hostWindow, displayWindow].forEach((window) => {
     if (!window || window.webContents.isDestroyed()) return;
@@ -26,6 +42,7 @@ function createWindows() {
     autoHideMenuBar: true,
     icon: windowIcon,
     webPreferences: {
+      backgroundThrottling: false,
       contextIsolation: true,
       nodeIntegration: false,
       preload: preloadPath
@@ -39,6 +56,7 @@ function createWindows() {
     autoHideMenuBar: true,
     icon: windowIcon,
     webPreferences: {
+      backgroundThrottling: false,
       contextIsolation: true,
       nodeIntegration: false,
       preload: preloadPath
@@ -48,13 +66,59 @@ function createWindows() {
   hostWindow.loadFile(path.join(__dirname, 'index.html'));
   displayWindow.loadFile(path.join(__dirname, 'display.html'));
 
+  applyWindowChromeDefaults(hostWindow);
+  applyWindowChromeDefaults(displayWindow);
+
+  displayWindow.on('enter-full-screen', () => {
+    if (displayWindow && !displayWindow.isDestroyed()) {
+      displayWindow.setMinimizable(false);
+    }
+  });
+
+  // Sta minimaliseren weer toe zodra Fullscreen verlaten wordt
+  displayWindow.on('leave-full-screen', () => {
+    if (displayWindow && !displayWindow.isDestroyed()) {
+      displayWindow.setMinimizable(true);
+    }
+  });
+
+  // Schakel F11 in/uit toggle in op het Display-venster
+  displayWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.type === 'keyDown' && input.key === 'F11') {
+      const isFull = displayWindow.isFullScreen();
+      displayWindow.setFullScreen(!isFull);
+      event.preventDefault(); // Voorkom standaard browserafhandeling
+    }
+  });
+
+  hostWindow.webContents.setWindowOpenHandler(() => {
+    return {
+      action: 'allow',
+      overrideBrowserWindowOptions: {
+        autoHideMenuBar: true,
+        menuBarVisible: false
+      }
+    };
+  });
+
+  hostWindow.webContents.on('did-create-window', (createdWindow) => {
+    applyWindowChromeDefaults(createdWindow);
+  });
+
   hostWindow.on('closed', () => {
+    const siblingDisplay = displayWindow;
     hostWindow = null;
-    if (displayWindow) displayWindow.close();
+    if (siblingDisplay && !siblingDisplay.isDestroyed()) {
+      siblingDisplay.close();
+    }
   });
 
   displayWindow.on('closed', () => {
+    const siblingHost = hostWindow;
     displayWindow = null;
+    if (siblingHost && !siblingHost.isDestroyed()) {
+      siblingHost.close();
+    }
   });
 }
 

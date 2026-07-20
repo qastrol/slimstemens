@@ -281,8 +281,12 @@ function applyOverlayPosition(overlayEl) {
     'round-opendeur-lobby',
     'round-opendeur-video'
   ]);
+  const isThreeSixNineScene = currentScene === 'round-369';
 
   overlayEl.classList.remove('mini-lobby-mode', 'mini-right', 'mini-369');
+  if (isThreeSixNineScene) {
+    overlayEl.classList.add('mini-369');
+  }
 
   if (fullscreenScenes.has(currentScene)) {
     overlayEl.classList.add('fullscreen');

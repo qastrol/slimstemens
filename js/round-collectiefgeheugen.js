@@ -14,6 +14,7 @@ function getCollectiefFragmentLabel(question, fallbackIndex = 0) {
         return `Fragment ${fallbackIndex + 1}`;
     }
 
+    // 1. Controleer of er expliciet een title of label is ingesteld
     if (typeof question.title === 'string' && question.title.trim()) {
         return question.title.trim();
     }
@@ -22,12 +23,19 @@ function getCollectiefFragmentLabel(question, fallbackIndex = 0) {
         return question.label.trim();
     }
 
+    // 2. Als er antwoorden zijn, voeg deze samen (bijv. "Antwoord 1, Antwoord 2, ...")
+    if (Array.isArray(question.answers) && question.answers.length > 0) {
+        return question.answers.join(', ');
+    }
+
+    // 3. Fallback naar videonaam (en negeer Base64-strings)
     const videoPath = (question.video || question.videoUrl || question.clip || '').toString();
-    if (videoPath.trim()) {
+    if (videoPath.trim() && !videoPath.startsWith('data:')) {
         const fileName = videoPath.split('/').pop() || videoPath;
         return fileName;
     }
 
+    // 4. Standaard fallback
     return `Fragment ${fallbackIndex + 1}`;
 }
 
@@ -413,8 +421,6 @@ function updateAnswerButton(answerIndex) {
     btn.disabled = true;
 }
 
-
-
 function nextCollectiefQuestion() {
     stopLoopTimer();
     
@@ -433,15 +439,8 @@ function nextCollectiefQuestion() {
 
         flash(`Start Fragment ${perRoundState.collectief.currentQuestionIndex + 1} voor ${players[activePlayerIndex].name}.`);
 
-        if (collectiefManualAssignmentEnabled) {
-            renderCollectiefHostUI('pre');
-            sendCollectiefDisplayUpdate('update', 'scene-round-collectief-pre');
-        } else {
-            startCollectiefVideo();
-        }
-        
+        startCollectiefVideo();
     } else {
-        
         endCollectiefRound();
     }
 }
@@ -562,10 +561,6 @@ function endCollectiefRound() {
     });
 }
 
-
-
-
-
 function renderCollectiefHostUI(phase = 'pre') {
     perRoundState.collectief.hostPhase = phase;
 
@@ -584,12 +579,14 @@ function renderCollectiefHostUI(phase = 'pre') {
         const assignedQuestion = currentQuestion || collectiefAssignedQuestionsByTurn[turnIndex] || null;
         const assignedLabel = assignedQuestion ? getCollectiefFragmentLabel(assignedQuestion, qIndex) : 'Nog niet gekozen';
 
-        currentQuestionEl.innerHTML = `
-            <em>Fragment ${qIndex + 1}/${perRoundState.collectief.questions.length}: ${activePlayerName} is aan de beurt.</em>
-            ${assignmentControls}
-            <div class="small muted" style="margin-top:8px;">Gekozen fragment: <strong>${assignedLabel}</strong></div>
-            ${assignedQuestion?.remarks ? `<div class="host-remarks">💬 ${assignedQuestion.remarks}</div>` : ''}
-        `;
+        if (typeof currentQuestionEl !== 'undefined' && currentQuestionEl) {
+            currentQuestionEl.innerHTML = `
+                <em>Fragment ${qIndex + 1}/${perRoundState.collectief.questions.length}: ${activePlayerName} is aan de beurt.</em>
+                ${assignmentControls}
+                <div class="small muted" style="margin-top:8px;">Gekozen fragment: <strong>${assignedLabel}</strong></div>
+                ${assignedQuestion?.remarks ? `<div class="host-remarks">💬 ${assignedQuestion.remarks}</div>` : ''}
+            `;
+        }
 
         html = `<button onclick="startCollectiefVideo()">Start Fragment ${qIndex + 1} Video (V)</button>`;
         controlsEl.innerHTML = html;
@@ -597,7 +594,9 @@ function renderCollectiefHostUI(phase = 'pre') {
     }
 
     if (!currentQuestion) {
-        currentQuestionEl.innerHTML = `<em>Geen Collectief Geheugen-fragment geselecteerd.</em>`;
+        if (typeof currentQuestionEl !== 'undefined' && currentQuestionEl) {
+            currentQuestionEl.innerHTML = `<em>Geen Collectief Geheugen-fragment geselecteerd.</em>`;
+        }
         controlsEl.innerHTML = '';
         return;
     }
@@ -606,42 +605,39 @@ function renderCollectiefHostUI(phase = 'pre') {
     const foundAnswers = currentQuestion.foundAnswers;
     const allFound = foundAnswers.length === answers.length;
 
-    
+    if (typeof currentQuestionEl !== 'undefined' && currentQuestionEl) {
+        currentQuestionEl.innerHTML = `
+            <em>Fragment ${qIndex + 1}/${perRoundState.collectief.questions.length}: ${activePlayerName} is aan de beurt.</em>
+            
+            <div style="margin-top:10px;">
+                <strong>Video:</strong>
+                <div style="margin-top:5px;">
+                    <button id="toggleAudioBtn">Audio Aan/Uit</button>
+                </div>
+            </div>
+            ${currentQuestion.remarks ? `<div class="host-remarks">💬 ${currentQuestion.remarks}</div>` : ''}
+            <div id="collectiefAnswerList" style="margin-top:10px; display:flex; flex-wrap:wrap; gap:10px;">
+                ${answers.map((ans, i) => {
+                    const found = foundAnswers.find(fa => fa.answer === ans);
+                    const display = found ? 
+                        `✅ (${i + 1}) ${ans} (${found.points}s)` : 
+                        `❓ (${i + 1}) ${ans}`;
+                    const className = found ? 'secondary' : 'primary';
+                    const disabled = found || phase !== 'main' ? 'disabled' : ''; 
+                    return `<button onclick="markCollectiefAnswer(${i})" class="${className}" ${disabled}>${display}</button>`;
+                }).join('')}
+            </div>
 
-currentQuestionEl.innerHTML = `
-    <em>Fragment ${qIndex + 1}/${perRoundState.collectief.questions.length}: ${activePlayerName} is aan de beurt.</em>
-    
-    <div style="margin-top:10px;">
-        <strong>Video:</strong>
-        <div style="margin-top:5px;">
-            <button id="toggleAudioBtn">Audio Aan/Uit</button>
-        </div>
-    </div>
-    ${currentQuestion.remarks ? `<div class="host-remarks">💬 ${currentQuestion.remarks}</div>` : ''}
-    <div id="collectiefAnswerList" style="margin-top:10px; display:flex; flex-wrap:wrap; gap:10px;">
-        ${answers.map((ans, i) => {
-            const found = foundAnswers.find(fa => fa.answer === ans);
-            const display = found ? 
-                `✅ (${i + 1}) ${ans} (${found.points}s)` : 
-                `❓ (${i + 1}) ${ans}`;
-            const className = found ? 'secondary' : 'primary';
-            const disabled = found || phase !== 'main' ? 'disabled' : ''; 
-            return `<button onclick="markCollectiefAnswer(${i})" class="${className}" ${disabled}>${display}</button>`;
-        }).join('')}
-    </div>
-
-    <video id="collectiefHostVideo" src="${currentQuestion.video}" muted playsinline style="max-width:100%; border:1px solid #ccc;"></video>
-
-`;
+            <video id="collectiefHostVideo" src="${currentQuestion.video}" muted playsinline style="max-width:100%; border:1px solid #ccc;"></video>
+        `;
+    }
 
     if (phase === 'video') {
-        
         html = `
             <button onclick="startCollectiefTimer()" id="collectiefStartTimer">Start Klok (T) voor ${activePlayerName}</button>
         `;
     } 
     else if (phase === 'main') {
-        
         const passDisabled = allFound ? 'disabled' : ''; 
         html = `
             <button onclick="startCollectiefTimer()" id="collectiefRestartTimer">Start Klok (T)</button>
@@ -649,16 +645,56 @@ currentQuestionEl.innerHTML = `
         `;
     } 
     else if (phase === 'answered') {
-        
-        const btnText = qIndex + 1 < perRoundState.collectief.questions.length ? 
-            `Start Volgende Fragment (${qIndex + 2})` : 'Einde Ronde';
+        const isLastQuestion = (qIndex + 1 >= perRoundState.collectief.questions.length);
+
+        if (isLastQuestion) {
+            // Markeer de ronde als klaar
+            if (typeof markCurrentRoundComplete === 'function') {
+                markCurrentRoundComplete();
+            }
+
+            if (players.length === 1) {
+                // BIJ 1 SPELER: Toon wel de Einde Ronde knop
+                html = `
+                    <div style="margin-top:10px; padding:10px; border:1px solid #c084fc; font-weight:bold;">
+                        Laatste fragment afgerond.
+                    </div>
+                    <button onclick="nextCollectiefQuestion()">Einde Ronde (N)</button>
+                `;
+            } else {
+                // BIJ 2 OF 3 SPELERS: Verberg de Einde Ronde knop. Toon alleen een statusbericht.
+                html = `
+                    <div style="margin-top:10px; padding:10px; border:1px solid #c084fc; font-weight:bold; background: rgba(192, 132, 252, 0.1);">
+                        Fragment ${qIndex + 1} Afgerond. Alle fragmenten zijn behandeld.<br>
+                        <em>Klik op <strong>Volgende ronde</strong> om door te gaan naar de finale.</em>
+                    </div>
+                `;
+            }
+        } else {
+            // Tussentijdse fragmenten (nog niet de laatste)
+            let nextControls = '';
             
-        html = `
-            <div style="margin-top:10px; padding:10px; border:1px solid #c084fc; font-weight:bold;">
-                Fragment ${qIndex + 1} Afgerond. Tussenstand bekendgemaakt.
-            </div>
-            <button onclick="nextCollectiefQuestion()">${btnText} (N)</button>
-        `;
+            if (collectiefManualAssignmentEnabled) {
+                const nextTurnIndex = (perRoundState.collectief.currentStarterTurn || 0) + 1;
+                const nextStarterIndex = perRoundState.collectief.starterOrder[nextTurnIndex] ?? perRoundState.collectief.starterOrder[perRoundState.collectief.starterOrder.length - 1];
+                
+                nextControls = `
+                    <div style="margin-top:12px; padding:10px; border-top:1px dashed #ccc;">
+                        ${renderCollectiefAssignmentControls(nextStarterIndex, nextTurnIndex)}
+                    </div>
+                `;
+            }
+
+            html = `
+                <div style="margin-top:10px; padding:10px; border:1px solid #c084fc; font-weight:bold;">
+                    Fragment ${qIndex + 1} Afgerond. Tussenstand bekendgemaakt.
+                </div>
+                ${nextControls}
+                <div style="margin-top:10px;">
+                    <button onclick="nextCollectiefQuestion()">Start Volgende Fragment (${qIndex + 2}) (N)</button>
+                </div>
+            `;
+        }
     }
 
     controlsEl.innerHTML = html;

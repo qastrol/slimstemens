@@ -418,7 +418,7 @@ else if (galleryPhase === 'slideshow') {
         ${canGoPreviousImage ? '<button class="secondary" onclick="showPreviousSlideshow()">Vorige afbeelding (←)</button>' : ''}
         ${canGoNextImage ? '<button class="secondary" onclick="showNextSlideshow()" style="margin-left:8px;">Volgende afbeelding (→)</button>' : ''}
         ${isLastGallery 
-          ? `<button onclick="endGalerijRound()" style="margin-left:8px;">Einde ronde scherm</button>` 
+          ? `<div></div>` 
            : `${renderGalerijAssignmentControls(nextPlayerIndex)}
              <button onclick="startNextGalerijStarter()" style="margin-left:8px;">Start volgende galerij (${nextPlayer.name}) (S)</button>`}
         <!-- ✅ Knop om display handmatig naar bespreekfase te sturen -->

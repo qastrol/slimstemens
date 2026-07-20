@@ -311,16 +311,21 @@
       }
 
       const openDisplayBtn = document.getElementById('openDisplayBtn');
+      const isElectronApp = !!(window && window.slimstemensDesktopBridge);
       if (openDisplayBtn) {
-        openDisplayBtn.addEventListener('click', () => {
-          const popup = window.open('display.html', 'width=1400,height=900');
-          if (!popup) {
-            alert('Kon display venster niet openen. Controleer of popups zijn toegestaan.');
-            return;
-          }
+        if (isElectronApp) {
+          openDisplayBtn.style.display = 'none';
+        } else {
+          openDisplayBtn.addEventListener('click', () => {
+            const popup = window.open('display.html', 'width=1400,height=900');
+            if (!popup) {
+              alert('Kon display venster niet openen. Controleer of popups zijn toegestaan.');
+              return;
+            }
 
-          // popup.focus();
-        });
+            // popup.focus();
+          });
+        }
       }
 
       // Player count selector logic

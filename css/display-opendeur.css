@@ -214,9 +214,9 @@
   border: 3px solid rgba(255,255,255,0.3);
 }
 
-.mini-lobby .player:nth-child(1) { top: 320px; left: 280px; }
-.mini-lobby .player:nth-child(2) { top: 320px; left: 430px; }
-.mini-lobby .player:nth-child(3) { top: 320px; right: 275px; }
+.mini-lobby .player:nth-child(1) { top: 290px; left: 280px; }
+.mini-lobby .player:nth-child(2) { top: 290px; left: 430px; }
+.mini-lobby .player:nth-child(3) { top: 290px; right: 275px; }
 
 .grid-part.part2 {
   grid-column: 2;
