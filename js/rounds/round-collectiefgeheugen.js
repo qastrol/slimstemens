@@ -477,7 +477,7 @@ function endCollectiefRound() {
         
         document.getElementById('roundControls').innerHTML = `
             <div style="margin-bottom: 10px;">
-                <p><strong>Het Collectief Geheugen - Solo Modus</strong></p>
+                <p><strong>Collectief Geheugen - Solo Modus</strong></p>
                 <p><strong>Kandidaat:</strong> ${player.name}</p>
                 <p><strong>Eindstand:</strong> ${Math.floor(player.seconds)} seconden</p>
             </div>
@@ -506,7 +506,7 @@ function endCollectiefRound() {
         
         document.getElementById('roundControls').innerHTML = `
             <div style="margin-bottom: 10px;">
-                <p><strong>Het Collectief Geheugen</strong></p>
+                <p><strong>Collectief Geheugen</strong></p>
                 <p><strong>Bij 2 spelers:</strong> Beide spelers gaan door naar de finale!</p>
                 <p><strong>Finalisten:</strong> ${finalistNames.join(' en ')}.</p>
             </div>
@@ -514,7 +514,7 @@ function endCollectiefRound() {
         `;
         
         currentQuestionEl.innerHTML = `
-            <em>Het Collectief Geheugen afgelopen. Bij 2 spelers valt er niemand af! Beide spelers spelen de finale.</em>
+            <em>Collectief Geheugen afgelopen. Bij 2 spelers valt er niemand af! Beide spelers spelen de finale.</em>
         `;
         
         sendDisplayUpdate({
@@ -549,7 +549,7 @@ function endCollectiefRound() {
     
     document.getElementById('roundControls').innerHTML = `
         <div style="margin-bottom: 10px;">
-            <p><strong>Het Collectief Geheugen</strong></p>
+            <p><strong>Collectief Geheugen</strong></p>
             ${afvaller ? `<p><strong>Afvaller:</strong> ${afvaller.name}</p>` : ''}
             ${slimsteVanDeDag ? `<p><strong>Slimste van de Dag:</strong> ${slimsteVanDeDag.name}</p>` : ''}
             <p><strong>Finalisten:</strong> ${finalistNames.join(' en ')}.</p>
@@ -558,7 +558,7 @@ function endCollectiefRound() {
     `;
 
     currentQuestionEl.innerHTML = `
-        <em>Het Collectief Geheugen afgelopen. Druk op 'Start Finale' om de Finalisten vast te stellen.</em>
+        <em>Collectief Geheugen afgelopen. Druk op 'Start Finale' om de Finalisten vast te stellen.</em>
     `;
 
     

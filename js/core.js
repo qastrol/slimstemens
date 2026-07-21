@@ -989,6 +989,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (introScriptArea) {
         introScriptArea.style.display = 'none';
       }
+
+      showPresenterScriptForPhase('lobbyBeforeThreeSixNine');
       
       // Reset button visibility
       startIntroBtn.style.display = 'inline-block';
