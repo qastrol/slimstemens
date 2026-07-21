@@ -1,8 +1,9 @@
 {
-  "name": "site",
+  "name": "de-slimste-mens",
+  "productName": "De Slimste Mens",
   "version": "1.0.0",
   "main": "electron-main.js",
-  "description": "De Slimste Mens - lokale host/display game tool",
+  "description": "De Slimste Mens game",
   "author": "qastrol",
   "private": true,
   "scripts": {
@@ -13,7 +14,7 @@
     "dist:win": "npm run clean:dist && electron-builder --win nsis",
     "dist:portable": "npm run clean:dist && electron-builder --win portable",
     "dist:linux": "npm run clean:dist && electron-builder --linux AppImage",
-    "dist:all": "npm run clean:dist && electron-builder --win nsis portable --linux AppImage deb"
+    "dist:all": "npm run clean:dist && electron-builder --win portable --linux AppImage"
   },
   "keywords": [],
   "license": "ISC",
@@ -52,7 +53,8 @@
       "target": [
         "nsis",
         "portable"
-      ]
+      ],
+      "icon": "assets/slimstemens.ico" 
     },
     "linux": {
       "target": ["AppImage", "deb"],

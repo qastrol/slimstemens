@@ -1,6 +1,9 @@
 const { app, BrowserWindow, dialog, ipcMain } = require('electron');
 const path = require('path');
 
+app.setName('De Slimste Mens');
+app.setAppUserModelId('nl.slimstemens.desktop');
+
 let hostWindow = null;
 let displayWindow = null;
 
