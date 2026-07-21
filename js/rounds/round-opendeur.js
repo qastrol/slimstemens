@@ -227,7 +227,7 @@ function markOpenDeurAnswer(ansIndex){
   if(q.answered.every(a => a)){
     if (typeof stopThinkingCountdownTimer === 'function') stopThinkingCountdownTimer(false);
     flash(`Vraag "${q.from}" volledig opgelost!`);
-    playSFX('SFX/goed.mp3');
+    // playSFX('SFX/goed.mp3');
 
     
     sendOpenDeurDisplayUpdate('vraag_voltooid', 'scene-round-opendeur-vraag');

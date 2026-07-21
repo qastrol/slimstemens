@@ -309,7 +309,7 @@ function startFinaleTimer() {
             sendFinaleDisplayUpdate('update', 'scene-round-finale-main');
         },
         onTimeout: (player) => {
-            stopFinaleTimer(true);
+            stopFinaleTimer(false);
             flash(`${player.name} is door zijn tijd heen!`);
             const winner = checkFinaleEnd();
             if (winner) {
