@@ -295,8 +295,17 @@ function renderPlayers(){
     playersArea.appendChild(el);
   });
 
-  const activeDisplayIndex = players.findIndex(p => p.index === activePlayerIndex);
-  const safeActiveIndex = activeDisplayIndex !== -1 ? activeDisplayIndex : activePlayerIndex;
+  // Zoek de speler eerst op ID/index, anders val terug op de actieve index als geldige array-index
+  let safeActiveIndex = players.findIndex(p => p.index === activePlayerIndex);
+  
+  if (safeActiveIndex === -1) {
+    // Als er geen matchende p.index is, controleer of activePlayerIndex rechtstreeks binnen de array-grenzen valt
+    if (activePlayerIndex >= 0 && activePlayerIndex < players.length) {
+      safeActiveIndex = activePlayerIndex;
+    } else {
+      safeActiveIndex = 0;
+    }
+  }
 
   sendDisplayUpdate({
     type: 'players',
