@@ -36,6 +36,20 @@ function createWindows() {
   const windowIcon = path.join(__dirname, 'assets', 'slimstemens.ico');
   const preloadPath = path.join(__dirname, 'js', 'electron-bridge.js');
 
+  displayWindow = new BrowserWindow({
+    width: 1920,
+    height: 1080,
+    title: 'De Slimste Mens - Display',
+    autoHideMenuBar: true,
+    icon: windowIcon,
+    webPreferences: {
+      backgroundThrottling: false,
+      contextIsolation: true,
+      nodeIntegration: false,
+      preload: preloadPath
+    }
+  });
+
   hostWindow = new BrowserWindow({
     width: 1400,
     height: 900,
@@ -52,22 +66,11 @@ function createWindows() {
     }
   });
 
-  displayWindow = new BrowserWindow({
-    width: 1920,
-    height: 1080,
-    title: 'De Slimste Mens - Display',
-    autoHideMenuBar: true,
-    icon: windowIcon,
-    webPreferences: {
-      backgroundThrottling: false,
-      contextIsolation: true,
-      nodeIntegration: false,
-      preload: preloadPath
-    }
-  });
 
-  hostWindow.loadFile(path.join(__dirname, 'index.html'));
+
   displayWindow.loadFile(path.join(__dirname, 'display.html'));
+    hostWindow.loadFile(path.join(__dirname, 'index.html'));
+
 
   applyWindowChromeDefaults(hostWindow);
   applyWindowChromeDefaults(displayWindow);
