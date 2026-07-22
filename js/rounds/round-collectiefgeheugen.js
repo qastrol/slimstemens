@@ -199,7 +199,6 @@ function setupCollectiefRound() {
         return;
     }
     
-    
     // Check of shuffle aan of uit staat
     const shouldShuffle = shouldShuffleRound('collectief');
     const questionPool = shouldShuffle
@@ -227,27 +226,24 @@ function setupCollectiefRound() {
     
     perRoundState.collectief.currentQuestionIndex = 0;
     perRoundState.collectief.firstQuestionReached = false;
-    perRoundState.collectief.starterOrder = (typeof getStarterOrderByLowestSeconds === 'function')
-        ? getStarterOrderByLowestSeconds(questionsCount)
-        : players
-            .map((p, i) => ({ i, seconds: p.seconds }))
-            .sort((a, b) => a.seconds - b.seconds || a.i - b.i)
-            .map(p => p.i)
-            .slice(0, questionsCount);
+    
+    // Bepaal de eerste startspeler dynamisch op basis van de LAAGSTE score
+    const lowestPlayerIndex = players
+        .map((p, i) => ({ i, seconds: p.seconds }))
+        .sort((a, b) => a.seconds - b.seconds || a.i - b.i)[0].i;
+
+    perRoundState.collectief.startedPlayerIndices = [lowestPlayerIndex];
     perRoundState.collectief.currentStarterTurn = 0;
     
-    
-    activePlayerIndex = perRoundState.collectief.starterOrder[0];
+    activePlayerIndex = lowestPlayerIndex;
     highlightActive();
 
-    
     renderCollectiefHostUI('pre');
 
     if (typeof showPresenterScriptForPhase === 'function') {
         showPresenterScriptForPhase('collectiefFirstQuestion');
     }
 
-    
     sendCollectiefDisplayUpdate('round_start', 'scene-round-collectief-pre');
 
     flash(`Collectief Geheugen klaar. Speler ${players[activePlayerIndex].name} start met fragment 1.`);
@@ -441,11 +437,26 @@ function nextCollectiefQuestion() {
     if (perRoundState.collectief.currentQuestionIndex < perRoundState.collectief.questions.length) {
         perRoundState.collectief.currentStarterTurn = (perRoundState.collectief.currentStarterTurn || 0) + 1;
 
-        if (perRoundState.collectief.currentStarterTurn < perRoundState.collectief.starterOrder.length) {
-            activePlayerIndex = perRoundState.collectief.starterOrder[perRoundState.collectief.currentStarterTurn];
+        // Kies dynamisch de kandidaat die nog NIET gestart is met de LAAGSTE actuele score:
+        const started = perRoundState.collectief.startedPlayerIndices || [];
+        const availableToStart = players
+            .map((p, i) => ({ index: i, seconds: p.seconds }))
+            .filter(p => !started.includes(p.index))
+            .sort((a, b) => a.seconds - b.seconds || a.index - b.index);
+
+        if (availableToStart.length > 0) {
+            activePlayerIndex = availableToStart[0].index;
         } else {
-            activePlayerIndex = perRoundState.collectief.starterOrder[perRoundState.collectief.starterOrder.length - 1];
+            // Als iedereen al een keer gestart is, neem de kandidaat met de allerlaagste actuele score
+            activePlayerIndex = players
+                .map((p, i) => ({ index: i, seconds: p.seconds }))
+                .sort((a, b) => a.seconds - b.seconds || a.index - b.index)[0].index;
         }
+
+        if (!perRoundState.collectief.startedPlayerIndices) {
+            perRoundState.collectief.startedPlayerIndices = [];
+        }
+        perRoundState.collectief.startedPlayerIndices.push(activePlayerIndex);
         
         highlightActive();
 
@@ -660,13 +671,11 @@ function renderCollectiefHostUI(phase = 'pre') {
         const isLastQuestion = (qIndex + 1 >= perRoundState.collectief.questions.length);
 
         if (isLastQuestion) {
-            // Markeer de ronde als klaar
             if (typeof markCurrentRoundComplete === 'function') {
                 markCurrentRoundComplete();
             }
 
             if (players.length === 1) {
-                // BIJ 1 SPELER: Toon wel de Einde Ronde knop
                 html = `
                     <div style="margin-top:10px; padding:10px; border:1px solid #c084fc; font-weight:bold;">
                         Laatste fragment afgerond.
@@ -674,7 +683,6 @@ function renderCollectiefHostUI(phase = 'pre') {
                     <button onclick="nextCollectiefQuestion()">Einde Ronde (N)</button>
                 `;
             } else {
-                // BIJ 2 OF 3 SPELERS: Verberg de Einde Ronde knop. Toon alleen een statusbericht.
                 html = `
                     <div style="margin-top:10px; padding:10px; border:1px solid #c084fc; font-weight:bold; background: rgba(192, 132, 252, 0.1);">
                         Fragment ${qIndex + 1} Afgerond. Alle fragmenten zijn behandeld.<br>
@@ -683,13 +691,22 @@ function renderCollectiefHostUI(phase = 'pre') {
                 `;
             }
         } else {
-            // Tussentijdse fragmenten (nog niet de laatste)
             let nextControls = '';
             
             if (collectiefManualAssignmentEnabled) {
                 const nextTurnIndex = (perRoundState.collectief.currentStarterTurn || 0) + 1;
-                const nextStarterIndex = perRoundState.collectief.starterOrder[nextTurnIndex] ?? perRoundState.collectief.starterOrder[perRoundState.collectief.starterOrder.length - 1];
                 
+                // Bereken wie de volgende dynamische starter zal zijn op basis van huidige scores
+                const started = perRoundState.collectief.startedPlayerIndices || [];
+                const availableToStart = players
+                    .map((p, i) => ({ index: i, seconds: p.seconds }))
+                    .filter(p => !started.includes(p.index))
+                    .sort((a, b) => a.seconds - b.seconds || a.index - b.index);
+
+                const nextStarterIndex = availableToStart.length > 0 
+                    ? availableToStart[0].index 
+                    : players.map((p, i) => ({ index: i, seconds: p.seconds })).sort((a, b) => a.seconds - b.seconds)[0].index;
+
                 nextControls = `
                     <div style="margin-top:12px; padding:10px; border-top:1px dashed #ccc;">
                         ${renderCollectiefAssignmentControls(nextStarterIndex, nextTurnIndex)}
