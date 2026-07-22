@@ -815,6 +815,13 @@ if (applauseBtn) {
   });
 }
 
+const goedBtn = document.getElementById('playGoed');
+if (goedBtn) {
+  goedBtn.addEventListener('click', () => {
+    sendDisplayUpdate({ type: 'audio', action: 'play', src: 'SFX/goed.mp3' });
+  });
+}
+
 const klokBtn = document.getElementById('playKlok');
 if (klokBtn) {
   klokBtn.addEventListener('click', () => {
