@@ -390,7 +390,7 @@ function renderPuzzelDisplay(puzzel) {
   rc.innerHTML = `
     <button id="startTimerBtn" onclick="startPuzzelTimer()" class="bank">Start Timer (T)</button>
     <div id="checkLinks" class="button-row" style="flex-wrap: wrap;">${checkLinkButtons}</div>
-    <button id="puzzelPassBtn" onclick="passPuzzel()" class="secondary" style="margin-top: 10px;" disabled>Pas (P)</button>
+    <button id="puzzelPassBtn" onclick="passPuzzel()" class="secondary" style="margin-top: 10px;" ${disabledAttr}>Pas (P)</button>
   `;
 
 sendPuzzelDisplayUpdate('scene-round-puzzel-active', {
