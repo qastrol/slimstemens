@@ -532,18 +532,9 @@ function passPuzzel() {
     highlightActive();
     renderPuzzelDisplay(puzzel);
     flash(`Beurt naar ${players[activePlayerIndex].name} (volgende laagste tijd).`);
-      sendPuzzelDisplayUpdate('scene-round-puzzel-active', {
-    puzzelWords: puzzel.currentWords.map(w => ({
-      text: w,
-      found: !puzzel.remainingWords.includes(w),
-      linkIndex: null
-    })),
-    puzzelLinks: puzzel.links.map(link => ({
-      link: link.link,
-      found: puzzel.foundLinks.includes(link),
-      timeGain: 30
-    }))
-  });
+    // Geen aparte display-update sturen: renderPuzzelDisplay() verstuurt al de
+    // correcte update (met linkIndex per gevonden woord). Een tweede update met
+    // linkIndex: null zou de gevonden woorden in de tabel laten 'doven'.
   } else {
     
     showPuzzelSolution(puzzel);
