@@ -158,7 +158,7 @@ const finaleVragen = [
         ]
     },
     {
-        question: 'Wat weet jij van de groente wortels?',
+        question: 'Wat weet jij van wortels?',
         answers: [
             'Peen',
             'Oranje',
@@ -183,7 +183,7 @@ const finaleVragen = [
             'Lijst Pim Fortuyn',
             'Veel zetels na moord',
             'Regering',
-            'Mat Herren',
+            'Mat Herben',
             'Immigratie/Integratie'
         ]
     },
@@ -508,7 +508,7 @@ const finaleVragen = [
         ]
     },
     {
-        question: "Wat weet u over Isaac Newton?",
+        question: "Wat weet u over Newton?",
         answers: [
             "Isaac",
             "Brit",
