@@ -122,6 +122,23 @@
       </div>
     </div>
 
+    <div id="scene-standings" class="scene">
+      <div class="round-grid">
+        <div class="grid-part part1">
+          <div class="mini-lobby">
+            <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
+            <div id="standingsMiniLobby"></div>
+          </div>
+        </div>
+        <div class="grid-part part2 standings-heading">
+          <div class="round-name">Tussenstand</div>
+        </div>
+        <div class="grid-part part3">
+          <div id="standingsPlayersBar" class="players-bar"></div>
+        </div>
+      </div>
+    </div>
+
     <div id="scene-round-369-video" class="scene" style="background:#000;">
       <video id="threeSixNineVideoPlayer" style="width:100%;height:100%;object-fit:contain;" autoplay>
         <source id="threeSixNineVideoSource" src="" type="video/mp4">
@@ -660,7 +677,8 @@
 
     <!-- Jury Overlay -->
     <div id="juryOverlay" style="display:none;">
-      <img src="assets/jury.png" alt="Jury" class="jury-image" />
+      <img id="juryImage" src="assets/jury.png" alt="Jury" class="jury-image" />
+      <img id="juryMemberPhoto" alt="Aangepast jurylid" class="jury-member-photo" style="display:none;" />
     </div>
 
     <div id="flashMessage"></div>

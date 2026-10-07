@@ -1,5 +1,6 @@
 let currentScene = null;
 let players = [];
+let showingStandings = false;
 let defaultThreeSixNineMax = 12;
 let perRoundState = { max: defaultThreeSixNineMax };
 let allGalleryAnswers = []; 
@@ -93,7 +94,7 @@ if (window.pendingUiConfig) {
 
 function updateScene(sceneName) {
     document.querySelectorAll('.scene').forEach(s => {
-        s.style.display = (s.id === `scene-${sceneName}`) ? 'flex' : 'none';
+  s.style.display = (s.id === `scene-${sceneName}` || (showingStandings && s.id === 'scene-standings')) ? 'flex' : 'none';
     });
     currentScene = sceneName;
   refreshVisibleOverlaysPosition();
@@ -278,17 +279,22 @@ function applyOverlayPosition(overlayEl) {
   const fullscreenScenes = new Set([
     'lobby',
     'waiting-game',
+    'waiting-host',
     'round-opendeur-lobby',
     'round-opendeur-video'
   ]);
   const isThreeSixNineScene = currentScene === 'round-369';
+  const finaleLobby = currentScene === 'round-finale-end'
+    ? document.querySelector('#scene-round-finale-end .finale-lobby-content')
+    : null;
+  const isFinaleLobbyFullscreen = !!finaleLobby && getComputedStyle(finaleLobby).display !== 'none';
 
   overlayEl.classList.remove('mini-lobby-mode', 'mini-right', 'mini-369');
   if (isThreeSixNineScene) {
     overlayEl.classList.add('mini-369');
   }
 
-  if (fullscreenScenes.has(currentScene)) {
+  if (fullscreenScenes.has(currentScene) || isFinaleLobbyFullscreen) {
     overlayEl.classList.add('fullscreen');
     applyOverlayBounds(overlayEl, { left: 0, top: 0, width: 1920, height: 1080 });
     return;
@@ -602,6 +608,11 @@ function handleAudioMessage(data) {
         const presenterOverlay = document.getElementById('presenterOverlay');
         const presenterPhoto = document.getElementById('presenterPhoto');
         const juryOverlay = document.getElementById('juryOverlay');
+
+        if (data.showing && showingStandings) {
+          showingStandings = false;
+          updateScene(currentScene || 'lobby');
+        }
         
         if (data.showing && data.photoData) {
           if (juryOverlay) juryOverlay.style.display = 'none';
@@ -619,13 +630,39 @@ function handleAudioMessage(data) {
       case 'jury_toggle': {
         const juryOverlay = document.getElementById('juryOverlay');
         const presenterOverlay = document.getElementById('presenterOverlay');
+        const juryImage = document.getElementById('juryImage');
+        const juryMemberPhoto = document.getElementById('juryMemberPhoto');
+        if (data.showing && showingStandings) {
+          showingStandings = false;
+          updateScene(currentScene || 'lobby');
+        }
         if (data.showing) {
           if (presenterOverlay) presenterOverlay.style.display = 'none';
+          const customJury = data.mode === 'custom' && data.photoData;
+          if (juryImage) juryImage.src = customJury ? 'assets/jurystoel.png' : 'assets/jury.png';
+          if (juryMemberPhoto) {
+            juryMemberPhoto.src = customJury ? data.photoData : '';
+            juryMemberPhoto.style.display = customJury ? 'block' : 'none';
+          }
           applyOverlayPosition(juryOverlay);
           if (juryOverlay) juryOverlay.style.display = 'flex';
         } else if (juryOverlay) {
           juryOverlay.style.display = 'none';
         }
+        break;
+      }
+
+      case 'scoreboard_toggle': {
+        showingStandings = !!data.showing;
+        if (Array.isArray(data.players)) players = data.players;
+        if (showingStandings) {
+          const presenterOverlay = document.getElementById('presenterOverlay');
+          const juryOverlay = document.getElementById('juryOverlay');
+          if (presenterOverlay) presenterOverlay.style.display = 'none';
+          if (juryOverlay) juryOverlay.style.display = 'none';
+          renderStandings(players);
+        }
+        updateScene(currentScene || 'lobby');
         break;
       }
 
@@ -1264,6 +1301,14 @@ function renderPlayersBarCompact(players, activeIndex, containerId) {
     `).join('');
 }
 
+function renderStandings(playersData) {
+  if (!Array.isArray(playersData)) return;
+
+  players = playersData;
+  renderMiniLobby(playersData, 'standingsMiniLobby');
+  renderPlayersBarUniversal(null, null, 'standingsPlayersBar');
+}
+
   function updatePlayersBarsFromGeneric(playersData, activeIndex) {
     if (!playersData || !playersData.length) return;
 
@@ -1297,6 +1342,8 @@ function renderPlayersBarCompact(players, activeIndex, containerId) {
         renderPlayersBarCompact(playersData, activeIndex, id);
       }
     });
+
+    if (showingStandings) renderStandings(playersData);
   }
 
 
@@ -2377,6 +2424,7 @@ function handleFinaleViewChange(data) {
     if (winnerContent) {
       winnerContent.style.display = 'none';
     }
+    refreshVisibleOverlaysPosition();
   } else {
     // Switch naar finale end scene
     updateScene('round-finale-end');
@@ -2455,6 +2503,7 @@ function handleFinaleViewChange(data) {
     if (lobbyContent) {
       lobbyContent.style.display = 'none';
     }
+    refreshVisibleOverlaysPosition();
   }
 }
 

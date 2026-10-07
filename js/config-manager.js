@@ -739,6 +739,9 @@ function getDefaultConfig() {
         titlePrefix: DEFAULT_BRANDING_SETTINGS.titlePrefix,
         titleSuffix: DEFAULT_BRANDING_SETTINGS.titleSuffix,
         logoPath: DEFAULT_BRANDING_SETTINGS.logoPath
+      },
+      scoreboard: {
+        enabled: true
       }
     },
     threeSixNine: [],

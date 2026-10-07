@@ -42,6 +42,13 @@
           </label>
         </div>
 
+                <div style="margin-top:10px;">
+          <label>
+            <input type="checkbox" id="scoreboardEnabledCheckbox" checked />
+            Tussenstand tonen (optioneel)
+          </label>
+        </div>
+
         <div style="margin-top:10px;">
           <label>
             <input type="checkbox" id="safeRoundNavigationCheckbox" />
@@ -68,6 +75,18 @@
             <input type="checkbox" id="juryEnabledCheckbox" />
             Jury tonen (optioneel)
           </label>
+          <div id="juryOptions" style="display:none;margin-top:10px;">
+            <label for="juryTypeSelect">Jurybeeld:</label>
+            <select id="juryTypeSelect">
+              <option value="standard">Standaardjury</option>
+              <option value="custom">Aangepast jurylid</option>
+            </select>
+            <div id="juryPhotoOptions" style="display:none;margin-top:10px;">
+              <label for="juryPhoto">Upload afbeelding jurylid:</label>
+              <input id="juryPhoto" type="file" accept="image/*" />
+              <div id="juryPhotoStatus" style="font-size:0.85em;color:#666;margin-top:5px;"></div>
+            </div>
+          </div>
         </div>
 
         <hr class="divider" />
@@ -118,11 +137,17 @@
 
         <hr class="divider" />
         <div>
-          <label>Aantal vragen 3-6-9 (standaard 12)</label>
+          <label for="rulesetSelect">Spelregels</label>
+          <select id="rulesetSelect">
+            <option value="flemish" selected>Vlaams - De Slimste Mens ter Wereld</option>
+            <option value="dutch">Nederlands - De Slimste Mens</option>
+          </select>
+        </div>
+
+        <div style="height:8px"></div>
+        <div>
+          <label>Aantal vragen 3-6-9</label>
           <input id="threeSixNineCount" type="number" min="1" max="50" value="12" />
-          <div class="controls">
-            <button id="setThreeSixNineCountBtn" class="secondary">Aantal vragen instellen</button>
-          </div>
         </div>
 
         <div style="height:8px"></div>
@@ -186,6 +211,11 @@
 
         <div id="juryControlArea" class="button-row" style="display:none;margin-top:10px;">
           <button id="toggleJuryView" class="secondary">Wissel naar Jury</button>
+        </div>
+
+
+        <div id="scoreboardControlArea" class="button-row" style="display:none;margin-top:10px;">
+          <button id="toggleScoreboardView" class="secondary">Toon tussenstand</button>
         </div>
 
         <div class="question-area" id="currentQuestion">
@@ -355,12 +385,60 @@
         });
       }
 
+      const rulesetSelect = document.getElementById('rulesetSelect');
+      const threeSixNineInput = document.getElementById('threeSixNineCount');
+      if (threeSixNineInput) {
+        threeSixNineInput.addEventListener('change', function () {
+          const count = parseInt(this.value, 10);
+          if (typeof setThreeSixNineMax === 'function') {
+            setThreeSixNineMax(count);
+          }
+
+          if (typeof gameConfig !== 'undefined' && gameConfig && !isNaN(count) && count > 0) {
+            gameConfig.settings = gameConfig.settings || {};
+            gameConfig.settings.threeSixNine = gameConfig.settings.threeSixNine || {};
+            gameConfig.settings.threeSixNine.maxQuestions = count;
+          }
+        });
+      }
+
+      if (rulesetSelect) {
+        rulesetSelect.addEventListener('change', function () {
+          const isDutchRules = this.value === 'dutch';
+          const threeSixNineCount = isDutchRules ? 15 : 12;
+          const galerijPhotoCount = isDutchRules ? 8 : 10;
+          const threeSixNineInput = document.getElementById('threeSixNineCount');
+          const galerijPhotoSelect = document.getElementById('galerijPhotoCount');
+
+          if (threeSixNineInput) threeSixNineInput.value = threeSixNineCount;
+          if (typeof setThreeSixNineMax === 'function') {
+            setThreeSixNineMax(threeSixNineCount);
+          }
+          if (galerijPhotoSelect) {
+            galerijPhotoSelect.value = galerijPhotoCount;
+            galerijPhotoSelect.dispatchEvent(new Event('change'));
+          }
+
+          if (typeof gameConfig !== 'undefined' && gameConfig) {
+            gameConfig.settings = gameConfig.settings || {};
+            gameConfig.settings.threeSixNine = gameConfig.settings.threeSixNine || {};
+            gameConfig.settings.threeSixNine.maxQuestions = threeSixNineCount;
+            gameConfig.settings.galerij = gameConfig.settings.galerij || {};
+            gameConfig.settings.galerij.photoCount = galerijPhotoCount;
+          }
+        });
+      }
+
       // Presentator functie event listeners
       let presenterEnabled = false;
       let presenterPhotoData = null;
       let showingPresenter = false;
       let juryEnabled = false;
       let showingJury = false;
+      let juryMode = 'standard';
+      let juryPhotoData = null;
+      let scoreboardEnabled = true;
+      let showingScoreboard = false;
 
       const presenterCheckbox = document.getElementById('presenterEnabledCheckbox');
       if (presenterCheckbox) {
@@ -387,10 +465,32 @@
       }
 
       const juryCheckbox = document.getElementById('juryEnabledCheckbox');
+      const juryTypeSelect = document.getElementById('juryTypeSelect');
+      const juryPhotoInput = document.getElementById('juryPhoto');
+      const juryOptions = document.getElementById('juryOptions');
+      const juryPhotoOptions = document.getElementById('juryPhotoOptions');
+
+      function updateJuryOptions() {
+        if (juryOptions) juryOptions.style.display = juryEnabled ? 'block' : 'none';
+        if (juryPhotoOptions) juryPhotoOptions.style.display = juryMode === 'custom' ? 'block' : 'none';
+      }
+
+      function sendJuryToggle(showing) {
+        if (typeof sendDisplayUpdate !== 'undefined') {
+          sendDisplayUpdate({
+            type: 'jury_toggle',
+            showing,
+            mode: juryMode,
+            photoData: juryPhotoData
+          });
+        }
+      }
+
       if (juryCheckbox) {
         juryCheckbox.addEventListener('change', function () {
           juryEnabled = this.checked;
           const juryControlArea = document.getElementById('juryControlArea');
+          updateJuryOptions();
 
           if (juryEnabled) {
             juryControlArea.style.display = 'flex';
@@ -399,8 +499,56 @@
             showingJury = false;
             const toggleJuryBtn = document.getElementById('toggleJuryView');
             if (toggleJuryBtn) toggleJuryBtn.textContent = 'Wissel naar Jury';
+            sendJuryToggle(false);
+          }
+        });
+      }
+
+      if (juryTypeSelect) {
+        juryTypeSelect.addEventListener('change', function () {
+          juryMode = this.value;
+          updateJuryOptions();
+          if (showingJury && (juryMode === 'standard' || juryPhotoData)) sendJuryToggle(true);
+        });
+      }
+
+      if (juryPhotoInput) {
+        juryPhotoInput.addEventListener('change', function () {
+          const file = this.files[0];
+          if (!file) return;
+
+          const reader = new FileReader();
+          reader.onload = function (event) {
+            juryPhotoData = event.target.result;
+            const status = document.getElementById('juryPhotoStatus');
+            if (status) {
+              status.textContent = '✓ Afbeelding geladen: ' + file.name;
+              status.style.color = '#4ade80';
+            }
+            if (showingJury && juryMode === 'custom') sendJuryToggle(true);
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+
+      const scoreboardCheckbox = document.getElementById('scoreboardEnabledCheckbox');
+      const scoreboardControlArea = document.getElementById('scoreboardControlArea');
+      const toggleScoreboardBtn = document.getElementById('toggleScoreboardView');
+      if (scoreboardCheckbox) {
+        scoreboardEnabled = scoreboardCheckbox.checked;
+        if (scoreboardControlArea) {
+          scoreboardControlArea.style.display = scoreboardEnabled ? 'flex' : 'none';
+        }
+        scoreboardCheckbox.addEventListener('change', function () {
+          scoreboardEnabled = this.checked;
+          if (scoreboardControlArea) {
+            scoreboardControlArea.style.display = scoreboardEnabled ? 'flex' : 'none';
+          }
+          if (!scoreboardEnabled && showingScoreboard) {
+            showingScoreboard = false;
+            if (toggleScoreboardBtn) toggleScoreboardBtn.textContent = 'Toon tussenstand';
             if (typeof sendDisplayUpdate !== 'undefined') {
-              sendDisplayUpdate({ type: 'jury_toggle', showing: false });
+              sendDisplayUpdate({ type: 'scoreboard_toggle', showing: false });
             }
           }
         });
@@ -501,6 +649,12 @@
         if (jurySettings && juryCheckbox && jurySettings.enabled !== undefined) {
           juryCheckbox.checked = !!jurySettings.enabled;
           juryCheckbox.dispatchEvent(new Event('change'));
+        }
+
+        const scoreboardSettings = config.settings.scoreboard;
+        if (scoreboardSettings && scoreboardCheckbox && scoreboardSettings.enabled !== undefined) {
+          scoreboardCheckbox.checked = !!scoreboardSettings.enabled;
+          scoreboardCheckbox.dispatchEvent(new Event('change'));
         }
 
         // Bumpers instelling
@@ -708,8 +862,10 @@
 
           if (showingPresenter) {
             showingJury = false;
+            showingScoreboard = false;
             const juryBtn = document.getElementById('toggleJuryView');
             if (juryBtn) juryBtn.textContent = 'Wissel naar Jury';
+            if (toggleScoreboardBtn) toggleScoreboardBtn.textContent = 'Toon tussenstand';
           }
 
           // Stuur WebSocket bericht naar display
@@ -737,6 +893,10 @@
             alert('Zet eerst "Jury tonen" aan.');
             return;
           }
+          if (juryMode === 'custom' && !juryPhotoData) {
+            alert('Upload eerst een afbeelding van het aangepaste jurylid.');
+            return;
+          }
 
           showingJury = !showingJury;
           const btn = document.getElementById('toggleJuryView');
@@ -744,15 +904,14 @@
 
           if (showingJury) {
             showingPresenter = false;
+            showingScoreboard = false;
             const presenterBtn = document.getElementById('togglePresenterView');
             if (presenterBtn) presenterBtn.textContent = 'Wissel naar Presentator';
+            if (toggleScoreboardBtn) toggleScoreboardBtn.textContent = 'Toon tussenstand';
           }
 
           if (typeof sendDisplayUpdate !== 'undefined') {
-            sendDisplayUpdate({
-              type: 'jury_toggle',
-              showing: showingJury
-            });
+            sendJuryToggle(showingJury);
 
             if (showingJury) {
               sendDisplayUpdate({
@@ -761,6 +920,32 @@
                 photoData: null
               });
             }
+          }
+        });
+      }
+
+      if (toggleScoreboardBtn) {
+        toggleScoreboardBtn.addEventListener('click', function () {
+          if (!scoreboardEnabled) return;
+
+          showingScoreboard = !showingScoreboard;
+          toggleScoreboardBtn.textContent = showingScoreboard ? 'Terug naar kandidaten' : 'Toon tussenstand';
+
+          if (showingScoreboard) {
+            showingPresenter = false;
+            showingJury = false;
+            const presenterBtn = document.getElementById('togglePresenterView');
+            const juryBtn = document.getElementById('toggleJuryView');
+            if (presenterBtn) presenterBtn.textContent = 'Wissel naar Presentator';
+            if (juryBtn) juryBtn.textContent = 'Wissel naar Jury';
+          }
+
+          if (typeof sendDisplayUpdate !== 'undefined') {
+            if (showingScoreboard) {
+              sendDisplayUpdate({ type: 'presenter_toggle', showing: false, photoData: null });
+              sendDisplayUpdate({ type: 'jury_toggle', showing: false });
+            }
+            sendDisplayUpdate({ type: 'scoreboard_toggle', showing: showingScoreboard, players });
           }
         });
       }

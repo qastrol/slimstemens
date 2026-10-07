@@ -1045,7 +1045,11 @@ function handleRoundHotkey(key) {
   }
 
   if (key === 't') {
-    if (round === 'opendeur' && typeof startOpenDeurTimer === 'function') { startOpenDeurTimer(); return true; }
+    if (round === 'opendeur') {
+      if (perRoundState?.openDeurAwaitingReturn || !perRoundState?.currentQuestion) return false;
+      if (typeof startOpenDeurTimer === 'function') { startOpenDeurTimer(); return true; }
+      return false;
+    }
     if (round === 'puzzel' && typeof startPuzzelTimer === 'function') { startPuzzelTimer(); return true; }
     if (round === 'galerij' && typeof startGalerijTimer === 'function') { startGalerijTimer(); return true; }
     if (round === 'collectief' && typeof startCollectiefTimer === 'function') { startCollectiefTimer(); return true; }
@@ -1081,7 +1085,11 @@ function handleRoundHotkey(key) {
   }
 
   if (key === 'p') {
-    if (round === 'opendeur' && typeof passOpenDeur === 'function') { passOpenDeur(); return true; }
+    if (round === 'opendeur') {
+      if (perRoundState?.openDeurAwaitingReturn || !perRoundState?.currentQuestion) return false;
+      if (typeof passOpenDeur === 'function') { passOpenDeur(); return true; }
+      return false;
+    }
     if (round === 'puzzel' && typeof passPuzzel === 'function') { passPuzzel(); return true; }
     if (round === 'galerij') {
       if (galleryPhase === 'aanvul' && typeof nextAanvulTurn === 'function') { nextAanvulTurn(); return true; }
@@ -1171,6 +1179,7 @@ function handleRoundHotkey(key) {
 
   if (numberIndex !== null) {
     if (round === 'opendeur') {
+      if (perRoundState?.openDeurAwaitingReturn) return false;
       if (!perRoundState?.currentQuestion && typeof chooseOpenDeurQuestion === 'function') {
         const remainingQuestions = (perRoundState?.questions || []).filter((q) => !q.played);
         if (numberIndex < remainingQuestions.length) {

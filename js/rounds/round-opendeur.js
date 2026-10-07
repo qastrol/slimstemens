@@ -55,6 +55,8 @@ function setupOpenDeurRound() {
   perRoundState.openDeurStarterOrder = [...perRoundState.remainingPlayers];
   perRoundState.playersWhoChoseQuestion = []; 
   perRoundState.currentQuestion = null;
+  perRoundState.openDeurAwaitingReturn = false;
+  perRoundState.allPlayersHavePassed = false;
   perRoundState.openDeurFirstQuestionReached = false;
   currentQuestionIndex = 0;
 
@@ -93,6 +95,8 @@ function renderOpenDeurChoices() {
       const rc = document.getElementById('roundControls');
       if (rc) rc.innerHTML = '';
       perRoundState.currentQuestion = null;
+      perRoundState.openDeurAwaitingReturn = false;
+      perRoundState.allPlayersHavePassed = false;
       if (typeof markCurrentRoundComplete === 'function') {
         markCurrentRoundComplete();
       }
@@ -116,6 +120,8 @@ function chooseOpenDeurQuestion(index){
   q.played = true;
   q.introVideoPlayed = false;
   perRoundState.currentQuestion = q;
+  perRoundState.openDeurAwaitingReturn = false;
+  perRoundState.allPlayersHavePassed = false;
 
   if (!perRoundState.openDeurFirstQuestionReached) {
     if (typeof hidePresenterScript === 'function') {
@@ -189,6 +195,7 @@ function showOpenDeurAnswerControls(){
 }
 
 function startOpenDeurTimer(){
+  if (perRoundState.openDeurAwaitingReturn || !perRoundState.currentQuestion) return;
   if (typeof startThinkingCountdownTimer !== 'function') {
     flash('Error: startThinkingCountdownTimer niet gevonden');
     return;
@@ -209,6 +216,8 @@ function startOpenDeurTimer(){
 }
 
 function markOpenDeurAnswer(ansIndex){
+  if (perRoundState.openDeurAwaitingReturn) return;
+  if (perRoundState.allPlayersHavePassed) return;
   const q = perRoundState.currentQuestion;
   if(!q || q.answered[ansIndex]) return;
   if(ansIndex >= q.answersDisplay.length) return;
@@ -230,13 +239,14 @@ function markOpenDeurAnswer(ansIndex){
     // playSFX('SFX/goed.mp3');
 
     
-    sendOpenDeurDisplayUpdate('vraag_voltooid', 'scene-round-opendeur-vraag');
+    sendOpenDeurDisplayUpdate('vraag_voltooid', 'scene-round-opendeur-vraag', q);
 
     
     
     showReturnToQuestionerButton();
 
     
+    perRoundState.openDeurAwaitingReturn = true;
     perRoundState.currentQuestion = null;
     return;
   }
@@ -302,6 +312,8 @@ function nextOpenDeurTurn() {
   activePlayerIndex = candidates[0];
   highlightActive();
   perRoundState.currentQuestion = null;
+  perRoundState.openDeurAwaitingReturn = false;
+  perRoundState.allPlayersHavePassed = false;
 
   if(remainingQuestions.length > 0){
     currentQuestionEl.innerHTML = `
@@ -318,6 +330,7 @@ function nextOpenDeurTurn() {
 
 
 function passOpenDeur(){
+  if (perRoundState.openDeurAwaitingReturn || perRoundState.allPlayersHavePassed) return;
   if (typeof stopThinkingCountdownTimer === 'function') {
     stopThinkingCountdownTimer(true);
   }
@@ -351,12 +364,14 @@ function passOpenDeur(){
     // Alle kandidaten hebben gepast - toon alle antwoorden en voeg knop toe
     perRoundState.allPlayersHavePassed = true;
     flash('Alle kandidaten hebben gepast - alle antwoorden worden zichtbaar.');
-    sendOpenDeurDisplayUpdate('update', 'scene-round-opendeur-vraag');
+    perRoundState.openDeurAwaitingReturn = true;
+    sendOpenDeurDisplayUpdate('update', 'scene-round-opendeur-vraag', q);
     showReturnToQuestionerButton();
+    perRoundState.currentQuestion = null;
   }
 }
 
-function sendOpenDeurDisplayUpdate(type, scene) {
+function sendOpenDeurDisplayUpdate(type, scene, questionOverride) {
     const data = {
         type: type,
         name: 'Open Deur',
@@ -390,8 +405,8 @@ if (scene === 'scene-round-opendeur-vragensteller') {
 }
 
 
-    if (scene === 'scene-round-opendeur-vraag' && perRoundState.currentQuestion) {
-        const q = perRoundState.currentQuestion;
+    if (scene === 'scene-round-opendeur-vraag' && (questionOverride || perRoundState.currentQuestion)) {
+        const q = questionOverride || perRoundState.currentQuestion;
         const introVideoUrl = getOpenDeurIntroVideoUrl(q);
         const showIntroVideo = !!introVideoUrl && !q.introVideoPlayed;
         const introThumbnailUrl = getOpenDeurIntroThumbnailUrl(q) || null;
@@ -452,6 +467,8 @@ function returnToOpenDeurQuestioners() {
 
     // Reset de state voor alle kandidaten gepast
     perRoundState.allPlayersHavePassed = false;
+    perRoundState.openDeurAwaitingReturn = false;
+    perRoundState.currentQuestion = null;
     
     // Haal volgende beschikbare kandidaat
     const remainingCandidates = (perRoundState.openDeurStarterOrder || perRoundState.remainingPlayers || [])

@@ -235,6 +235,31 @@ body {
   background-position: center center;
 }
 
+#scene-standings {
+  position: absolute;
+  inset: 0;
+  z-index: 10001;
+  width: 1920px;
+  height: 1080px;
+  background-color: #bd321d;
+}
+
+#scene-standings .round-grid {
+  grid-template-rows: 520px 560px;
+}
+
+#scene-standings .standings-heading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+#scene-standings .standings-heading .round-name {
+  font-size: 4em;
+  text-transform: uppercase;
+}
+
 
 .round-grid {
   display: grid;
@@ -475,7 +500,8 @@ body {
 }
 
 
-#scene-round-369 .grid-part.part3 {
+#scene-round-369 .grid-part.part3,
+#scene-standings .grid-part.part3 {
   grid-column: 1 / span 2;
   grid-row: 2;
   position: relative;
@@ -488,7 +514,8 @@ body {
 }
 
 
-#scene-round-369 .players-bar {
+#scene-round-369 .players-bar,
+#scene-standings .players-bar {
   position: absolute;
   top: 40px;
   left: 0;
@@ -533,14 +560,16 @@ body {
 
 
 
-#scene-round-369 .player-card {
+#scene-round-369 .player-card,
+#scene-standings .player-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   color: white;
 }
 
-#scene-round-369 .player-name {
+#scene-round-369 .player-name,
+#scene-standings .player-name {
   font-weight: 800;
   font-size: 2.2em;
   margin-bottom: 18px;
@@ -548,7 +577,8 @@ body {
 }
 
 
-#scene-round-369 .player-seconds {
+#scene-round-369 .player-seconds,
+#scene-standings .player-seconds {
   width: 180px;
   height: 90px;
   border-radius: 45px;
@@ -563,7 +593,8 @@ body {
   transition: all 0.3s ease;
 }
 
-#scene-round-369 .player-card.active-player .player-seconds {
+#scene-round-369 .player-card.active-player .player-seconds,
+#scene-standings .player-card.active-player .player-seconds {
   background-color: #ffd17a;
   color: #071021;
   box-shadow: 0 0 30px #ffd17a;
@@ -1877,13 +1908,33 @@ body {
 }
 
 .jury-image {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: contain;
+  z-index: 1;
 }
 
 #juryOverlay.mini-369 .jury-image {
   object-fit: cover;
+}
+
+#juryOverlay {
+  --jury-member-width: 33%;
+  --jury-member-left: 44%;
+  --jury-member-top: 60%;
+}
+
+.jury-member-photo {
+  position: absolute;
+  left: var(--jury-member-left);
+  top: var(--jury-member-top);
+  transform: translate(-50%, -50%);
+  width: var(--jury-member-width);
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  z-index: 2;
 }
 
 /* ===== INTRO SCENE STYLING ===== */

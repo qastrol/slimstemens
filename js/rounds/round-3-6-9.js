@@ -658,7 +658,6 @@ function selectDoeWinner(playerIndex) {
     
     renderPlayers();
 }
-
 // Inschattingsvraag winnaar selecteren
 function selectEstimationWinner(playerIndex) {
     if (!roundRunning || !perRoundState.currentQuestion) return;
@@ -690,8 +689,3 @@ function selectEstimationWinner(playerIndex) {
     
     renderPlayers();
 }
-
-document.getElementById('setThreeSixNineCountBtn').addEventListener('click', () => {
-  const num = document.getElementById('threeSixNineCount').value;
-  setThreeSixNineMax(num);
-});

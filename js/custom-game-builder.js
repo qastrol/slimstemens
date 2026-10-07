@@ -944,6 +944,9 @@
       jury: {
         enabled: !!document.getElementById('settingJuryEnabled')?.checked
       },
+      scoreboard: {
+        enabled: !!document.getElementById('settingScoreboardEnabled')?.checked
+      },
       intro: {
         enabled: !!document.getElementById('settingIntroEnabled')?.checked,
         text: document.getElementById('settingIntroText')?.value?.trim() || ''
@@ -1361,6 +1364,7 @@
     }
     setCheckboxValue('settingPresenterEnabled', !!config?.settings?.presenter?.enabled);
     setCheckboxValue('settingJuryEnabled', !!config?.settings?.jury?.enabled);
+    setCheckboxValue('settingScoreboardEnabled', config?.settings?.scoreboard?.enabled !== false);
     const combinedIntroOutroEnabled = !!config?.settings?.intro?.enabled || !!config?.settings?.outro?.enabled;
     setCheckboxValue('settingIntroEnabled', combinedIntroOutroEnabled);
     const introTextInput = document.getElementById('settingIntroText');
