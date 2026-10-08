@@ -1,0 +1,99 @@
+.round-title-badge,
+:is(#scene-round-369, #scene-standings, #finaleMainInfo, #finaleEndInfo, .finale-standings-heading, #finalePreInfo) .round-title-badge {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  margin: 0 auto 0.3em;
+  padding: 0.18em 0.72em 0.22em;
+  border: 4px solid #004186;
+  border-width: 6px 3px;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-family: 'Formula Condensed Bold', sans-serif;
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0;
+  text-align: center;
+  text-shadow: none;
+  text-transform: lowercase;
+}
+
+#scene-round-369 .player-seconds,
+#scene-standings .player-seconds,
+.players-bar-compact .player-seconds,
+.galerij-aanvul-answers-list .answer-points,
+#collectiefMainAnswers .collectief-answer-points,
+#finaleMainAnswers .collectief-answer-points,
+.finale-standings-score,
+.puzzel-link-points {
+  border-width: 6px 3px;
+}
+
+.answer-correct .od-answer-text,
+.answer-correct .answer-text,
+.answer-correct .collectief-answer-text,
+.answer-correct .puzzel-link-text,
+.answer-correct.puzzel-word {
+  animation: answer-text-reveal 600ms ease-out both;
+}
+
+.answer-correct .od-answer-points,
+.answer-correct .answer-points,
+.answer-correct .collectief-answer-points,
+.answer-correct .puzzel-link-points {
+  animation: answer-oval-fill 600ms ease-out both;
+}
+
+@keyframes answer-text-reveal {
+  from {
+    filter: blur(12px);
+    opacity: 0.7;
+  }
+  to {
+    filter: blur(0);
+    opacity: 1;
+  }
+}
+
+@keyframes answer-oval-fill {
+  from {
+    background-color: rgba(40, 116, 184, 0);
+  }
+  to {
+    background-color: #2874b8;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .answer-correct .od-answer-text,
+  .answer-correct .answer-text,
+  .answer-correct .collectief-answer-text,
+  .answer-correct .puzzel-link-text,
+  .answer-correct.puzzel-word,
+  .answer-correct .od-answer-points,
+  .answer-correct .answer-points,
+  .answer-correct .collectief-answer-points,
+  .answer-correct .puzzel-link-points {
+    animation: none;
+  }
+}
+
+#scene-round-369 .round-title-badge,
+#scene-standings .round-title-badge,
+#scene-round-opendeur-lobby .round-title-badge,
+#finaleMainInfo .round-title-badge,
+#finaleEndInfo .round-title-badge,
+.finale-standings-heading .round-title-badge,
+#finalePreInfo .round-title-badge {
+  color: #fff;
+  font-family: 'Formula Condensed Bold', sans-serif;
+  font-size: 3rem;
+  font-weight: 700;
+  text-shadow: none;
+  text-transform: lowercase;
+}

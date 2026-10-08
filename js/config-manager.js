@@ -9,9 +9,11 @@ let activeConfigBlobUrls = [];
 
 const DEFAULT_BRANDING_SETTINGS = Object.freeze({
   titlePrefix: 'de slimste mens',
-  titleSuffix: 'van twitch',
+  titleSuffix: '',
   logoPath: 'assets/slimstemens.png'
 });
+
+const CUSTOM_QUESTION_ROUND_KEYS = ['threeSixNine', 'opendeur', 'puzzel', 'galerij', 'collectief', 'finale'];
 
 function normalizeBrandingSettings(branding) {
   const merged = {
@@ -21,21 +23,32 @@ function normalizeBrandingSettings(branding) {
 
   return {
     titlePrefix: String(merged.titlePrefix || DEFAULT_BRANDING_SETTINGS.titlePrefix).trim() || DEFAULT_BRANDING_SETTINGS.titlePrefix,
-    titleSuffix: String(merged.titleSuffix || DEFAULT_BRANDING_SETTINGS.titleSuffix).trim() || DEFAULT_BRANDING_SETTINGS.titleSuffix,
+    titleSuffix: String(merged.titleSuffix ?? DEFAULT_BRANDING_SETTINGS.titleSuffix).trim(),
     logoPath: String(merged.logoPath || DEFAULT_BRANDING_SETTINGS.logoPath).trim() || DEFAULT_BRANDING_SETTINGS.logoPath
   };
 }
 
 function getBrandingSettings() {
   const branding = gameConfig?.settings?.branding;
-  return normalizeBrandingSettings(branding);
+  const normalized = normalizeBrandingSettings(branding);
+  const hasCustomQuestions = CUSTOM_QUESTION_ROUND_KEYS.some((roundKey) => (
+    Array.isArray(gameConfig?.[roundKey]) && gameConfig[roundKey].length > 0
+  ));
+
+  if (hasCustomQuestions && !Object.prototype.hasOwnProperty.call(branding || {}, 'titleSuffix')) {
+    normalized.titleSuffix = 'van twitch';
+  } else if (!hasCustomQuestions && normalized.titleSuffix.toLowerCase() === 'van twitch') {
+    normalized.titleSuffix = '';
+  }
+
+  return normalized;
 }
 
 function getBrandingFullTitle() {
   const branding = getBrandingSettings();
   const combined = `${branding.titlePrefix} ${branding.titleSuffix}`.replace(/\s+/g, ' ').trim();
   if (!combined) {
-    return 'De Slimste Mens van Twitch';
+    return 'De Slimste Mens';
   }
   return combined.charAt(0).toUpperCase() + combined.slice(1);
 }
@@ -463,6 +476,18 @@ async function remapConfigMediaFromZip(config, zip) {
     }
   }
 
+  if (config?.settings?.jury && typeof config.settings.jury === 'object') {
+    const juryPhotoResult = await tryMapPath(
+      config.settings.jury.photoUrl || config.settings.jury.photoData,
+      'Aangepast jurylid'
+    );
+
+    if (juryPhotoResult.found && juryPhotoResult.mapped) {
+      config.settings.jury.photoUrl = juryPhotoResult.mapped;
+      config.settings.jury.photoData = juryPhotoResult.mapped;
+    }
+  }
+
   config._generatedBlobUrls = generatedBlobUrls;
   config._zipUnresolvedPaths = unresolvedPaths;
 
@@ -531,6 +556,15 @@ async function applyLoadedConfig(config) {
 
 function collectMediaPathChecks(config) {
   const checks = [];
+
+  const juryPhotoPath = config?.settings?.jury?.photoUrl || config?.settings?.jury?.photoData;
+  if (typeof juryPhotoPath === 'string' && juryPhotoPath.trim()) {
+    checks.push({
+      round: 'jury',
+      label: 'Aangepast jurylid',
+      path: juryPhotoPath.trim()
+    });
+  }
 
   if (Array.isArray(config?.threeSixNine)) {
     config.threeSixNine.forEach((question, questionIndex) => {

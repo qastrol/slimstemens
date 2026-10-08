@@ -1,9 +1,28 @@
 let currentScene = null;
 let players = [];
 let showingStandings = false;
+const canonicalRoundDisplayNames = {
+  '369': '3-6-9',
+  threesixnine: '3-6-9',
+  opendeur: 'Open Deur',
+  puzzel: 'Puzzel',
+  galerij: 'Galerij',
+  collectief: 'Collectief Geheugen',
+  collectiefgeheugen: 'Collectief Geheugen',
+  finale: 'Finale'
+};
+
+function getCanonicalRoundDisplayName(value) {
+  const normalized = String(value || '').replace(/^(het|de)\s+/i, '').replace(/[^a-z0-9]/gi, '').toLowerCase();
+  return canonicalRoundDisplayNames[normalized] || String(value || '').trim();
+}
+
+let currentRoundDisplayName = '';
+let currentRoundDisplayKey = '';
 let defaultThreeSixNineMax = 12;
 let perRoundState = { max: defaultThreeSixNineMax };
 let allGalleryAnswers = []; 
+const answerRevealStates = new WeakMap();
 let openDeurIntroVideoActive = false;
 let openDeurPendingVraagData = null;
 const openDeurPreparedThumbUrls = new Set();
@@ -13,11 +32,42 @@ let lastThreeSixNineData = null;
 let threeSixNineActiveAudio = null;
 const DEFAULT_DISPLAY_BRANDING = {
   titlePrefix: 'de slimste mens',
-  titleSuffix: 'van twitch',
+  titleSuffix: '',
   logoPath: 'assets/slimstemens.png'
 };
 const DISPLAY_DEBUG_WS = false;
 let displayBranding = { ...DEFAULT_DISPLAY_BRANDING };
+
+function animateNewlyFoundAnswers(container, stateKey) {
+  if (!container) return;
+
+  const previousState = answerRevealStates.get(container);
+  const currentKey = String(stateKey ?? '');
+  const foundAnswers = Array.from(container.children)
+    .map((element, index) => ({ element, index }))
+    .filter(({ element }) => element.classList.contains('found'));
+  const foundIndexes = new Set(foundAnswers.map(({ index }) => String(index)));
+
+  if (previousState?.key === currentKey) {
+    foundAnswers.forEach(({ element, index }) => {
+      if (!previousState.foundIndexes.has(String(index))) {
+        element.classList.add('answer-correct');
+      }
+    });
+  }
+
+  answerRevealStates.set(container, { key: currentKey, foundIndexes });
+}
+
+function getAnswerRevealKey(data, fallback = '') {
+  return [
+    data.key || data.scene || fallback,
+    data.currentQuestion?.id || data.currentQuestion?.questionText || '',
+    data.questionText || data.question || '',
+    data.currentPuzzelIndex ?? '',
+    data.imageIndex ?? ''
+  ].join(':');
+}
 
 function normalizeDisplayBranding(branding) {
   const merged = {
@@ -27,7 +77,7 @@ function normalizeDisplayBranding(branding) {
 
   return {
     titlePrefix: String(merged.titlePrefix || DEFAULT_DISPLAY_BRANDING.titlePrefix).trim() || DEFAULT_DISPLAY_BRANDING.titlePrefix,
-    titleSuffix: String(merged.titleSuffix || DEFAULT_DISPLAY_BRANDING.titleSuffix).trim() || DEFAULT_DISPLAY_BRANDING.titleSuffix,
+    titleSuffix: String(merged.titleSuffix ?? DEFAULT_DISPLAY_BRANDING.titleSuffix).trim(),
     logoPath: String(merged.logoPath || DEFAULT_DISPLAY_BRANDING.logoPath).trim() || DEFAULT_DISPLAY_BRANDING.logoPath
   };
 }
@@ -94,7 +144,11 @@ if (window.pendingUiConfig) {
 
 function updateScene(sceneName) {
     document.querySelectorAll('.scene').forEach(s => {
-  s.style.display = (s.id === `scene-${sceneName}` || (showingStandings && s.id === 'scene-standings')) ? 'flex' : 'none';
+  const isStandingsScene = showingStandings && (
+    (currentRoundDisplayKey === 'finale' && s.id === 'scene-finale-standings') ||
+    (currentRoundDisplayKey !== 'finale' && s.id === 'scene-standings')
+  );
+  s.style.display = (s.id === `scene-${sceneName}` || isStandingsScene) ? 'flex' : 'none';
     });
     currentScene = sceneName;
   refreshVisibleOverlaysPosition();
@@ -387,13 +441,16 @@ function connectWebSocket() {
         break;
 
       case 'round_start':
+        currentRoundDisplayName = getCanonicalRoundDisplayName(data.name || data.key);
+        currentRoundDisplayKey = data.key || '';
         
         if (data.key === 'threeSixNine') {
           updateScene('round-369');
           perRoundState.max = data.maxQuestions;
+          perRoundState.currentQuestionIndex = null;
           renderMiniLobby(players, 'miniLobbyPlayers');
           renderPlayersBarUniversal();
-          document.getElementById('roundName').textContent = data.name;
+          document.getElementById('roundName').textContent = currentRoundDisplayName;
           document.getElementById('roundStatus').textContent = 'Druk op “Volgende vraag” om te beginnen.';
           document.getElementById('roundQuestion').textContent = '—';
           break;
@@ -656,6 +713,10 @@ function handleAudioMessage(data) {
         showingStandings = !!data.showing;
         if (Array.isArray(data.players)) players = data.players;
         if (showingStandings) {
+          const standingsRoundName = document.getElementById('standingsRoundName');
+          if (standingsRoundName) {
+            standingsRoundName.textContent = getCanonicalRoundDisplayName(data.roundName || currentRoundDisplayName) || '—';
+          }
           const presenterOverlay = document.getElementById('presenterOverlay');
           const juryOverlay = document.getElementById('juryOverlay');
           if (presenterOverlay) presenterOverlay.style.display = 'none';
@@ -750,9 +811,47 @@ function renderPlayersBarUniversal(currentQuestionIndex = null, activeIndex = nu
         const qContainer = document.getElementById('questionNumbersContainer');
         
         if(qContainer && perRoundState.max){ 
-            qContainer.innerHTML = Array.from({length: perRoundState.max}, (_, i) => `
-                <div class="${currentQuestionIndex===i?'current':''}">${i+1}</div>
-            `).join('');
+          let questionMarkers = Array.from(qContainer.querySelectorAll('.question-number'));
+          let currentIndicator = qContainer.querySelector('.question-current-indicator');
+
+          if (questionMarkers.length !== perRoundState.max || !currentIndicator) {
+            qContainer.innerHTML = Array.from({length: perRoundState.max}, (_, i) =>
+              `<div class="question-number future">${i + 1}</div>`
+            ).join('') + '<span class="question-current-indicator" aria-hidden="true"></span>';
+            delete qContainer.dataset.currentQuestionIndex;
+            questionMarkers = Array.from(qContainer.querySelectorAll('.question-number'));
+            currentIndicator = qContainer.querySelector('.question-current-indicator');
+          }
+
+          questionMarkers.forEach((marker, i) => {
+            const questionState = currentQuestionIndex === i
+              ? 'current'
+              : Number.isInteger(currentQuestionIndex) && i < currentQuestionIndex
+                ? 'past'
+                : 'future';
+            marker.className = `question-number ${questionState}`;
+          });
+
+          if (Number.isInteger(currentQuestionIndex) && questionMarkers[currentQuestionIndex]) {
+            const previousIndex = Number(qContainer.dataset.currentQuestionIndex);
+            const hasPreviousIndex = qContainer.dataset.currentQuestionIndex !== undefined;
+
+            if (!hasPreviousIndex || currentQuestionIndex !== previousIndex) {
+              const shouldAnimate = hasPreviousIndex && currentQuestionIndex === previousIndex + 1;
+              currentIndicator.classList.toggle('no-transition', !shouldAnimate);
+              currentIndicator.style.left = `${questionMarkers[currentQuestionIndex].offsetLeft}px`;
+              currentIndicator.style.top = `${questionMarkers[currentQuestionIndex].offsetTop}px`;
+              currentIndicator.classList.add('is-visible');
+              qContainer.dataset.currentQuestionIndex = `${currentQuestionIndex}`;
+
+              if (!shouldAnimate) {
+                requestAnimationFrame(() => currentIndicator.classList.remove('no-transition'));
+              }
+            }
+          } else {
+            currentIndicator.classList.remove('is-visible');
+            delete qContainer.dataset.currentQuestionIndex;
+          }
         }
     }
 }
@@ -962,7 +1061,10 @@ function renderThreeSixNine(data){
         
         roundStatusEl.textContent = "Einde van deze ronde";
         roundQuestionEl.textContent = ""; 
-        if (questionNumbersContainer) questionNumbersContainer.innerHTML = ""; 
+        if (questionNumbersContainer) {
+          questionNumbersContainer.innerHTML = "";
+          delete questionNumbersContainer.dataset.currentQuestionIndex;
+        }
         const photoContainer = document.getElementById('threeSixNinePhotoContainer');
         if (photoContainer) {
           photoContainer.style.display = 'none';
@@ -1119,28 +1221,26 @@ function renderOpenDeurVragensteller(data) {
       `;
     }).join('');
 
-    data.questioners.forEach((questioner) => {
-      if (questioner.introVideoUrl) {
+    const maxPreloadedQuestioners = 1;
+    data.questioners
+      .filter((questioner) => !!questioner.introVideoUrl)
+      .slice(0, maxPreloadedQuestioners)
+      .forEach((questioner) => {
         preloadOpenDeurIntroVideo(questioner.introVideoUrl);
-      }
 
-      const introThumbnailUrl = getOpenDeurIntroThumbnailUrl(questioner);
-      if (introThumbnailUrl) {
-        return;
-      }
+        const introThumbnailUrl = getOpenDeurIntroThumbnailUrl(questioner);
+        if (introThumbnailUrl) {
+          return;
+        }
 
-      if (!questioner.introVideoUrl) {
-        return;
-      }
-
-      const videoEl = container.querySelector(`.vragensteller-box[data-questioner-index="${questioner.index}"] .vragensteller-thumb`);
-      const box = videoEl?.closest('.vragensteller-box');
-      if (box && !openDeurPreparedThumbUrls.has(questioner.introVideoUrl)) {
-        box.classList.add('loading-video-thumb');
-      }
-      prepareOpenDeurQuestionerVideo(videoEl, questioner.introVideoUrl);
-      openDeurPreparedThumbUrls.add(questioner.introVideoUrl);
-    });
+        const videoEl = container.querySelector(`.vragensteller-box[data-questioner-index="${questioner.index}"] .vragensteller-thumb`);
+        const box = videoEl?.closest('.vragensteller-box');
+        if (box && !openDeurPreparedThumbUrls.has(questioner.introVideoUrl)) {
+          box.classList.add('loading-video-thumb');
+        }
+        prepareOpenDeurQuestionerVideo(videoEl, questioner.introVideoUrl);
+        openDeurPreparedThumbUrls.add(questioner.introVideoUrl);
+      });
 
     renderPlayersBarCompact(data.players, data.activeChoosingPlayerIndex, 'od-vragensteller-scores');
 }
@@ -1236,20 +1336,19 @@ function renderOpenDeurVraag(data) {
 
     
     container.innerHTML = answers.map(a => {
-        
-        const displayText = (a.isAnswered || data.isAllAnswersVisible) ? a.text : a.text.replace(/./g, '█');
         const points = data.currentQuestion.timeGain || 20;
         const isBlurred = !a.isAnswered && !data.isAllAnswersVisible;
         
         return `
-            <div class="od-answer-line${!a.isAnswered ? ' unguessed' : ''}">
-            ${a.isAnswered ? `<div class="od-answer-points"><span>${points}</span></div>` : ''}
+            <div class="od-answer-line${a.isAnswered ? ' found' : ' unguessed'}">
+            <div class="od-answer-points">${a.isAnswered ? `<span>${points}</span>` : ''}</div>
                 <div class="od-answer-text${isBlurred ? ' blurred' : ''}">
-                    ${displayText}
+              ${a.text}
                 </div>
             </div>
         `;
     }).join('');
+    animateNewlyFoundAnswers(container, getAnswerRevealKey(data, 'opendeur'));
 
     
 document.getElementById('od-beurt-info').textContent = `Beurt: ${data.activeAnsweringPlayer}`;
@@ -1305,6 +1404,21 @@ function renderStandings(playersData) {
   if (!Array.isArray(playersData)) return;
 
   players = playersData;
+  if (currentRoundDisplayKey === 'finale') {
+    const finalists = playersData.filter(player => !player.isOut).slice(0, 2);
+    renderMiniLobby(finalists, 'finaleStandingsMiniLobby');
+    const container = document.getElementById('finaleStandingsPlayers');
+    if (container) {
+      container.innerHTML = finalists.map((player, index) => `
+        <div class="finale-standings-player${index === 1 ? ' right-score-first' : ''}">
+          <div class="finale-standings-name">${player.name}</div>
+          <div class="finale-standings-score">${player.seconds}</div>
+        </div>
+      `).join('');
+    }
+    return;
+  }
+
   renderMiniLobby(playersData, 'standingsMiniLobby');
   renderPlayersBarUniversal(null, null, 'standingsPlayersBar');
 }
@@ -1329,7 +1443,6 @@ function renderStandings(playersData) {
       'galerijDonePlayersBar',
       'collectiefPrePlayersBar',
       'collectiefMainPlayersBar',
-      'collectiefTussenstandPlayersBar',
       'collectiefDonePlayersBar',
       'finalePrePlayersBar',
       'finaleMainPlayersBar',
@@ -1371,12 +1484,13 @@ function handlePuzzelDisplayUpdate(data) {
         const puzzelRoundInfoEl = document.getElementById('puzzelRoundInfo');
         if (data.statusText) {
             puzzelRoundInfoEl.innerHTML = `
-                <div class="round-name">Puzzel</div>
+                <div class="round-name round-title-badge">Puzzel</div>
                 <div class="round-status" style="color: #ffd17a; font-size: 1.2em;">${data.statusText}</div>
             `;
         } else {
             puzzelRoundInfoEl.innerHTML = `
-                <div class="round-name">Puzzel ${data.currentPuzzelIndex} van ${data.maxPuzzles}</div>
+                <div class="round-name round-title-badge">Puzzel</div>
+                <div class="round-status">Puzzel ${data.currentPuzzelIndex} van ${data.maxPuzzles}</div>
                 <div class="round-status">Beurt: ${data.currentTurnPlayer}</div>
             `;
         }
@@ -1399,6 +1513,7 @@ function handlePuzzelDisplayUpdate(data) {
                     return `<div class="${classes}">${w.text}</div>`;
                 })
                 .join('');
+              animateNewlyFoundAnswers(puzzelTableEl, getAnswerRevealKey(data, 'puzzel'));
               requestAnimationFrame(() => adjustPuzzelWordFontSizes(puzzelTableEl));
             puzzelTableEl.style.transition = 'opacity 0.3s ease';
             puzzelTableEl.style.opacity = 1;
@@ -1416,12 +1531,12 @@ function handlePuzzelDisplayUpdate(data) {
                 puzzelLinksEl.innerHTML = data.puzzelLinks
                     .map((link, index) => {
                         
-                        const displayText = link.found ? link.link : link.link.replace(/./g, '█');
+                        const displayText = link.link;
                         const points = link.timeGain || 30;
 
                         return `
-                            <div class="puzzel-link-line${!link.found ? ' unguessed' : ''} ${link.found ? `found-link-${index}` : ''}">
-                            ${link.found ? `<div class="puzzel-link-points"><span>${points}</span></div>` : ''}
+                          <div class="puzzel-link-line${link.found ? ' found' : ' unguessed'} ${link.found ? `found-link-${index}` : ''}">
+                            <div class="puzzel-link-points">${link.found ? `<span>${points}</span>` : ''}</div>
                                 <div class="puzzel-link-text${!link.found ? ' blurred' : ''}">
                                     ${displayText}
                                 </div>
@@ -1437,6 +1552,7 @@ function handlePuzzelDisplayUpdate(data) {
                 
             }
         }
+          animateNewlyFoundAnswers(puzzelLinksEl, getAnswerRevealKey(data, 'puzzel-links'));
 
     } else if (scene === 'scene-round-puzzel-waiting') {
         updateScene('round-puzzel-waiting');
@@ -1551,7 +1667,7 @@ function handleGalerijDisplayUpdate(data) {
       const infoContainer = document.getElementById('galerijMainInfoContainer');
       if (infoContainer) {
         infoContainer.innerHTML = `
-          <div class="round-name">Galerij</div>
+          <div class="round-name round-title-badge">Galerij</div>
           <div class="round-image">Afbeelding ${data.imageIndex + 1 || 1} van ${data.totalImages || 0}</div>
           <div class="round-status">Beurt van ${data.activePlayer?.name || '-'}</div>
           <div id="galerijMainPlayersBar" class="players-bar-compact"></div>
@@ -1570,7 +1686,7 @@ function handleGalerijDisplayUpdate(data) {
       if (answersContainer && data.answers) {
         answersContainer.innerHTML = data.answers.map(a => {
           const revealed = a.found || a.isFound || false;
-          const displayText = revealed ? a.text : a.text.replace(/./g, '█');
+          const displayText = a.text;
           const points = a.points || maxPoints;
 
           return `
@@ -1584,6 +1700,7 @@ function handleGalerijDisplayUpdate(data) {
             </div>
           `;
         }).join('');
+        animateNewlyFoundAnswers(answersContainer, getAnswerRevealKey(data, 'galerij-aanvul'));
       }
 
       renderMiniLobby(playersData, 'galerijAanvulMiniLobby');
@@ -1626,7 +1743,8 @@ function handleGalerijDisplayUpdate(data) {
       const infoEl = document.getElementById('galerijSlideshowInfo');
       if (infoEl) {
         infoEl.innerHTML = `
-          <div class="round-name">Thema: ${data.galleryTheme || 'Galerij'}</div>
+          <div class="round-name round-title-badge">Galerij</div>
+          ${data.galleryTheme ? `<div class="round-status">Thema: ${data.galleryTheme}</div>` : ''}
           ${data.imageAnswer ? `<div class="round-status" style="font-size: 2.5em; margin-top: 20px; color: #ffd17a;">Antwoord: ${data.imageAnswer}</div>` : ''}
         `;
       }
@@ -1654,6 +1772,11 @@ function handleGalerijDisplayUpdate(data) {
     
     let sceneToShow = data.scene;
     if (!sceneToShow) sceneToShow = 'scene-round-collectief-pre';
+
+    if (sceneToShow === 'scene-round-collectief-tussenstand') {
+      sceneToShow = 'scene-round-collectief-main';
+      data.revealAllAnswers = true;
+    }
     
     if (data.action === 'start_clock') {
       sceneToShow = 'scene-round-collectief-main';
@@ -1703,6 +1826,7 @@ function handleGalerijDisplayUpdate(data) {
         
         const answersContainer = document.getElementById('collectiefMainAnswers');
         if (answersContainer && data.answers) {
+          const revealAllAnswers = !!(data.revealAllAnswers || data.allAnswersFound || data.allPlayersAnswered);
           answersContainer.innerHTML = data.answers.map((answer, i) => {
             
             const text = typeof answer === 'string' ? answer : (answer.answer || answer.text || '');
@@ -1710,60 +1834,29 @@ function handleGalerijDisplayUpdate(data) {
               ? !!(answer.isFound || answer.found || answer.answered || answer.isAnswered)
               : false;
             const points = typeof answer === 'object' ? (answer.points || 0) : 0;
-            
-            
-            const displayText = found ? text : text.replace(/./g, '█');
+            const isVisible = found || revealAllAnswers;
             
             return `
               <div class="collectief-answer-line${found ? ' found' : ''}" data-index="${i}">
-                <div class="collectief-answer-points"><span>${points}</span></div>
-                <div class="collectief-answer-text${found ? '' : ' blurred'}">${displayText}</div>
+                <div class="collectief-answer-points">${found ? `<span>${points}</span>` : ''}</div>
+                <div class="collectief-answer-text${isVisible ? '' : ' blurred'}">${text}</div>
               </div>
             `;
           }).join('');
+          animateNewlyFoundAnswers(answersContainer, getAnswerRevealKey(data, 'collectief'));
         }
       
         
         const infoEl = document.getElementById('collectiefMainInfo');
         if (infoEl) {
           infoEl.innerHTML = `
-            <div class="round-name">Het Collectief Geheugen</div>
+            <div class="round-name round-title-badge">Collectief Geheugen</div>
             <div class="round-status">Beurt van ${data.activePlayer || '-'}</div>
             ${data.questionText ? `<div class="round-status" style="font-size: 1.8em; margin-top: 15px;">${data.questionText}</div>` : ''}
           `;
         }
       
         renderPlayersBarCompact(displayPlayers, activeIndex, 'collectiefMainPlayersBar');
-        break;
-      }
-
-      case 'scene-round-collectief-tussenstand': {
-        renderMiniLobby(displayPlayers, 'collectiefTussenstandMiniLobby');
-      
-        
-        const answersContainer = document.getElementById('collectiefTussenstandAnswers');
-        if (answersContainer && data.answers) {
-          answersContainer.innerHTML = data.answers.map((answer, i) => {
-            const text = typeof answer === 'string' ? answer : (answer.answer || answer.text || '');
-            const found = typeof answer === 'object' 
-              ? !!(answer.isFound || answer.found)
-              : false;
-            const points = typeof answer === 'object' ? (answer.points || 0) : 0;
-            const finderName = typeof answer === 'object' ? (answer.finderName || '') : '';
-            
-            return `
-              <div class="collectief-answer-line found" style="justify-content: space-between;">
-                <div style="display: flex; align-items: center; gap: 20px; flex: 1;">
-                  <div class="collectief-answer-points"><span>${points}</span></div>
-                  <div class="collectief-answer-text">${text}</div>
-                </div>
-                ${finderName ? `<div style="font-size: 1.5em; color: #ffd17a; padding-right: 20px;">✓ ${finderName}</div>` : ''}
-              </div>
-            `;
-          }).join('');
-        }
-      
-        renderPlayersBarCompact(displayPlayers, activeIndex, 'collectiefTussenstandPlayersBar');
         break;
       }
 
@@ -1843,8 +1936,6 @@ function handleGalerijDisplayUpdate(data) {
       case 'scene-round-finale-main': {
         renderMiniLobby(displayPlayers, 'finaleMainMiniLobby');
         const revealAllAnswers = !!data.revealAllAnswers;
-        const bothPlayersPassed = Array.isArray(data.playersWhoPassed) && data.playersWhoPassed.length >= 2;
-        const showFinderNames = revealAllAnswers && bothPlayersPassed;
         const deductionSeconds = Number(data.deductionSeconds) > 0 ? Number(data.deductionSeconds) : 20;
       
         
@@ -1856,32 +1947,27 @@ function handleGalerijDisplayUpdate(data) {
             const found = typeof answer === 'object' 
               ? !!(answer.isFound || answer.found)
               : false;
-            const finderName = typeof answer === 'object' ? (answer.finderName || '') : '';
             const isVisible = found || revealAllAnswers;
-            const showPointsBadge = found || revealAllAnswers;
             const pointsText = found ? `${deductionSeconds}` : '';
-            const revealClass = revealAllAnswers && !found ? ' revealed-unfound' : '';
             
-            
-            const displayText = isVisible ? text : text.replace(/./g, '█');
             
             return `
-              <div class="collectief-answer-line${found ? ' found' : ''}${revealClass}" data-index="${i}">
-                ${showPointsBadge ? `<div class="collectief-answer-points"><span>${pointsText}</span></div>` : ''}
+              <div class="collectief-answer-line${found ? ' found' : ''}" data-index="${i}">
+                <div class="collectief-answer-points"><span>${pointsText}</span></div>
                 <div class="collectief-answer-text${isVisible ? '' : ' blurred'}">
-                  ${displayText}
+                  ${text}
                 </div>
-                ${showFinderNames && found && finderName ? `<div class="finale-finder-name">✓ ${finderName}</div>` : ''}
               </div>
             `;
           }).join('');
+          animateNewlyFoundAnswers(answersContainer, getAnswerRevealKey(data, 'finale'));
         }
       
         
         const infoEl = document.getElementById('finaleMainInfo');
         if (infoEl) {
           infoEl.innerHTML = `
-            <div class="round-name">DE FINALE</div>
+            <div class="round-name round-title-badge">Finale</div>
             <div class="round-status">Beurt van ${data.activePlayer || '-'}</div>
             ${data.question ? `<div class="round-status" style="font-size: 1.8em; margin-top: 15px;">${data.question}</div>` : ''}
           `;
@@ -2384,8 +2470,8 @@ function handleFinaleViewChange(data) {
       const infoEl = document.getElementById('finaleMainInfo');
       if (infoEl && data.question) {
         infoEl.innerHTML = `
-          <div class="round-name">DE FINALE</div>
-          <div class="round-status">Laatste vraag (alle antwoorden onthuld)</div>
+          <div class="round-name round-title-badge">Finale</div>
+          <div class="round-status">Laatste vraag</div>
           ${data.question ? `<div class="round-status" style="font-size: 1.8em; margin-top: 15px;">${data.question}</div>` : ''}
         `;
       }

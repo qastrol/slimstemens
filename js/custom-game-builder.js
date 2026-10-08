@@ -21,9 +21,13 @@
   const introTextOptions = document.getElementById('introTextOptions');
   const presenterScriptsOptions = document.getElementById('presenterScriptsOptions');
   const presenterPhotoOptions = document.getElementById('presenterPhotoOptions');
+  const settingJuryOptions = document.getElementById('settingJuryOptions');
+  const settingJuryPhotoOptions = document.getElementById('settingJuryPhotoOptions');
   const prefillOptions = document.getElementById('prefillOptions');
   const settingPresenterPhotoPath = document.getElementById('settingPresenterPhotoPath');
   const settingPresenterPhotoUpload = document.getElementById('settingPresenterPhotoUpload');
+  const settingJuryPhotoPath = document.getElementById('settingJuryPhotoPath');
+  const settingJuryPhotoUpload = document.getElementById('settingJuryPhotoUpload');
 
   let uid = 0;
 
@@ -214,6 +218,15 @@
 
     if (presenterPhotoOptions) {
       presenterPhotoOptions.style.display = document.getElementById('settingPresenterEnabled')?.checked ? '' : 'none';
+    }
+
+    const juryEnabled = !!document.getElementById('settingJuryEnabled')?.checked;
+    const customJurySelected = document.getElementById('settingJuryType')?.value === 'custom';
+    if (settingJuryOptions) {
+      settingJuryOptions.style.display = juryEnabled ? '' : 'none';
+    }
+    if (settingJuryPhotoOptions) {
+      settingJuryPhotoOptions.style.display = juryEnabled && customJurySelected ? '' : 'none';
     }
 
     if (presenterScriptsOptions) {
@@ -492,6 +505,22 @@
 
       const safeName = file.name.replace(/\s+/g, '_');
       settingPresenterPhotoPath.value = `media/presenter/${safeName}`;
+    });
+  }
+
+  function wireJuryPhotoUpload() {
+    if (!settingJuryPhotoPath || !settingJuryPhotoUpload) {
+      return;
+    }
+
+    settingJuryPhotoUpload.addEventListener('change', () => {
+      const file = settingJuryPhotoUpload.files && settingJuryPhotoUpload.files[0];
+      if (!file) {
+        return;
+      }
+
+      const safeName = file.name.replace(/\s+/g, '_');
+      settingJuryPhotoPath.value = `media/jury/${safeName}`;
     });
   }
 
@@ -942,7 +971,8 @@
         enabled: !!document.getElementById('settingPresenterEnabled')?.checked
       },
       jury: {
-        enabled: !!document.getElementById('settingJuryEnabled')?.checked
+        enabled: !!document.getElementById('settingJuryEnabled')?.checked,
+        type: document.getElementById('settingJuryType')?.value === 'custom' ? 'custom' : 'standard'
       },
       scoreboard: {
         enabled: !!document.getElementById('settingScoreboardEnabled')?.checked
@@ -994,6 +1024,14 @@
     const presenterPhotoPath = settingPresenterPhotoPath?.value?.trim() || '';
     if (presenterPhotoPath) {
       settings.presenter.photoUrl = normalizePath(presenterPhotoPath);
+    }
+
+    const juryPhotoPath = settingJuryPhotoPath?.value?.trim() || '';
+    if (settings.jury.enabled && settings.jury.type === 'custom' && !juryPhotoPath) {
+      throw new Error('Aangepaste jury: een afbeelding is verplicht.');
+    }
+    if (juryPhotoPath) {
+      settings.jury.photoUrl = normalizePath(juryPhotoPath);
     }
 
     if (!settings.intro.text) {
@@ -1364,6 +1402,13 @@
     }
     setCheckboxValue('settingPresenterEnabled', !!config?.settings?.presenter?.enabled);
     setCheckboxValue('settingJuryEnabled', !!config?.settings?.jury?.enabled);
+    const juryTypeInput = document.getElementById('settingJuryType');
+    if (juryTypeInput) {
+      juryTypeInput.value = config?.settings?.jury?.type === 'custom' ? 'custom' : 'standard';
+    }
+    if (settingJuryPhotoPath) {
+      settingJuryPhotoPath.value = config?.settings?.jury?.photoUrl || config?.settings?.jury?.photoData || '';
+    }
     setCheckboxValue('settingScoreboardEnabled', config?.settings?.scoreboard?.enabled !== false);
     const combinedIntroOutroEnabled = !!config?.settings?.intro?.enabled || !!config?.settings?.outro?.enabled;
     setCheckboxValue('settingIntroEnabled', combinedIntroOutroEnabled);
@@ -1481,6 +1526,8 @@
   document.getElementById('photoCountGalerij')?.addEventListener('change', syncAllGalerijThemes);
   document.getElementById('settingIntroEnabled')?.addEventListener('change', updateSettingsVisibility);
   document.getElementById('settingPresenterEnabled')?.addEventListener('change', updateSettingsVisibility);
+  document.getElementById('settingJuryEnabled')?.addEventListener('change', updateSettingsVisibility);
+  document.getElementById('settingJuryType')?.addEventListener('change', updateSettingsVisibility);
   document.getElementById('settingPresenterScriptsEnabled')?.addEventListener('change', updateSettingsVisibility);
   document.getElementById('prefillPlayersEnabled')?.addEventListener('change', updateSettingsVisibility);
   document.getElementById('prefillPlayerCount')?.addEventListener('change', updateSettingsVisibility);
@@ -1569,4 +1616,5 @@
   }
   syncAllGalerijThemes();
   updateSettingsVisibility();
+  wireJuryPhotoUpload();
 })();

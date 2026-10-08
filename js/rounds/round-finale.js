@@ -735,7 +735,7 @@ function endFinaleRound() {
     let loserText = '';
         const brandingTitle = typeof getBrandingFullTitle === 'function'
             ? getBrandingFullTitle()
-            : 'De Slimste Mens van Twitch';
+            : 'De Slimste Mens';
     
     const collectiefEndOption = document.getElementById('collectiefEndOption')?.value || 'lowestOut';
 

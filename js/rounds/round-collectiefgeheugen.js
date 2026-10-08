@@ -275,10 +275,12 @@ function startCollectiefVideo() {
     
     const videoEl = document.getElementById('collectiefHostVideo');
     if (videoEl) {
-        videoEl.play().catch(err => console.warn('Video kon niet starten:', err));
-        videoEl.addEventListener('ended', () => {
-            videoEl.style.display = 'none'; 
-        });
+        if (videoEl.dataset.videoSrc) {
+            videoEl.pause();
+            videoEl.removeAttribute('src');
+            videoEl.load();
+        }
+        videoEl.style.display = 'none';
     }
 
     
@@ -361,7 +363,6 @@ updateAnswerButton(answerIndex);
         
         stopLoopTimer(); 
         flash(`Alle antwoorden gevonden. ${currentPlayer.name} was de laatste vinder.`, 'success');
-        sendCollectiefDisplayUpdate('update', 'scene-round-collectief-tussenstand');
         renderCollectiefHostUI('answered'); 
     } 
     
@@ -407,7 +408,7 @@ function passCollectief(isScoreAnnounced = false) {
         flash('Iedereen is geweest. Einde van dit fragment.', 'info');
         
         
-        sendCollectiefDisplayUpdate('update', 'scene-round-collectief-tussenstand');
+        sendCollectiefDisplayUpdate('update', 'scene-round-collectief-main');
         
         
         renderCollectiefHostUI('answered');
@@ -651,7 +652,7 @@ function renderCollectiefHostUI(phase = 'pre') {
                 }).join('')}
             </div>
 
-            <video id="collectiefHostVideo" src="${currentQuestion.video}" muted playsinline style="max-width:100%; border:1px solid #ccc;"></video>
+            <video id="collectiefHostVideo" muted playsinline preload="none" data-video-src="${currentQuestion.video || ''}" style="display:none; max-width:100%; border:1px solid #ccc;"></video>
         `;
     }
 
@@ -753,10 +754,13 @@ function sendCollectiefDisplayUpdate(action, scene) {
         maxQuestions: perRoundState.collectief.questions.length,
         activePlayer: players[activePlayerIndex]?.name || '-',
         answers: answersData,
-        videoSrc: hasCurrentQuestion ? currentQuestion.video : null,
         allAnswersFound: hasCurrentQuestion ? currentQuestion.foundAnswers.length === currentQuestion.answers.length : false,
         allPlayersAnswered: hasCurrentQuestion ? currentQuestion.playersWhoAnswered.length === players.length : false
     };
+
+    if (scene === 'scene-round-collectief-video' && hasCurrentQuestion && currentQuestion.video) {
+        extraData.videoSrc = currentQuestion.video;
+    }
 
     if (typeof sendRoundDisplayUpdate === 'function') {
         sendRoundDisplayUpdate({

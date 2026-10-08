@@ -176,7 +176,7 @@ function connectToQuizServer() {
 function sendDisplayUpdate(data) {
   const fallbackBranding = {
     titlePrefix: 'de slimste mens',
-    titleSuffix: 'van twitch',
+    titleSuffix: '',
     logoPath: 'assets/slimstemens.png'
   };
   const branding = typeof getBrandingSettings === 'function' ? getBrandingSettings() : fallbackBranding;
@@ -1244,5 +1244,6 @@ document.addEventListener('keydown', (event) => {
   const key = event.key.toLowerCase();
   if (handleRoundHotkey(key)) {
     event.preventDefault();
+    if (typeof window.dismissScoreboard === 'function') window.dismissScoreboard();
   }
 });

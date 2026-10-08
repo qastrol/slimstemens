@@ -124,6 +124,31 @@
             <label class="checkbox-label-align"><input id="settingJuryEnabled" type="checkbox" /> Jury tonen</label>
             <label class="checkbox-label-align"><input id="settingScoreboardEnabled" type="checkbox" checked /> Tussenstand tonen</label>
           </div>
+          <div id="settingJuryOptions" class="full" style="display:none;margin-top:10px;">
+            <div class="grid two">
+              <label>Jurybeeld
+                <select id="settingJuryType">
+                  <option value="standard">Standaardjury</option>
+                  <option value="custom">Aangepast jurylid</option>
+                </select>
+              </label>
+            </div>
+            <div id="settingJuryPhotoOptions" class="item" style="display:none;margin-top:10px;">
+              <div class="media-row">
+                <label>Foto aangepast jurylid pad
+                  <input id="settingJuryPhotoPath" type="text" placeholder="media/jury/jurylid" />
+                </label>
+                <input
+                  id="settingJuryPhotoUpload"
+                  type="file"
+                  accept="image/*"
+                  data-path-input-id="settingJuryPhotoPath"
+                  title="Kies een afbeelding van het jurylid"
+                />
+              </div>
+              <p class="helper">Verplicht voor een aangepast jurylid. Wordt opgeslagen als settings.jury.photoUrl.</p>
+            </div>
+          </div>
           <div id="introTextOptions" class="full">
             <label>Intro-tekst
               <textarea id="settingIntroText" placeholder="Optionele intro-tekst die getoond wordt tijdens de intro/outro"></textarea>

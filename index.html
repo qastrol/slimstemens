@@ -534,6 +534,25 @@
       const scoreboardCheckbox = document.getElementById('scoreboardEnabledCheckbox');
       const scoreboardControlArea = document.getElementById('scoreboardControlArea');
       const toggleScoreboardBtn = document.getElementById('toggleScoreboardView');
+      function dismissScoreboard() {
+        if (!showingScoreboard) return;
+
+        showingScoreboard = false;
+        if (toggleScoreboardBtn) toggleScoreboardBtn.textContent = 'Toon tussenstand';
+        if (typeof sendDisplayUpdate !== 'undefined') {
+          sendDisplayUpdate({ type: 'scoreboard_toggle', showing: false });
+        }
+      }
+
+      window.dismissScoreboard = dismissScoreboard;
+
+      document.addEventListener('click', function (event) {
+        const clickedButton = event.target instanceof Element ? event.target.closest('button') : null;
+        if (!showingScoreboard || !clickedButton || clickedButton === toggleScoreboardBtn) return;
+
+        dismissScoreboard();
+      }, true);
+
       if (scoreboardCheckbox) {
         scoreboardEnabled = scoreboardCheckbox.checked;
         if (scoreboardControlArea) {
@@ -646,9 +665,30 @@
 
         // Jury instellingen
         const jurySettings = config.settings.jury;
-        if (jurySettings && juryCheckbox && jurySettings.enabled !== undefined) {
-          juryCheckbox.checked = !!jurySettings.enabled;
-          juryCheckbox.dispatchEvent(new Event('change'));
+        if (jurySettings) {
+          juryMode = jurySettings.type === 'custom' ? 'custom' : 'standard';
+          if (juryTypeSelect) {
+            juryTypeSelect.value = juryMode;
+          }
+          juryPhotoData = jurySettings.photoData || jurySettings.photoUrl || null;
+          const juryPhotoStatus = document.getElementById('juryPhotoStatus');
+          if (juryPhotoStatus) {
+            const juryPhotoValue = String(juryPhotoData || '');
+            if (juryPhotoValue) {
+              const label = juryPhotoValue.startsWith('data:')
+                ? 'Data URI'
+                : juryPhotoValue.split('/').pop();
+              juryPhotoStatus.textContent = '✓ Foto vastgezet via config: ' + label;
+              juryPhotoStatus.style.color = '#4ade80';
+            } else {
+              juryPhotoStatus.textContent = '';
+            }
+          }
+          updateJuryOptions();
+          if (juryCheckbox && jurySettings.enabled !== undefined) {
+            juryCheckbox.checked = !!jurySettings.enabled;
+            juryCheckbox.dispatchEvent(new Event('change'));
+          }
         }
 
         const scoreboardSettings = config.settings.scoreboard;
@@ -945,7 +985,12 @@
               sendDisplayUpdate({ type: 'presenter_toggle', showing: false, photoData: null });
               sendDisplayUpdate({ type: 'jury_toggle', showing: false });
             }
-            sendDisplayUpdate({ type: 'scoreboard_toggle', showing: showingScoreboard, players });
+            sendDisplayUpdate({
+              type: 'scoreboard_toggle',
+              showing: showingScoreboard,
+              players,
+              roundName: document.getElementById('currentRound')?.textContent.trim() || ''
+            });
           }
         });
       }
