@@ -216,6 +216,7 @@
 
         <div id="scoreboardControlArea" class="button-row" style="display:none;margin-top:10px;">
           <button id="toggleScoreboardView" class="secondary">Toon tussenstand</button>
+          <button id="lobbyStartScoreRevealBtn" class="secondary" style="display:none;">Toon startscore</button>
         </div>
 
         <div class="question-area" id="currentQuestion">
@@ -439,6 +440,7 @@
       let juryPhotoData = null;
       let scoreboardEnabled = true;
       let showingScoreboard = false;
+      let showingLobbyScoreboard = false;
 
       const presenterCheckbox = document.getElementById('presenterEnabledCheckbox');
       if (presenterCheckbox) {
@@ -534,11 +536,14 @@
       const scoreboardCheckbox = document.getElementById('scoreboardEnabledCheckbox');
       const scoreboardControlArea = document.getElementById('scoreboardControlArea');
       const toggleScoreboardBtn = document.getElementById('toggleScoreboardView');
+      const lobbyStartScoreRevealBtn = document.getElementById('lobbyStartScoreRevealBtn');
       function dismissScoreboard() {
         if (!showingScoreboard) return;
 
         showingScoreboard = false;
+        showingLobbyScoreboard = false;
         if (toggleScoreboardBtn) toggleScoreboardBtn.textContent = 'Toon tussenstand';
+        if (lobbyStartScoreRevealBtn) lobbyStartScoreRevealBtn.style.display = 'none';
         if (typeof sendDisplayUpdate !== 'undefined') {
           sendDisplayUpdate({ type: 'scoreboard_toggle', showing: false });
         }
@@ -548,10 +553,25 @@
 
       document.addEventListener('click', function (event) {
         const clickedButton = event.target instanceof Element ? event.target.closest('button') : null;
-        if (!showingScoreboard || !clickedButton || clickedButton === toggleScoreboardBtn) return;
+        if (!showingScoreboard || !clickedButton ||
+            clickedButton === toggleScoreboardBtn ||
+            clickedButton === lobbyStartScoreRevealBtn) return;
 
         dismissScoreboard();
       }, true);
+
+      if (lobbyStartScoreRevealBtn) {
+        lobbyStartScoreRevealBtn.addEventListener('click', function () {
+          if (!showingLobbyScoreboard) return;
+
+          showingLobbyScoreboard = false;
+          lobbyStartScoreRevealBtn.style.display = 'none';
+          if (typeof sendDisplayUpdate !== 'undefined') {
+            sendDisplayUpdate({ type: 'lobby_standings_reveal' });
+          }
+          if (typeof playSFX === 'function') playSFX('SFX/goed.mp3');
+        });
+      }
 
       if (scoreboardCheckbox) {
         scoreboardEnabled = scoreboardCheckbox.checked;
@@ -565,7 +585,9 @@
           }
           if (!scoreboardEnabled && showingScoreboard) {
             showingScoreboard = false;
+            showingLobbyScoreboard = false;
             if (toggleScoreboardBtn) toggleScoreboardBtn.textContent = 'Toon tussenstand';
+            if (lobbyStartScoreRevealBtn) lobbyStartScoreRevealBtn.style.display = 'none';
             if (typeof sendDisplayUpdate !== 'undefined') {
               sendDisplayUpdate({ type: 'scoreboard_toggle', showing: false });
             }
@@ -970,6 +992,11 @@
 
           showingScoreboard = !showingScoreboard;
           toggleScoreboardBtn.textContent = showingScoreboard ? 'Terug naar kandidaten' : 'Toon tussenstand';
+          const currentRoundName = document.getElementById('currentRound')?.textContent.trim() || '';
+          showingLobbyScoreboard = showingScoreboard && currentRoundName === '—';
+          if (lobbyStartScoreRevealBtn) {
+            lobbyStartScoreRevealBtn.style.display = showingLobbyScoreboard ? 'inline-block' : 'none';
+          }
 
           if (showingScoreboard) {
             showingPresenter = false;
@@ -988,8 +1015,9 @@
             sendDisplayUpdate({
               type: 'scoreboard_toggle',
               showing: showingScoreboard,
+              lobbyStandings: showingLobbyScoreboard,
               players,
-              roundName: document.getElementById('currentRound')?.textContent.trim() || ''
+              roundName: currentRoundName
             });
           }
         });

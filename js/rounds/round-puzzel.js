@@ -430,32 +430,6 @@ puzzel.foundLinks.push(foundLink);
   puzzel.remainingWords = puzzel.remainingWords.filter(word => !foundLink.answers.includes(word));
   renderPlayers(); 
 
-  const payloadWords = puzzel.currentWords.map(word => {
-      let foundState = { text: word, found: false, linkIndex: null };
-      
-      
-      puzzel.foundLinks.forEach(fl => {
-          if (fl.answers.includes(word)) {
-              const fl_index = puzzel.links.indexOf(fl); 
-              foundState.found = true;
-              foundState.linkIndex = fl_index; 
-          }
-      });
-      return foundState;
-  });
-
-  const payloadLinks = puzzel.links.map(link => ({
-      link: link.link,
-      found: puzzel.foundLinks.includes(link),
-      timeGain: 30 
-  }));
-
-  sendPuzzelDisplayUpdate('scene-round-puzzel-active', {
-      puzzelWords: payloadWords,
-      puzzelLinks: payloadLinks
-  });
-
-  
   renderPuzzelDisplay(puzzel);
 
   
@@ -635,4 +609,3 @@ function showPuzzelSolution(puzzel) {
     }
   }
 }
-

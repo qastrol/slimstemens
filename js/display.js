@@ -1,6 +1,7 @@
 let currentScene = null;
 let players = [];
 let showingStandings = false;
+let showingLobbyStandings = false;
 const canonicalRoundDisplayNames = {
   '369': '3-6-9',
   threesixnine: '3-6-9',
@@ -148,7 +149,8 @@ function updateScene(sceneName) {
     (currentRoundDisplayKey === 'finale' && s.id === 'scene-finale-standings') ||
     (currentRoundDisplayKey !== 'finale' && s.id === 'scene-standings')
   );
-  s.style.display = (s.id === `scene-${sceneName}` || isStandingsScene) ? 'flex' : 'none';
+  const isLobbyStandingsScene = showingLobbyStandings && s.id === 'scene-lobby-standings';
+  s.style.display = (s.id === `scene-${sceneName}` || isStandingsScene || isLobbyStandingsScene) ? 'flex' : 'none';
     });
     currentScene = sceneName;
   refreshVisibleOverlaysPosition();
@@ -445,11 +447,12 @@ function connectWebSocket() {
         currentRoundDisplayKey = data.key || '';
         
         if (data.key === 'threeSixNine') {
+          if (data.players) players = data.players;
           updateScene('round-369');
-          perRoundState.max = data.maxQuestions;
+          if (Number.isFinite(data.maxQuestions)) perRoundState.max = data.maxQuestions;
           perRoundState.currentQuestionIndex = null;
           renderMiniLobby(players, 'miniLobbyPlayers');
-          renderPlayersBarUniversal();
+          renderPlayersBarUniversal(null, normalizeActiveIndex(players, data.activeIndex));
           document.getElementById('roundName').textContent = currentRoundDisplayName;
           document.getElementById('roundStatus').textContent = 'Druk op “Volgende vraag” om te beginnen.';
           document.getElementById('roundQuestion').textContent = '—';
@@ -710,7 +713,8 @@ function handleAudioMessage(data) {
       }
 
       case 'scoreboard_toggle': {
-        showingStandings = !!data.showing;
+        showingLobbyStandings = !!data.showing && !!data.lobbyStandings;
+        showingStandings = !!data.showing && !showingLobbyStandings;
         if (Array.isArray(data.players)) players = data.players;
         if (showingStandings) {
           const standingsRoundName = document.getElementById('standingsRoundName');
@@ -723,7 +727,16 @@ function handleAudioMessage(data) {
           if (juryOverlay) juryOverlay.style.display = 'none';
           renderStandings(players);
         }
+        if (showingLobbyStandings) renderLobbyStandings(players);
         updateScene(currentScene || 'lobby');
+        break;
+      }
+
+      case 'lobby_standings_reveal': {
+        const scorePanel = document.getElementById('lobbyStandingsScorePanel');
+        if (showingLobbyStandings && scorePanel) {
+          scorePanel.classList.remove('lobby-standings-scores-hidden');
+        }
         break;
       }
 
@@ -787,6 +800,31 @@ function renderMiniLobby(players, containerId){
     el.innerHTML = players.map(p => `<div class="player"><img src="${p.photoUrl || 'assets/avatar.png'}"></div>`).join('');
 }
 
+function renderFinaleCandidatePhotos(
+  players,
+  activeIndex = null,
+  photoIds = ['finaleCandidatePhotoLeft', 'finaleCandidatePhotoRight'],
+  scoreIds = ['finaleCandidateScoreLeft', 'finaleCandidateScoreRight']
+) {
+  const finalists = (players || []).filter(player => !player.isOut).slice(0, 2);
+  const normalizedActiveIndex = normalizeActiveIndex(finalists, activeIndex);
+  finalists.forEach((finalist, index) => {
+    const photo = document.getElementById(photoIds[index]);
+    const score = scoreIds[index] ? document.getElementById(scoreIds[index]) : null;
+    if (photo && finalist) {
+      photo.src = finalist.photoUrl || 'assets/avatar.png';
+      photo.alt = finalist.name || 'Kandidaat';
+    }
+    if (score && finalist) {
+      score.textContent = finalist.seconds ?? '';
+      score.classList.toggle(
+        'active-player',
+        !!finalist.isActive || index === normalizedActiveIndex
+      );
+    }
+  });
+}
+
 function renderLobby(players, containerId = 'lobbyPlayerImages'){
     const container = document.getElementById(containerId);
     if(!container) return;
@@ -802,7 +840,7 @@ function renderPlayersBarUniversal(currentQuestionIndex = null, activeIndex = nu
     container.innerHTML = players.map((p,i)=>`
         <div class="player-card${activeIndex!==null && i===activeIndex ? ' active-player' : ''}">
             <div class="player-name">${p.name}</div>
-            <div class="player-seconds"><div class="big-timer">${p.seconds}</div></div>
+            <div class="player-seconds"><div class="big-timer score-oval-face">${p.seconds}</div></div>
         </div>
     `).join('');
 
@@ -1341,7 +1379,7 @@ function renderOpenDeurVraag(data) {
         
         return `
             <div class="od-answer-line${a.isAnswered ? ' found' : ' unguessed'}">
-            <div class="od-answer-points">${a.isAnswered ? `<span>${points}</span>` : ''}</div>
+            <div class="od-answer-points">${a.isAnswered ? `<span class="score-oval-face">${points}</span>` : ''}</div>
                 <div class="od-answer-text${isBlurred ? ' blurred' : ''}">
               ${a.text}
                 </div>
@@ -1406,7 +1444,12 @@ function renderStandings(playersData) {
   players = playersData;
   if (currentRoundDisplayKey === 'finale') {
     const finalists = playersData.filter(player => !player.isOut).slice(0, 2);
-    renderMiniLobby(finalists, 'finaleStandingsMiniLobby');
+    renderFinaleCandidatePhotos(
+      finalists,
+      null,
+      ['finaleStandingsPhotoLeft', 'finaleStandingsPhotoRight'],
+      []
+    );
     const container = document.getElementById('finaleStandingsPlayers');
     if (container) {
       container.innerHTML = finalists.map((player, index) => `
@@ -1421,6 +1464,15 @@ function renderStandings(playersData) {
 
   renderMiniLobby(playersData, 'standingsMiniLobby');
   renderPlayersBarUniversal(null, null, 'standingsPlayersBar');
+}
+
+function renderLobbyStandings(playersData) {
+  if (!Array.isArray(playersData)) return;
+
+  renderLobby(playersData, 'lobbyStandingsPlayerImages');
+  renderPlayersBarUniversal(null, null, 'lobbyStandingsPlayersBar');
+  document.getElementById('lobbyStandingsScorePanel')
+    ?.classList.add('lobby-standings-scores-hidden');
 }
 
   function updatePlayersBarsFromGeneric(playersData, activeIndex) {
@@ -1445,8 +1497,6 @@ function renderStandings(playersData) {
       'collectiefMainPlayersBar',
       'collectiefDonePlayersBar',
       'finalePrePlayersBar',
-      'finaleMainPlayersBar',
-      'finaleEndPlayersBar',
       'soloEndPlayersBar'
     ];
 
@@ -1536,7 +1586,7 @@ function handlePuzzelDisplayUpdate(data) {
 
                         return `
                           <div class="puzzel-link-line${link.found ? ' found' : ' unguessed'} ${link.found ? `found-link-${index}` : ''}">
-                            <div class="puzzel-link-points">${link.found ? `<span>${points}</span>` : ''}</div>
+                            <div class="puzzel-link-points">${link.found ? `<span class="score-oval-face">${points}</span>` : ''}</div>
                                 <div class="puzzel-link-text${!link.found ? ' blurred' : ''}">
                                     ${displayText}
                                 </div>
@@ -1692,7 +1742,7 @@ function handleGalerijDisplayUpdate(data) {
           return `
             <div class="answer-line ${revealed ? 'found' : 'unfound'}">
               <div class="answer-points">
-                  ${revealed ? `<span>${points}</span>` : ''}
+                  ${revealed ? `<span class="score-oval-face">${points}</span>` : ''}
               </div>
               <div class="answer-text ${revealed ? '' : 'blurred'}">
                 ${displayText}
@@ -1838,7 +1888,7 @@ function handleGalerijDisplayUpdate(data) {
             
             return `
               <div class="collectief-answer-line${found ? ' found' : ''}" data-index="${i}">
-                <div class="collectief-answer-points">${found ? `<span>${points}</span>` : ''}</div>
+                <div class="collectief-answer-points">${found ? `<span class="score-oval-face">${points}</span>` : ''}</div>
                 <div class="collectief-answer-text${isVisible ? '' : ' blurred'}">${text}</div>
               </div>
             `;
@@ -1898,7 +1948,12 @@ function handleGalerijDisplayUpdate(data) {
 
     switch (sceneToShow) {
       case 'scene-round-finale-pre': {
-        renderMiniLobby(displayPlayers, 'finalePreMiniLobby');
+        renderFinaleCandidatePhotos(
+          displayPlayers,
+          null,
+          ['finalePrePhotoLeft', 'finalePrePhotoRight'],
+          []
+        );
         
         
         const finalisten = displayPlayers.filter(p => !p.isOut);
@@ -1934,7 +1989,7 @@ function handleGalerijDisplayUpdate(data) {
       }
 
       case 'scene-round-finale-main': {
-        renderMiniLobby(displayPlayers, 'finaleMainMiniLobby');
+        renderFinaleCandidatePhotos(displayPlayers, activeIndex);
         const revealAllAnswers = !!data.revealAllAnswers;
         const deductionSeconds = Number(data.deductionSeconds) > 0 ? Number(data.deductionSeconds) : 20;
       
@@ -1953,7 +2008,7 @@ function handleGalerijDisplayUpdate(data) {
             
             return `
               <div class="collectief-answer-line${found ? ' found' : ''}" data-index="${i}">
-                <div class="collectief-answer-points"><span>${pointsText}</span></div>
+                <div class="collectief-answer-points"><span class="score-oval-face">${pointsText}</span></div>
                 <div class="collectief-answer-text${isVisible ? '' : ' blurred'}">
                   ${text}
                 </div>
@@ -1973,12 +2028,16 @@ function handleGalerijDisplayUpdate(data) {
           `;
         }
       
-        renderPlayersBarCompact(displayPlayers, activeIndex, 'finaleMainPlayersBar');
         break;
       }
 
       case 'scene-round-finale-end': {
-        renderMiniLobby(displayPlayers, 'finaleEndMiniLobby');
+        renderFinaleCandidatePhotos(
+          displayPlayers,
+          activeIndex,
+          ['finaleEndPhotoLeft', 'finaleEndPhotoRight'],
+          ['finaleEndScoreLeft', 'finaleEndScoreRight']
+        );
         
         // Sla huidige spelers op voor finale lobby view
         finaleEndViewState.allPlayers = displayPlayers;
@@ -2036,7 +2095,6 @@ function handleGalerijDisplayUpdate(data) {
           loserTextEl.innerHTML = loserText;
         }
         
-        renderPlayersBarCompact(displayPlayers, activeIndex, 'finaleEndPlayersBar');
         break;
       }
     }
@@ -2442,9 +2500,9 @@ function handleFinaleViewChange(data) {
     
     // Update de content van de finale main scene
     if (finaleMainScene) {
-      // Render mini lobby als players data beschikbaar is
+      // Render de finalistfoto's als players data beschikbaar is
       if (data.players) {
-        renderMiniLobby(data.players, 'finaleMainMiniLobby');
+        renderFinaleCandidatePhotos(data.players, data.activeIndex);
       }
       
       // Render antwoorden
@@ -2457,7 +2515,7 @@ function handleFinaleViewChange(data) {
           
           return `
             <div class="collectief-answer-line found" data-index="${i}">
-              <div class="collectief-answer-points"><span>${deductionSeconds}</span></div>
+              <div class="collectief-answer-points"><span class="score-oval-face">${deductionSeconds}</span></div>
               <div class="collectief-answer-text">
                 ${text}
               </div>
@@ -2474,11 +2532,6 @@ function handleFinaleViewChange(data) {
           <div class="round-status">Laatste vraag</div>
           ${data.question ? `<div class="round-status" style="font-size: 1.8em; margin-top: 15px;">${data.question}</div>` : ''}
         `;
-      }
-      
-      // Render players bar als data beschikbaar is
-      if (data.players && data.activeIndex !== undefined) {
-        renderPlayersBarCompact(data.players, data.activeIndex, 'finaleMainPlayersBar');
       }
       
       console.log('✅ Laatste vraag met alle antwoorden weergegeven');
@@ -2527,9 +2580,14 @@ function handleFinaleViewChange(data) {
       const isHighestWinner = finaleEndViewState.isHighestWinner;
       const preFinaleAfvallerName = finaleEndViewState.preFinaleAfvallerName;
       
-      // Update mini lobby
+      // Update de finalistfoto's en scores
       if (finaleEndViewState.allPlayers) {
-        renderMiniLobby(finaleEndViewState.allPlayers, 'finaleEndMiniLobby');
+        renderFinaleCandidatePhotos(
+          finaleEndViewState.allPlayers,
+          0,
+          ['finaleEndPhotoLeft', 'finaleEndPhotoRight'],
+          ['finaleEndScoreLeft', 'finaleEndScoreRight']
+        );
       }
       
       // Update winnaar naam
@@ -2566,11 +2624,6 @@ function handleFinaleViewChange(data) {
           }
         }
         loserTextEl.innerHTML = loserText;
-      }
-      
-      // Update spelers bar
-      if (finaleEndViewState.allPlayers) {
-        renderPlayersBarCompact(finaleEndViewState.allPlayers, 0, 'finaleEndPlayersBar');
       }
       
       console.log('✅ Winnaarscherm opnieuw gerenderd');

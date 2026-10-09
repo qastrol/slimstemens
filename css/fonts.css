@@ -1,5 +1,5 @@
 @font-face {
-  font-family: 'DIN Black';
+  font-family: 'Oracle Crimson Sans';
   src: url('../assets/fonts/oracle-crimson-sans-regular.ttf') format('truetype');
   font-style: normal;
   font-weight: 400;
@@ -8,11 +8,20 @@
 }
 
 @font-face {
-  font-family: 'DIN Black Text';
-  src: url('../assets/fonts/oracle-crimson-sans-regular.ttf') format('truetype');
+  font-family: 'DIN Black';
+  src: url('../assets/fonts/FF_DIN_Condensed_Black.otf') format('opentype');
   font-style: normal;
   font-weight: 400;
-  size-adjust: 105%;
+  size-adjust: 106%;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DIN Black Text';
+  src: url('../assets/fonts/FF_DIN_Condensed_Black.otf') format('opentype');
+  font-style: normal;
+  font-weight: 400;
+  size-adjust: 106%;
   font-display: swap;
 }
 

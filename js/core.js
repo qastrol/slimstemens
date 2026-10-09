@@ -542,6 +542,8 @@ function startRoundAfterBumper(roundKey) {
       type: 'round_start',
       name: niceRoundName(roundKey),
       key: roundKey,
+      players,
+      activeIndex: activePlayerIndex,
       scene: roundKey === 'puzzel' ? 'scene-round-puzzel-waiting' : undefined
   });
 }

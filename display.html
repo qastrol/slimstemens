@@ -125,11 +125,11 @@
 
     <div id="scene-finale-standings" class="scene">
       <div class="finale-display-grid finale-standings-grid">
-        <div class="finale-display-lobby">
-          <div class="mini-lobby">
-            <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
-            <div id="finaleStandingsMiniLobby"></div>
-          </div>
+        <div class="finale-candidate-panel finale-candidate-panel-left finale-candidate-panel-standings">
+          <img id="finaleStandingsPhotoLeft" class="finale-candidate-photo" src="assets/avatar.png" alt="Kandidaat">
+        </div>
+        <div class="finale-candidate-panel finale-candidate-panel-right finale-candidate-panel-standings">
+          <img id="finaleStandingsPhotoRight" class="finale-candidate-photo" src="assets/avatar.png" alt="Kandidaat">
         </div>
         <div class="finale-display-info finale-standings-heading">
           <div class="round-name round-title-badge">Finale</div>
@@ -156,6 +156,22 @@
         <div class="grid-part part3">
           <div id="standingsPlayersBar" class="players-bar"></div>
         </div>
+      </div>
+    </div>
+
+    <div id="scene-lobby-standings" class="scene">
+      <div class="lobby-standings-lobby-crop">
+        <div class="lobby-standings-lobby-fullscreen">
+          <div class="initial-title-bar">
+            de slimste mens
+            <img src="assets/slimstemens.png" alt="logo">
+            van twitch
+          </div>
+          <div id="lobbyStandingsPlayerImages"></div>
+        </div>
+      </div>
+      <div id="lobbyStandingsScorePanel" class="lobby-standings-score-panel lobby-standings-scores-hidden">
+        <div id="lobbyStandingsPlayersBar" class="lobby-standings-players"></div>
       </div>
     </div>
 
@@ -517,11 +533,11 @@
   <!-- 🎬 SCENE: Finale - Pre (Finalisten bekendmaking) -->
 <div id="scene-round-finale-pre" class="scene">
     <div id="finale-pre-grid" class="finale-display-grid">
-      <div class="finale-display-lobby">
-        <div class="mini-lobby">
-          <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
-          <div id="finalePreMiniLobby"></div>
-        </div>
+      <div class="finale-candidate-panel finale-candidate-panel-left finale-candidate-panel-standings">
+        <img id="finalePrePhotoLeft" class="finale-candidate-photo" src="assets/avatar.png" alt="Kandidaat">
+      </div>
+      <div class="finale-candidate-panel finale-candidate-panel-right finale-candidate-panel-standings">
+        <img id="finalePrePhotoRight" class="finale-candidate-photo" src="assets/avatar.png" alt="Kandidaat">
       </div>
 
       <div class="finale-display-info finale-pre-info" id="finalePreMainContainer">
@@ -544,15 +560,16 @@
 
 <div id="scene-round-finale-main" class="scene">
     <div id="finale-main-grid" class="finale-display-grid">
-      <div class="finale-display-lobby">
-        <div class="mini-lobby">
-          <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
-          <div id="finaleMainMiniLobby"></div>
-        </div>
+      <div class="finale-candidate-panel finale-candidate-panel-left">
+        <img id="finaleCandidatePhotoLeft" class="finale-candidate-photo" src="assets/avatar.png" alt="Kandidaat">
+        <div id="finaleCandidateScoreLeft" class="finale-candidate-score player-seconds"></div>
+      </div>
+      <div class="finale-candidate-panel finale-candidate-panel-right">
+        <img id="finaleCandidatePhotoRight" class="finale-candidate-photo" src="assets/avatar.png" alt="Kandidaat">
+        <div id="finaleCandidateScoreRight" class="finale-candidate-score player-seconds"></div>
       </div>
       <div class="finale-display-info" id="finaleMainInfoContainer">
         <div id="finaleMainInfo" class="round-status"></div>
-        <div id="finaleMainPlayersBar" class="players-bar-compact"></div>
       </div>
       <div class="finale-display-answers" id="finaleMainAnswersContainer">
         <div id="finaleMainAnswers" class="collectief-answers-list"></div>
@@ -563,17 +580,18 @@
 <div id="scene-round-finale-end" class="scene">
     <div class="finale-winner-content" style="display: block; width: 100%; height: 100%;">
       <div id="finale-end-grid" class="finale-display-grid">
-        <div class="finale-display-lobby">
-          <div class="mini-lobby">
-            <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
-            <div id="finaleEndMiniLobby"></div>
-          </div>
+        <div class="finale-candidate-panel finale-candidate-panel-left">
+          <img id="finaleEndPhotoLeft" class="finale-candidate-photo" src="assets/avatar.png" alt="Kandidaat">
+          <div id="finaleEndScoreLeft" class="finale-candidate-score player-seconds"></div>
+        </div>
+        <div class="finale-candidate-panel finale-candidate-panel-right">
+          <img id="finaleEndPhotoRight" class="finale-candidate-photo" src="assets/avatar.png" alt="Kandidaat">
+          <div id="finaleEndScoreRight" class="finale-candidate-score player-seconds"></div>
         </div>
         <div class="finale-display-info" id="finaleEndInfoContainer">
           <div id="finaleEndInfo" class="round-status">
             <div class="round-name">Finale Afgelopen</div>
           </div>
-          <div id="finaleEndPlayersBar" class="players-bar-compact"></div>
         </div>
         <div class="finale-display-winner" id="finaleEndMainContainer">
           <div class="round-name"><span id="finaleWinnerName"></span></div>

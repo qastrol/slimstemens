@@ -1,9 +1,9 @@
 Plaats hier de webfontbestanden die de site moet meeleveren (.otf, .woff2 of .woff).
 
 Verwachte bestandsnamen voor de huidige CSS:
-- DIN Black Regular.otf
+- oracle-crimson-sans-regular.ttf (hoofdlettertype voor het display)
+- FF_DIN_Condensed_Black.otf (fallback voor Oracle Crimson Sans)
 - FormulaCondensed-Bold.otf
-- DIN-Black.woff2 (optioneel, snellere webvariant)
 - Formula-Condensed-Bold.woff2 (optioneel, snellere webvariant)
 - Inter-Regular.woff2 (optioneel, voor host-interface)
 - Inter-SemiBold.woff2 (optioneel, voor host-interface)
