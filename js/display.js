@@ -416,6 +416,11 @@ function connectWebSocket() {
       setDisplayBranding(data.branding);
     }
 
+    if (data.dismissScoreboard) {
+      showingStandings = false;
+      showingLobbyStandings = false;
+    }
+
     switch (data.type) {
       case 'audio':
         handleAudioMessage(data);
@@ -1941,7 +1946,6 @@ function handleGalerijDisplayUpdate(data) {
 
     
     const sceneId = sceneToShow.replace(/^scene-/, '');
-    updateScene(sceneId);
 
     
     const displayPlayers = playersData.length > 0 ? playersData : players;
@@ -2098,6 +2102,8 @@ function handleGalerijDisplayUpdate(data) {
         break;
       }
     }
+
+    updateScene(sceneId);
   }
 
 function renderSoloGameEnd(data) {

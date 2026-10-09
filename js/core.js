@@ -173,6 +173,18 @@ function connectToQuizServer() {
 }
 
 
+let pendingScoreboardDismissal = false;
+let scoreboardDismissalFallbackTimeout = null;
+
+function deferScoreboardDismissal() {
+  pendingScoreboardDismissal = true;
+  clearTimeout(scoreboardDismissalFallbackTimeout);
+  scoreboardDismissalFallbackTimeout = setTimeout(() => {
+    if (!pendingScoreboardDismissal) return;
+    sendDisplayUpdate({ type: 'scoreboard_toggle', showing: false });
+  }, 0);
+}
+
 function sendDisplayUpdate(data) {
   const fallbackBranding = {
     titlePrefix: 'de slimste mens',
@@ -180,8 +192,14 @@ function sendDisplayUpdate(data) {
     logoPath: 'assets/slimstemens.png'
   };
   const branding = typeof getBrandingSettings === 'function' ? getBrandingSettings() : fallbackBranding;
+  const dismissScoreboard = pendingScoreboardDismissal && data?.type !== 'audio';
+  if (dismissScoreboard) {
+    pendingScoreboardDismissal = false;
+    clearTimeout(scoreboardDismissalFallbackTimeout);
+  }
   const payload = {
     ...data,
+    ...(dismissScoreboard ? { dismissScoreboard: true } : {}),
     branding: data?.branding || branding
   };
 

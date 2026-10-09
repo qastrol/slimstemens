@@ -537,14 +537,16 @@
       const scoreboardControlArea = document.getElementById('scoreboardControlArea');
       const toggleScoreboardBtn = document.getElementById('toggleScoreboardView');
       const lobbyStartScoreRevealBtn = document.getElementById('lobbyStartScoreRevealBtn');
-      function dismissScoreboard() {
+      function dismissScoreboard(deferUntilNextUpdate = false) {
         if (!showingScoreboard) return;
 
         showingScoreboard = false;
         showingLobbyScoreboard = false;
         if (toggleScoreboardBtn) toggleScoreboardBtn.textContent = 'Toon tussenstand';
         if (lobbyStartScoreRevealBtn) lobbyStartScoreRevealBtn.style.display = 'none';
-        if (typeof sendDisplayUpdate !== 'undefined') {
+        if (deferUntilNextUpdate && typeof deferScoreboardDismissal === 'function') {
+          deferScoreboardDismissal();
+        } else if (typeof sendDisplayUpdate !== 'undefined') {
           sendDisplayUpdate({ type: 'scoreboard_toggle', showing: false });
         }
       }
@@ -557,7 +559,7 @@
             clickedButton === toggleScoreboardBtn ||
             clickedButton === lobbyStartScoreRevealBtn) return;
 
-        dismissScoreboard();
+        dismissScoreboard(true);
       }, true);
 
       if (lobbyStartScoreRevealBtn) {
