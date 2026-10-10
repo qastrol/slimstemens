@@ -531,6 +531,9 @@ function startRoundAfterBumper(roundKey) {
   currentQuestionIndex = 0;
   activePlayerIndex = 0;
   currentRoundEl.textContent = niceRoundName(roundKey);
+  if (typeof window.updatePerspectiveMenu === 'function') {
+    window.updatePerspectiveMenu();
+  }
   currentQuestionEl.innerHTML = '<em>Ronde gestart — druk op Volgende vraag om te beginnen.</em>';
   hidePresenterScript();
   stopAllTimers();
@@ -713,12 +716,16 @@ document.getElementById('applyBtn').addEventListener('click', async ()=>{
   currentRoundIndex = 0;
   currentRoundEl.textContent = '—';
   updateRoundNavigationButtons();
+  if (typeof window.resetPerspectiveMenuSelection === 'function') {
+    window.resetPerspectiveMenuSelection();
+  }
 
   sendDisplayUpdate({
       type: 'scene_change',
       scene: 'lobby',
       players: players 
   });
+  sendDisplayUpdate({ type: 'universal_perspective', fullscreenLobby: false, playerIndex: null });
 
   if (!showPresenterScriptForPhase('lobbyBeforeThreeSixNine')) {
     hidePresenterScript();
@@ -737,6 +744,10 @@ document.getElementById('resetBtn').addEventListener('click', ()=>{
   roundRunning = false;
   currentRoundEl.textContent = '—';
   currentQuestionEl.innerHTML = '<em>Spel gereset</em>';
+  if (typeof window.resetPerspectiveMenuSelection === 'function') {
+    window.resetPerspectiveMenuSelection();
+  }
+  sendDisplayUpdate({ type: 'universal_perspective', fullscreenLobby: false, playerIndex: null });
   hidePresenterScript();
   stopAllTimers();
   updateRoundNavigationButtons();

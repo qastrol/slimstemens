@@ -14,8 +14,27 @@
 <body>
   <div class="container">
     <h1>De Slimste Mens</h1>
-    <div class="grid">
-      <div class="card">
+    <div class="grid" id="dashboardGrid">
+      <div class="sidebar-menus">
+        <div class="controls">
+          <button id="applyBtn">Maak spel</button>
+          <button id="resetBtn" class="secondary">Reset</button>
+        </div>
+        <aside class="card options-menu" aria-label="Optiemenu">
+          <div class="options-menu-header">
+            <h2 class="options-menu-title">Opties</h2>
+            <button id="toggleOptionsMenu" class="secondary options-menu-toggle" type="button"
+              aria-label="Opties inklappen" aria-expanded="true" aria-controls="optionsMenuContent"
+              title="Opties inklappen">
+              <svg class="collapse-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m6 15 6-6 6 6"></path>
+              </svg>
+              <svg class="expand-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m6 9 6 6 6-6"></path>
+              </svg>
+            </button>
+          </div>
+          <div id="optionsMenuContent" class="options-menu-content">
         <div style="height:8px"></div>
 
         <div>
@@ -124,11 +143,6 @@
           </div>
         </div>
 
-        <div class="controls">
-          <button id="applyBtn">Maak spel</button>
-          <button id="resetBtn" class="secondary">Reset</button>
-        </div>
-
         <hr class="divider" />
         <div>
           <label>Startseconden per kandidaat</label>
@@ -168,6 +182,46 @@
           </select>
         </div>
 
+          </div>
+        </aside>
+
+        <aside class="card perspectives-menu" aria-label="Perspectieven">
+          <h2 class="perspectives-menu-title">Perspectieven</h2>
+          <p id="perspectiveMenuEmpty" class="small perspective-menu-message">
+            Maak eerst een spel aan om beschikbare perspectieven te zien.
+          </p>
+          <div class="perspective-actions">
+            <button id="fullPresenterPerspectiveBtn" class="secondary" type="button" style="display:none;"
+              aria-pressed="false">Volledige presentator</button>
+            <button id="fullJuryPerspectiveBtn" class="secondary" type="button" style="display:none;"
+              aria-pressed="false">Volledige jury</button>
+          </div>
+          <div id="candidatePerspectives" class="perspective-actions" style="display:none;">
+            <button id="fullscreenLobbyPerspectiveBtn" class="secondary" type="button" style="display:none;">
+              Volledige lobby tonen
+            </button>
+            <button id="threeSixNineLobbyPerspectiveBtn" class="secondary" type="button" style="display:none;"
+              aria-pressed="false">Breedbeeld-lobby tonen</button>
+            <button id="fullScenePerspectiveBtn" class="secondary" type="button" style="display:none;">Volledig beeld</button>
+            <div id="candidatePerspectiveButtons" class="perspective-actions"></div>
+          </div>
+          <div id="lobbyPerspectives" style="display:none;">
+            <div id="presenterControlArea" class="perspective-actions" style="display:none;">
+              <button id="togglePresenterView" class="secondary">Wissel naar Presentator</button>
+            </div>
+            <div id="juryControlArea" class="perspective-actions" style="display:none;">
+              <button id="toggleJuryView" class="secondary">Wissel naar Jury</button>
+            </div>
+          </div>
+          <div id="finalePerspectives" style="display:none;">
+            <p class="small perspective-menu-message">Finale afgelopen</p>
+            <div class="perspective-actions">
+              <button id="showFinaleFullLobbyBtn" class="secondary">👥 Fullscreen Lobby</button>
+              <button id="showFinaleWinnerBtn" class="secondary">🏆 Winnaarscherm</button>
+              <button id="showFinaleLastQuestionBtn" class="secondary">❓ Laatste Vraag</button>
+            </div>
+          </div>
+        </aside>
       </div>
 
       <!-- Midden: spel interface -->
@@ -204,15 +258,6 @@
           <strong id="introScriptTitle" style="color:#ffd17a;display:block;margin-bottom:8px;">Presentator script:</strong>
           <div id="introScriptText" style="color:#fff;font-size:1.1em;line-height:1.5;"></div>
         </div>
-
-        <div id="presenterControlArea" class="button-row" style="display:none;margin-top:10px;">
-          <button id="togglePresenterView" class="secondary">Wissel naar Presentator</button>
-        </div>
-
-        <div id="juryControlArea" class="button-row" style="display:none;margin-top:10px;">
-          <button id="toggleJuryView" class="secondary">Wissel naar Jury</button>
-        </div>
-
 
         <div id="scoreboardControlArea" class="button-row" style="display:none;margin-top:10px;">
           <button id="toggleScoreboardView" class="secondary">Toon tussenstand</button>
@@ -463,6 +508,10 @@
               sendDisplayUpdate({ type: 'presenter_toggle', showing: false, photoData: null });
             }
           }
+          updatePresenterControls();
+          if (typeof window.updatePerspectiveMenu === 'function') {
+            window.updatePerspectiveMenu();
+          }
         });
       }
 
@@ -477,11 +526,12 @@
         if (juryPhotoOptions) juryPhotoOptions.style.display = juryMode === 'custom' ? 'block' : 'none';
       }
 
-      function sendJuryToggle(showing) {
+      function sendJuryToggle(showing, fullscreen = false) {
         if (typeof sendDisplayUpdate !== 'undefined') {
           sendDisplayUpdate({
             type: 'jury_toggle',
             showing,
+            fullscreen,
             mode: juryMode,
             photoData: juryPhotoData
           });
@@ -503,6 +553,9 @@
             if (toggleJuryBtn) toggleJuryBtn.textContent = 'Wissel naar Jury';
             sendJuryToggle(false);
           }
+          if (typeof window.updatePerspectiveMenu === 'function') {
+            window.updatePerspectiveMenu();
+          }
         });
       }
 
@@ -511,6 +564,7 @@
           juryMode = this.value;
           updateJuryOptions();
           if (showingJury && (juryMode === 'standard' || juryPhotoData)) sendJuryToggle(true);
+          updatePerspectiveMenu();
         });
       }
 
@@ -528,6 +582,7 @@
               status.style.color = '#4ade80';
             }
             if (showingJury && juryMode === 'custom') sendJuryToggle(true);
+            updatePerspectiveMenu();
           };
           reader.readAsDataURL(file);
         });
@@ -635,6 +690,10 @@
             presenterPhotoData = e.target.result;
             document.getElementById('presenterPhotoStatus').textContent = '✓ Foto geladen: ' + file.name;
             document.getElementById('presenterPhotoStatus').style.color = '#4ade80';
+            updatePresenterControls();
+            if (typeof window.updatePerspectiveMenu === 'function') {
+              window.updatePerspectiveMenu();
+            }
           };
           reader.readAsDataURL(file);
         });
@@ -903,14 +962,240 @@
 
       // Listener om presentator controls te updaten na het maken van een spel
       const applyBtn = document.getElementById('applyBtn');
+      const dashboardGrid = document.getElementById('dashboardGrid');
+      const toggleOptionsMenuBtn = document.getElementById('toggleOptionsMenu');
+      const setOptionsMenuCollapsed = (collapsed) => {
+        if (!dashboardGrid || !toggleOptionsMenuBtn) return;
+        dashboardGrid.classList.toggle('options-menu-collapsed', collapsed);
+        toggleOptionsMenuBtn.setAttribute('aria-expanded', String(!collapsed));
+        toggleOptionsMenuBtn.setAttribute('aria-label', collapsed ? 'Opties uitklappen' : 'Opties inklappen');
+        toggleOptionsMenuBtn.title = collapsed ? 'Opties uitklappen' : 'Opties inklappen';
+      };
+
+      if (toggleOptionsMenuBtn && dashboardGrid) {
+        toggleOptionsMenuBtn.addEventListener('click', () => {
+          setOptionsMenuCollapsed(!dashboardGrid.classList.contains('options-menu-collapsed'));
+        });
+      }
+
       if (applyBtn) {
         applyBtn.addEventListener('click', function () {
+          setOptionsMenuCollapsed(true);
           // Wacht even zodat het spel eerst gemaakt wordt
           setTimeout(updatePresenterControls, 100);
           setTimeout(updateIntroControls, 100);
           setTimeout(updateJuryControls, 100);
+          setTimeout(updatePerspectiveMenu, 100);
         });
       }
+
+      let selectedPerspectivePlayerIndex = null;
+      let previousPerspectiveContext = null;
+      let fullscreenLobbyPerspectiveActive = false;
+      let threeSixNineLobbyPerspectiveActive = false;
+      const resetPerspectiveMenuSelection = () => {
+        selectedPerspectivePlayerIndex = null;
+        fullscreenLobbyPerspectiveActive = false;
+        threeSixNineLobbyPerspectiveActive = false;
+        updatePerspectiveMenu();
+      };
+
+      function setThreeSixNineLobbyPerspective(showing) {
+        const wasFullscreenLobbyPerspectiveActive = fullscreenLobbyPerspectiveActive;
+        threeSixNineLobbyPerspectiveActive = showing;
+        if (showing) {
+          if (showingScoreboard) dismissScoreboard();
+          selectedPerspectivePlayerIndex = null;
+          fullscreenLobbyPerspectiveActive = false;
+          showingPresenter = false;
+          showingJury = false;
+          const presenterButton = document.getElementById('togglePresenterView');
+          const juryButton = document.getElementById('toggleJuryView');
+          if (presenterButton) presenterButton.textContent = 'Wissel naar Presentator';
+          if (juryButton) juryButton.textContent = 'Wissel naar Jury';
+          sendDisplayUpdate(wasFullscreenLobbyPerspectiveActive
+            ? { type: 'universal_perspective', fullscreenLobby: false, playerIndex: null }
+            : { type: 'universal_perspective', playerIndex: null });
+          sendDisplayUpdate({ type: 'presenter_toggle', showing: false, photoData: null });
+          sendJuryToggle(false);
+        }
+        updatePerspectiveMenu();
+        sendDisplayUpdate({
+          type: 'three_six_nine_lobby_perspective',
+          showing
+        });
+      }
+
+      function updatePerspectiveMenu() {
+        const emptyMessage = document.getElementById('perspectiveMenuEmpty');
+        const candidatePerspectives = document.getElementById('candidatePerspectives');
+        const lobbyPerspectives = document.getElementById('lobbyPerspectives');
+        const finalePerspectives = document.getElementById('finalePerspectives');
+        const currentRoundName = document.getElementById('currentRound')?.textContent.trim() || '';
+        const currentPlayers = typeof players !== 'undefined' ? players : [];
+        const gameCreated = currentPlayers.length > 0;
+        const finaleComplete = typeof perRoundState !== 'undefined' &&
+          Boolean(perRoundState?.finale?.gameEnded && perRoundState?.finale?.endGameState);
+        const isLobby = gameCreated && currentRoundName === '—' && !finaleComplete;
+        const perspectiveContext = finaleComplete ? 'finale' : currentRoundName;
+        if (previousPerspectiveContext !== null && previousPerspectiveContext !== perspectiveContext) {
+          selectedPerspectivePlayerIndex = null;
+          fullscreenLobbyPerspectiveActive = false;
+          threeSixNineLobbyPerspectiveActive = false;
+        }
+        previousPerspectiveContext = perspectiveContext;
+
+        const candidatePerspectiveButtons = document.getElementById('candidatePerspectiveButtons');
+        candidatePerspectiveButtons.replaceChildren();
+        currentPlayers.forEach((player, index) => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'secondary';
+          button.textContent = `Zoom in op ${player.name || `Kandidaat ${index + 1}`}`;
+          button.setAttribute('aria-pressed', String(player.index === selectedPerspectivePlayerIndex));
+          button.addEventListener('click', () => {
+            if (threeSixNineLobbyPerspectiveActive) setThreeSixNineLobbyPerspective(false);
+            selectedPerspectivePlayerIndex = player.index;
+            updatePerspectiveMenu();
+            sendDisplayUpdate({
+              type: 'universal_perspective',
+              playerIndex: player.index,
+              playerName: player.name
+            });
+          });
+          candidatePerspectiveButtons.appendChild(button);
+        });
+        candidatePerspectives.style.display = gameCreated ? 'grid' : 'none';
+        const fullscreenLobbyPerspectiveBtn = document.getElementById('fullscreenLobbyPerspectiveBtn');
+        fullscreenLobbyPerspectiveBtn.style.display = gameCreated && !isLobby && !finaleComplete ? 'block' : 'none';
+        fullscreenLobbyPerspectiveBtn.textContent = fullscreenLobbyPerspectiveActive
+          ? 'Terug naar ronde'
+          : 'Volledige lobby tonen';
+        document.getElementById('fullScenePerspectiveBtn').style.display =
+          selectedPerspectivePlayerIndex === null ? 'none' : 'block';
+        const threeSixNineLobbyButton = document.getElementById('threeSixNineLobbyPerspectiveBtn');
+        const isThreeSixNine = currentRoundName === '3-6-9';
+        threeSixNineLobbyButton.style.display = isThreeSixNine ? 'block' : 'none';
+        threeSixNineLobbyButton.textContent = threeSixNineLobbyPerspectiveActive
+          ? 'Terug naar 3-6-9'
+          : 'Breedbeeld-lobby tonen';
+        threeSixNineLobbyButton.setAttribute('aria-pressed', String(threeSixNineLobbyPerspectiveActive));
+
+        const fullPresenterButton = document.getElementById('fullPresenterPerspectiveBtn');
+        const fullJuryButton = document.getElementById('fullJuryPerspectiveBtn');
+        fullPresenterButton.style.display = presenterEnabled ? 'block' : 'none';
+        fullPresenterButton.disabled = !presenterPhotoData;
+        fullPresenterButton.setAttribute('aria-pressed', String(showingPresenter));
+        fullPresenterButton.title = presenterPhotoData ? '' : 'Upload eerst een presentatorfoto.';
+        fullJuryButton.style.display = juryEnabled ? 'block' : 'none';
+        fullJuryButton.disabled = juryMode === 'custom' && !juryPhotoData;
+        fullJuryButton.title = fullJuryButton.disabled
+          ? 'Upload eerst een afbeelding van het aangepaste jurylid.'
+          : '';
+        fullJuryButton.setAttribute('aria-pressed', String(showingJury));
+
+        lobbyPerspectives.style.display =
+          gameCreated && !finaleComplete && !fullscreenLobbyPerspectiveActive ? 'block' : 'none';
+        finalePerspectives.style.display = finaleComplete ? 'block' : 'none';
+        emptyMessage.style.display = gameCreated ? 'none' : 'block';
+
+        if (!gameCreated) {
+          emptyMessage.textContent = 'Maak eerst een spel aan om beschikbare perspectieven te zien.';
+        }
+      }
+
+      window.updatePerspectiveMenu = updatePerspectiveMenu;
+      window.resetPerspectiveMenuSelection = resetPerspectiveMenuSelection;
+      updatePerspectiveMenu();
+
+      document.getElementById('fullScenePerspectiveBtn').addEventListener('click', () => {
+        if (threeSixNineLobbyPerspectiveActive) setThreeSixNineLobbyPerspective(false);
+        selectedPerspectivePlayerIndex = null;
+        updatePerspectiveMenu();
+        sendDisplayUpdate({ type: 'universal_perspective', playerIndex: null });
+      });
+
+      document.getElementById('threeSixNineLobbyPerspectiveBtn').addEventListener('click', () => {
+        setThreeSixNineLobbyPerspective(!threeSixNineLobbyPerspectiveActive);
+      });
+
+      document.getElementById('fullPresenterPerspectiveBtn').addEventListener('click', () => {
+        if (!presenterEnabled || !presenterPhotoData) return;
+
+        if (threeSixNineLobbyPerspectiveActive) setThreeSixNineLobbyPerspective(false);
+        showingPresenter = !showingPresenter;
+        showingJury = false;
+        selectedPerspectivePlayerIndex = null;
+        const presenterButton = document.getElementById('togglePresenterView');
+        const juryButton = document.getElementById('toggleJuryView');
+        if (presenterButton) presenterButton.textContent = showingPresenter ? 'Wissel naar Kandidaten' : 'Wissel naar Presentator';
+        if (juryButton) juryButton.textContent = 'Wissel naar Jury';
+        updatePerspectiveMenu();
+        sendDisplayUpdate({
+          type: 'presenter_toggle',
+          showing: showingPresenter,
+          photoData: showingPresenter ? presenterPhotoData : null,
+          fullscreen: showingPresenter
+        });
+        if (!showingPresenter) {
+          sendDisplayUpdate({ type: 'jury_toggle', showing: false });
+        }
+      });
+
+      document.getElementById('fullJuryPerspectiveBtn').addEventListener('click', () => {
+        if (!juryEnabled || (juryMode === 'custom' && !juryPhotoData)) return;
+
+        if (threeSixNineLobbyPerspectiveActive) setThreeSixNineLobbyPerspective(false);
+        showingJury = !showingJury;
+        showingPresenter = false;
+        selectedPerspectivePlayerIndex = null;
+        const presenterButton = document.getElementById('togglePresenterView');
+        const juryButton = document.getElementById('toggleJuryView');
+        if (presenterButton) presenterButton.textContent = 'Wissel naar Presentator';
+        if (juryButton) juryButton.textContent = showingJury ? 'Wissel naar Kandidaten' : 'Wissel naar Jury';
+        updatePerspectiveMenu();
+        sendJuryToggle(showingJury, showingJury);
+        if (showingJury) {
+          sendDisplayUpdate({
+            type: 'presenter_toggle',
+            showing: false,
+            photoData: null
+          });
+        }
+      });
+
+      document.getElementById('fullscreenLobbyPerspectiveBtn').addEventListener('click', () => {
+        if (threeSixNineLobbyPerspectiveActive) setThreeSixNineLobbyPerspective(false);
+        fullscreenLobbyPerspectiveActive = !fullscreenLobbyPerspectiveActive;
+        if (fullscreenLobbyPerspectiveActive && (showingPresenter || showingJury)) {
+          showingPresenter = false;
+          showingJury = false;
+          const presenterButton = document.getElementById('togglePresenterView');
+          const juryButton = document.getElementById('toggleJuryView');
+          if (presenterButton) presenterButton.textContent = 'Wissel naar Presentator';
+          if (juryButton) juryButton.textContent = 'Wissel naar Jury';
+          sendDisplayUpdate({ type: 'presenter_toggle', showing: false, photoData: null });
+          sendJuryToggle(false);
+        }
+        if (!fullscreenLobbyPerspectiveActive) {
+          selectedPerspectivePlayerIndex = null;
+        }
+        updatePerspectiveMenu();
+        sendDisplayUpdate({
+          type: 'universal_perspective',
+          fullscreenLobby: fullscreenLobbyPerspectiveActive,
+          playerIndex: fullscreenLobbyPerspectiveActive ? selectedPerspectivePlayerIndex : null
+        });
+      });
+
+      const finalePerspectiveButtons = [
+        ['showFinaleFullLobbyBtn', showFinaleFullLobby],
+        ['showFinaleWinnerBtn', showFinaleWinner],
+        ['showFinaleLastQuestionBtn', showFinaleLastQuestion]
+      ];
+      finalePerspectiveButtons.forEach(([buttonId, action]) => {
+        document.getElementById(buttonId).addEventListener('click', action);
+      });
 
       const togglePresenterBtn = document.getElementById('togglePresenterView');
       if (togglePresenterBtn) {
@@ -947,6 +1232,7 @@
               });
             }
           }
+          updatePerspectiveMenu();
         });
       }
 
@@ -985,6 +1271,7 @@
               });
             }
           }
+          updatePerspectiveMenu();
         });
       }
 
@@ -992,6 +1279,7 @@
         toggleScoreboardBtn.addEventListener('click', function () {
           if (!scoreboardEnabled) return;
 
+          if (threeSixNineLobbyPerspectiveActive) setThreeSixNineLobbyPerspective(false);
           showingScoreboard = !showingScoreboard;
           toggleScoreboardBtn.textContent = showingScoreboard ? 'Terug naar kandidaten' : 'Toon tussenstand';
           const currentRoundName = document.getElementById('currentRound')?.textContent.trim() || '';

@@ -989,7 +989,7 @@
 
 #scene-round-puzzel-active .round-grid {
     display: grid;
-    grid-template-columns: 960px 960px;
+    grid-template-columns: 63.75% 36.25%;
     grid-template-rows: 540px 540px; 
     width: 1920px;
     height: 1080px;
@@ -999,14 +999,38 @@
 #scene-round-puzzel-active .grid-part.part1 {
     grid-column: 1;
     grid-row: 1 / span 2;
-    padding: 40px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    padding: 0;
+    position: relative;
     background: #bd321d;
     border-radius: 20px;
     box-shadow: 0 0 40px rgba(0,0,0,0.4);
-    gap: 20px; 
+}
+
+/* Basisresolutie 1920x1080 (schaalt mee); maten afgeleid van 2557x1437 */
+#scene-round-puzzel-active .grid-part.part1 .puzzel-table-grid {
+    position: absolute;
+    left: 178px;
+    top: 112px;
+    width: 926px;
+    height: 480px;
+    max-height: none;
+}
+
+#scene-round-puzzel-active .grid-part.part1 #puzzelLinksContainer {
+    position: absolute;
+    left: 240px;
+    top: 646px;
+    width: 864px;
+    height: 310px;
+    padding: 0;
+    gap: 0;
+    justify-content: space-between;
+    flex-grow: 0;
+}
+
+#scene-round-puzzel-active .grid-part.part1 .puzzel-link-line {
+    height: 66px;
+    padding: 0;
 }
 
 #scene-round-puzzel-active .grid-part.part2 {
@@ -1190,7 +1214,7 @@
 }
 
 #puzzelActivePlayersBar .player-name {
-    font-size: 1.4em;
+    font-size: 1em;
 }
 
 #puzzelActivePlayersBar .player-seconds {

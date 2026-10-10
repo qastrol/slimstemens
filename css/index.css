@@ -34,6 +34,80 @@ h1 {
   gap: 16px
 }
 
+.sidebar-menus {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.options-menu,
+.perspectives-menu {
+  min-width: 0;
+}
+
+.options-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.options-menu-title {
+  margin: 0;
+  font-size: 16px;
+}
+
+.options-menu-toggle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  min-height: 36px;
+  padding: 8px;
+}
+
+.options-menu-toggle svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.options-menu-toggle[aria-expanded="true"] .expand-icon,
+.options-menu-toggle[aria-expanded="false"] .collapse-icon {
+  display: none;
+}
+
+.perspectives-menu-title {
+  margin: 0;
+  font-size: 16px;
+}
+
+.perspective-menu-message {
+  margin: 10px 0 0;
+}
+
+.perspective-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.perspective-actions button[aria-pressed="true"] {
+  background: var(--accent);
+  color: #041023;
+}
+
+.options-menu-collapsed .options-menu-content {
+  display: none;
+}
+
 .card {
   background: var(--card);
   border-radius: 12px;

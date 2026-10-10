@@ -533,14 +533,7 @@ function endFinaleGame(winner) {
         `;
     }
     
-    // Voeg finale-post-game knoppen toe
     controlsHTML += `
-        <div style="margin-top:20px;">
-            <h3>Perspectieven:</h3>
-            <button id="showFinaleWinnerBtn" class="secondary">🏆 Winnaarscherm</button>
-            <button id="showFinaleLastQuestionBtn" class="secondary">❓ Laatste Vraag</button>
-            <button id="showFinaleFullLobbyBtn" class="secondary">👥 Fullscreen Lobby</button>
-        </div>
         <div style="margin-top:20px;">
             <button id="restoreFinaleCeelsBtn" class="secondary">🔧 Stoelen Herstellen</button>
         </div>
@@ -554,22 +547,6 @@ function endFinaleGame(winner) {
         if (startOutroBtn) {
             startOutroBtn.addEventListener('click', startOutro);
         }
-    }
-    
-    // Event listeners voor perspectief knoppen
-    const showWinnerBtn = document.getElementById('showFinaleWinnerBtn');
-    if (showWinnerBtn) {
-        showWinnerBtn.addEventListener('click', showFinaleWinner);
-    }
-    
-    const showLastQuestionBtn = document.getElementById('showFinaleLastQuestionBtn');
-    if (showLastQuestionBtn) {
-        showLastQuestionBtn.addEventListener('click', showFinaleLastQuestion);
-    }
-    
-    const showFullLobbyBtn = document.getElementById('showFinaleFullLobbyBtn');
-    if (showFullLobbyBtn) {
-        showFullLobbyBtn.addEventListener('click', showFinaleFullLobby);
     }
     
     const restoreStoelBtn = document.getElementById('restoreFinaleCeelsBtn');
@@ -586,6 +563,9 @@ function endFinaleGame(winner) {
     };
     perRoundState.finale.gameEnded = true;
     perRoundState.finale.awaitingHostNext = true;
+    if (typeof window.updatePerspectiveMenu === 'function') {
+        window.updatePerspectiveMenu();
+    }
 
     // Verwijder interactieve antwoordknoppen uit het vraagvlak na einde finale.
     const finaleQuestionHostEl = document.getElementById('currentQuestion');

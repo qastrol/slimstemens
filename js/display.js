@@ -1,7 +1,12 @@
 let currentScene = null;
 let players = [];
+const universalPerspectiveStyles = new Map();
+let universalPerspectivePreviousScene = null;
+const UNIVERSAL_PERSPECTIVE_ZOOM_SCALE = 2.6;
+const UNIVERSAL_PERSPECTIVE_VERTICAL_OFFSET = -55; // Pas dit getal aan om de kandidaat hoger of lager te plaatsen.
 let showingStandings = false;
 let showingLobbyStandings = false;
+let showingThreeSixNineLobbyPerspective = false;
 const canonicalRoundDisplayNames = {
   '369': '3-6-9',
   threesixnine: '3-6-9',
@@ -144,6 +149,15 @@ if (window.pendingUiConfig) {
 }
 
 function updateScene(sceneName) {
+    if (currentScene !== sceneName) {
+      if (sceneName !== 'round-369') {
+        showingThreeSixNineLobbyPerspective = false;
+      }
+      clearUniversalPerspective();
+      if (universalPerspectivePreviousScene && sceneName !== 'lobby') {
+        universalPerspectivePreviousScene = null;
+      }
+    }
     document.querySelectorAll('.scene').forEach(s => {
   const isStandingsScene = showingStandings && (
     (currentRoundDisplayKey === 'finale' && s.id === 'scene-finale-standings') ||
@@ -152,6 +166,10 @@ function updateScene(sceneName) {
   const isLobbyStandingsScene = showingLobbyStandings && s.id === 'scene-lobby-standings';
   s.style.display = (s.id === `scene-${sceneName}` || isStandingsScene || isLobbyStandingsScene) ? 'flex' : 'none';
     });
+    const wideLobby = document.getElementById('threeSixNineWideLobby');
+    if (wideLobby) {
+      wideLobby.style.display = sceneName === 'round-369' && showingThreeSixNineLobbyPerspective ? 'block' : 'none';
+    }
     currentScene = sceneName;
   refreshVisibleOverlaysPosition();
 }
@@ -329,7 +347,7 @@ function applyOverlayBounds(overlayEl, bounds) {
   overlayEl.style.height = `${bounds.height}px`;
 }
 
-function applyOverlayPosition(overlayEl) {
+function applyOverlayPosition(overlayEl, forceFullscreen = false) {
   if (!overlayEl) return;
 
   const fullscreenScenes = new Set([
@@ -350,7 +368,7 @@ function applyOverlayPosition(overlayEl) {
     overlayEl.classList.add('mini-369');
   }
 
-  if (fullscreenScenes.has(currentScene) || isFinaleLobbyFullscreen) {
+  if (forceFullscreen || fullscreenScenes.has(currentScene) || isFinaleLobbyFullscreen) {
     overlayEl.classList.add('fullscreen');
     applyOverlayBounds(overlayEl, { left: 0, top: 0, width: 1920, height: 1080 });
     return;
@@ -373,11 +391,11 @@ function refreshVisibleOverlaysPosition() {
   const juryOverlay = document.getElementById('juryOverlay');
 
   if (presenterOverlay && presenterOverlay.style.display !== 'none') {
-    applyOverlayPosition(presenterOverlay);
+    applyOverlayPosition(presenterOverlay, presenterOverlay.dataset.forceFullscreen === 'true');
   }
 
   if (juryOverlay && juryOverlay.style.display !== 'none') {
-    applyOverlayPosition(juryOverlay);
+    applyOverlayPosition(juryOverlay, juryOverlay.dataset.forceFullscreen === 'true');
   }
 }
 
@@ -431,6 +449,8 @@ function connectWebSocket() {
 
       case 'scene_change':
         if (data.scene === 'lobby') {
+          universalPerspectivePreviousScene = null;
+          clearUniversalPerspective();
           if (data.players) players = data.players;
           updateScene('lobby');
           renderLobby(players);
@@ -681,7 +701,8 @@ function handleAudioMessage(data) {
         
         if (data.showing && data.photoData) {
           if (juryOverlay) juryOverlay.style.display = 'none';
-          applyOverlayPosition(presenterOverlay);
+          presenterOverlay.dataset.forceFullscreen = String(!!data.fullscreen);
+          applyOverlayPosition(presenterOverlay, !!data.fullscreen);
           
           // Toon presentator
           presenterPhoto.src = data.photoData;
@@ -689,6 +710,7 @@ function handleAudioMessage(data) {
         } else {
           // Verberg presentator, toon kandidaten
           presenterOverlay.style.display = 'none';
+          presenterOverlay.dataset.forceFullscreen = 'false';
         }
         break;
 
@@ -709,15 +731,18 @@ function handleAudioMessage(data) {
             juryMemberPhoto.src = customJury ? data.photoData : '';
             juryMemberPhoto.style.display = customJury ? 'block' : 'none';
           }
-          applyOverlayPosition(juryOverlay);
+          juryOverlay.dataset.forceFullscreen = String(!!data.fullscreen);
+          applyOverlayPosition(juryOverlay, !!data.fullscreen);
           if (juryOverlay) juryOverlay.style.display = 'flex';
         } else if (juryOverlay) {
           juryOverlay.style.display = 'none';
+          juryOverlay.dataset.forceFullscreen = 'false';
         }
         break;
       }
 
       case 'scoreboard_toggle': {
+        showingThreeSixNineLobbyPerspective = false;
         showingLobbyStandings = !!data.showing && !!data.lobbyStandings;
         showingStandings = !!data.showing && !showingLobbyStandings;
         if (Array.isArray(data.players)) players = data.players;
@@ -733,6 +758,20 @@ function handleAudioMessage(data) {
           renderStandings(players);
         }
         if (showingLobbyStandings) renderLobbyStandings(players);
+        updateScene(currentScene || 'lobby');
+        break;
+      }
+
+      case 'three_six_nine_lobby_perspective': {
+        showingThreeSixNineLobbyPerspective =
+          !!data.showing && currentScene === 'round-369';
+        if (showingThreeSixNineLobbyPerspective) {
+          const presenterOverlay = document.getElementById('presenterOverlay');
+          const juryOverlay = document.getElementById('juryOverlay');
+          if (presenterOverlay) presenterOverlay.style.display = 'none';
+          if (juryOverlay) juryOverlay.style.display = 'none';
+          renderThreeSixNineLobbyPerspective(players);
+        }
         updateScene(currentScene || 'lobby');
         break;
       }
@@ -755,6 +794,10 @@ function handleAudioMessage(data) {
 
       case 'intro_perspective':
         handleIntroPerspectiveChange(data.perspective);
+        break;
+
+      case 'universal_perspective':
+        handleUniversalPerspectiveChange(data);
         break;
 
       case 'intro_stop':
@@ -802,7 +845,7 @@ function handleAudioMessage(data) {
 function renderMiniLobby(players, containerId){
     const el = document.getElementById(containerId);
     if(!el) return;
-    el.innerHTML = players.map(p => `<div class="player"><img src="${p.photoUrl || 'assets/avatar.png'}"></div>`).join('');
+    el.innerHTML = players.map(p => `<div class="player" data-player-index="${p.index}"><img src="${p.photoUrl || 'assets/avatar.png'}"></div>`).join('');
 }
 
 function renderFinaleCandidatePhotos(
@@ -833,7 +876,7 @@ function renderFinaleCandidatePhotos(
 function renderLobby(players, containerId = 'lobbyPlayerImages'){
     const container = document.getElementById(containerId);
     if(!container) return;
-    container.innerHTML = players.map(p => `<div class="lobby-photo"><img src="${p.photoUrl || 'assets/avatar.png'}"><div>${p.name}</div></div>`).join('');
+    container.innerHTML = players.map(p => `<div class="lobby-photo" data-player-index="${p.index}"><img src="${p.photoUrl || 'assets/avatar.png'}"><div>${p.name}</div></div>`).join('');
 }
 
 
@@ -1480,12 +1523,21 @@ function renderLobbyStandings(playersData) {
     ?.classList.add('lobby-standings-scores-hidden');
 }
 
+function renderThreeSixNineLobbyPerspective(playersData) {
+  if (!Array.isArray(playersData)) return;
+
+  renderLobby(playersData, 'threeSixNineLobbyPlayerImages');
+}
+
   function updatePlayersBarsFromGeneric(playersData, activeIndex) {
     if (!playersData || !playersData.length) return;
 
     const normalizedActiveIndex = normalizeActiveIndex(playersData, activeIndex);
     const questionIndex = currentScene === 'round-369' ? perRoundState.currentQuestionIndex : null;
     renderPlayersBarUniversal(questionIndex, normalizedActiveIndex);
+    if (currentScene === 'round-369' && showingThreeSixNineLobbyPerspective) {
+      renderThreeSixNineLobbyPerspective(playersData);
+    }
 
     const compactBars = [
       'od-vragensteller-scores',
@@ -1680,6 +1732,9 @@ function adjustPuzzelWordFontSizes(puzzelTableEl) {
 
 function handleGalerijDisplayUpdate(data) {
   const playersData = data.players || [];
+  if (playersData.length > 0) {
+    players = playersData;
+  }
   const activeIndex = data.activeIndex ?? -1;
 
   
@@ -1787,11 +1842,6 @@ function handleGalerijDisplayUpdate(data) {
           : '<div style="padding:2rem;">Geen afbeelding beschikbaar</div>';
       }
       
-      
-      const answerContainer = document.getElementById('galerijSlideshowAnswerContainer');
-      if (answerContainer && data.imageAnswer) {
-        answerContainer.innerHTML = `<div class="galerij-slideshow-answer-text">${data.imageAnswer}</div>`;
-      }
       
       renderMiniLobby(playersData, 'galerijSlideshowMiniLobby');
       
@@ -2210,6 +2260,113 @@ function handleIntroPlayVideo() {
   });
   
   introState.playing = true;
+}
+
+function clearUniversalPerspective() {
+  universalPerspectiveStyles.forEach((styles, element) => {
+    element.style.transform = styles.transform;
+    element.style.transformOrigin = styles.transformOrigin;
+    element.style.transition = styles.transition;
+    if (styles.overflow !== undefined) element.style.overflow = styles.overflow;
+  });
+  universalPerspectiveStyles.clear();
+}
+
+function applyUniversalPerspectiveZoom(element, target, frame, zoom) {
+  const frameRect = frame.getBoundingClientRect();
+  const targetRect = target.getBoundingClientRect();
+  if (!frameRect.width || !frameRect.height || !targetRect.width || !targetRect.height) return false;
+
+  const frameScaleX = frame.offsetWidth / frameRect.width;
+  const frameScaleY = frame.offsetHeight / frameRect.height;
+  const targetX = (targetRect.left + targetRect.width / 2 - frameRect.left) * frameScaleX;
+  const targetY = (targetRect.top + targetRect.height / 2 - frameRect.top) * frameScaleY;
+  const elementRect = element.getBoundingClientRect();
+  if (!elementRect.width || !elementRect.height) return false;
+
+  universalPerspectiveStyles.set(element, {
+    transform: element.style.transform,
+    transformOrigin: element.style.transformOrigin,
+    transition: element.style.transition
+  });
+  element.style.transformOrigin = `${(targetRect.left + targetRect.width / 2 - elementRect.left) * (element.offsetWidth / elementRect.width)}px ${(targetRect.top + targetRect.height / 2 - elementRect.top) * (element.offsetHeight / elementRect.height)}px`;
+  element.style.transition = 'none';
+  element.style.transform = `translate(${frame.offsetWidth / 2 - targetX}px, ${frame.offsetHeight / 2 - targetY + UNIVERSAL_PERSPECTIVE_VERTICAL_OFFSET}px) scale(${zoom})`;
+  return true;
+}
+
+function handleUniversalPerspectiveChange(data) {
+  if (typeof data.fullscreenLobby === 'boolean') {
+    if (data.fullscreenLobby) {
+      if (!universalPerspectivePreviousScene) {
+        universalPerspectivePreviousScene = currentScene;
+      }
+      renderLobby(players);
+      updateScene('lobby');
+    } else if (universalPerspectivePreviousScene) {
+      const previousScene = universalPerspectivePreviousScene;
+      universalPerspectivePreviousScene = null;
+      updateScene(previousScene);
+    }
+  }
+
+  clearUniversalPerspective();
+  if (data.playerIndex === null || data.playerIndex === undefined) return;
+
+  const player = players.find(candidate => candidate.index === data.playerIndex);
+  const playerName = data.playerName || player?.name;
+  if (!playerName) {
+    console.warn('Universeel perspectief niet toegepast: kandidaat niet gevonden.', data.playerIndex);
+    return;
+  }
+
+  const scene = document.getElementById(`scene-${currentScene}`);
+  if (!scene) return;
+
+  const playerPosition = players.findIndex(candidate => candidate.index === data.playerIndex);
+  const miniLobby = scene.querySelector('.mini-lobby');
+  let target = Array.from(miniLobby?.querySelectorAll('.player[data-player-index]') || [])
+    .find(candidate => Number(candidate.dataset.playerIndex) === Number(data.playerIndex)) || null;
+  if (!target && miniLobby) {
+    target = miniLobby.querySelectorAll('.player')[playerPosition] || null;
+  }
+  if (!target) {
+    target = Array.from(scene.querySelectorAll('.lobby-photo[data-player-index]'))
+      .find(candidate => Number(candidate.dataset.playerIndex) === Number(data.playerIndex)) || null;
+  }
+  if (!target) {
+    target = scene.querySelectorAll('.lobby-photo')[playerPosition] || null;
+  }
+  if (!target) {
+    console.warn(`Universeel perspectief niet toegepast: "${playerName}" staat niet in de huidige scène.`);
+    return;
+  }
+
+  if (miniLobby && miniLobby.contains(target)) {
+    universalPerspectiveStyles.set(miniLobby, {
+      transform: miniLobby.style.transform,
+      transformOrigin: miniLobby.style.transformOrigin,
+      transition: miniLobby.style.transition,
+      overflow: miniLobby.style.overflow
+    });
+    miniLobby.style.overflow = 'hidden';
+    Array.from(miniLobby.children).forEach(element => {
+      applyUniversalPerspectiveZoom(
+        element,
+        target,
+        miniLobby,
+        UNIVERSAL_PERSPECTIVE_ZOOM_SCALE
+      );
+    });
+    return;
+  }
+
+  applyUniversalPerspectiveZoom(
+    scene,
+    target,
+    scene,
+    UNIVERSAL_PERSPECTIVE_ZOOM_SCALE
+  );
 }
 
 function handleIntroPerspectiveChange(perspective) {

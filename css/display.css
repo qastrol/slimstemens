@@ -165,7 +165,8 @@ body {
 
 
 #lobbyPlayerImages,
-#lobbyStandingsPlayerImages {
+#lobbyStandingsPlayerImages,
+#threeSixNineLobbyPlayerImages {
   position: relative;
   width: 1920px;
   height: 1080px;
@@ -340,6 +341,49 @@ body {
   background: #bd321d;
 }
 
+.threesixnine-wide-lobby {
+  --wide-lobby-base-offset: 250px;
+  --wide-lobby-bottom-crop: 0px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 11;
+  width: 1920px;
+  height: 57.97%;
+  overflow: hidden;
+}
+
+#threeSixNineLobbyPlayerImages .lobby-photo > div {
+  display: none;
+}
+
+#threeSixNineLobbyPlayerImages {
+  --wide-lobby-photo-size: 220px;
+  --wide-lobby-photo-top: 570px;
+}
+
+#threeSixNineLobbyPlayerImages .lobby-photo {
+  top: var(--wide-lobby-photo-top);
+}
+
+#threeSixNineLobbyPlayerImages .lobby-photo img {
+  width: var(--wide-lobby-photo-size);
+  height: var(--wide-lobby-photo-size);
+}
+
+.threesixnine-wide-lobby-stage {
+  position: absolute;
+  top: calc(var(--wide-lobby-bottom-crop) - var(--wide-lobby-base-offset));
+  left: 0;
+  width: 1920px;
+  height: 1080px;
+  background-color: #bd321d;
+  background-image: url("../assets/kandidatenstoelen.jpg");
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
 .lobby-standings-lobby-crop {
   position: relative;
   flex: 0 0 540px;
@@ -455,6 +499,15 @@ body {
   position: absolute;
   width: 960px;
   height: 540px;
+}
+
+#odVragenstellerMiniLobby,
+#odVraagMiniLobby {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .mini-lobby .player {
@@ -1347,11 +1400,63 @@ body {
 
 #scene-round-puzzel-active .round-grid {
   display: grid;
-  grid-template-columns: 960px 960px;
+  grid-template-columns: 63.75% 36.25%;
   grid-template-rows: 540px 540px;
   width: 1920px;
   height: 1080px;
   gap: 0;
+  position: relative;
+  --puzzel-galerij-left-width: 63.75%;
+  --puzzel-galerij-blue-divider-width: 15px;
+  --puzzel-galerij-black-divider-width: 14px;
+}
+
+#scene-round-puzzel-active .round-grid::before,
+#puzzel-pre-grid::before,
+#galerij-pre-grid::before,
+#galerij-main-grid::before,
+#galerij-slideshow-grid::before,
+#galerij-aanvul-grid::before,
+#galerij-done-grid::before,
+#scene-round-puzzel-active .round-grid::after,
+#puzzel-pre-grid::after,
+#galerij-pre-grid::after,
+#galerij-main-grid::after,
+#galerij-slideshow-grid::after,
+#galerij-aanvul-grid::after,
+#galerij-done-grid::after {
+  content: '';
+  position: absolute;
+  z-index: 30;
+  pointer-events: none;
+}
+
+#scene-round-puzzel-active .round-grid::before,
+#puzzel-pre-grid::before,
+#galerij-pre-grid::before,
+#galerij-main-grid::before,
+#galerij-slideshow-grid::before,
+#galerij-aanvul-grid::before,
+#galerij-done-grid::before {
+  top: 0;
+  left: calc(var(--puzzel-galerij-left-width) - var(--puzzel-galerij-blue-divider-width));
+  width: var(--puzzel-galerij-blue-divider-width);
+  height: 100%;
+  background: #004186;
+}
+
+#scene-round-puzzel-active .round-grid::after,
+#puzzel-pre-grid::after,
+#galerij-pre-grid::after,
+#galerij-main-grid::after,
+#galerij-slideshow-grid::after,
+#galerij-aanvul-grid::after,
+#galerij-done-grid::after {
+  top: calc(50% - var(--puzzel-galerij-black-divider-width) / 2);
+  left: var(--puzzel-galerij-left-width);
+  width: calc(100% - var(--puzzel-galerij-left-width));
+  height: var(--puzzel-galerij-black-divider-width);
+  background: #000;
 }
 
 #scene-round-puzzel-active .grid-part.part1 {
@@ -1557,7 +1662,7 @@ body {
 }
 
 #puzzelActivePlayersBar .player-name {
-  font-size: 1.4em;
+  font-size: 1em;
 }
 
 #puzzelActivePlayersBar .player-seconds {
@@ -1588,6 +1693,19 @@ body {
   width: 1920px;
   height: 1080px;
   background-color: #bd321d;
+}
+
+#puzzel-pre-grid,
+#galerij-pre-grid,
+#galerij-main-grid,
+#galerij-slideshow-grid,
+#galerij-aanvul-grid,
+#galerij-done-grid {
+  grid-template-columns: 63.75% 36.25%;
+  position: relative;
+  --puzzel-galerij-left-width: 63.75%;
+  --puzzel-galerij-blue-divider-width: 15px;
+  --puzzel-galerij-black-divider-width: 14px;
 }
 
 
@@ -1631,6 +1749,40 @@ body {
   opacity: 1;
 }
 
+#puzzel-pre-grid .part2 .mini-lobby .player:nth-child(1),
+#galerij-pre-grid .part2 .mini-lobby .player:nth-child(1),
+#galerij-main-grid .part2 .mini-lobby .player:nth-child(1),
+#galerij-slideshow-grid .part2 .mini-lobby .player:nth-child(1),
+#galerij-aanvul-grid .part2 .mini-lobby .player:nth-child(1),
+#galerij-done-grid .part2 .mini-lobby .player:nth-child(1),
+#scene-round-puzzel-active .grid-part.part2 .mini-lobby .player:nth-child(1) {
+  left: 21.17%;
+}
+
+#puzzel-pre-grid .part2 .mini-lobby .player:nth-child(2),
+#galerij-pre-grid .part2 .mini-lobby .player:nth-child(2),
+#galerij-main-grid .part2 .mini-lobby .player:nth-child(2),
+#galerij-slideshow-grid .part2 .mini-lobby .player:nth-child(2),
+#galerij-aanvul-grid .part2 .mini-lobby .player:nth-child(2),
+#galerij-done-grid .part2 .mini-lobby .player:nth-child(2),
+#scene-round-puzzel-active .grid-part.part2 .mini-lobby .player:nth-child(2) {
+  left: 42.79%;
+}
+
+#puzzel-pre-grid .part2 .mini-lobby .player:nth-child(3),
+#galerij-pre-grid .part2 .mini-lobby .player:nth-child(3),
+#galerij-main-grid .part2 .mini-lobby .player:nth-child(3),
+#galerij-slideshow-grid .part2 .mini-lobby .player:nth-child(3),
+#galerij-aanvul-grid .part2 .mini-lobby .player:nth-child(3),
+#galerij-done-grid .part2 .mini-lobby .player:nth-child(3),
+#scene-round-puzzel-active .grid-part.part2 .mini-lobby .player:nth-child(3) {
+  left: 63.94%;
+  right: auto;
+}
+
+.galerij-round-grid .part2 .mini-lobby > div,
+#scene-round-puzzel-active .grid-part.part2 .mini-lobby > div,
+#scene-round-puzzel-waiting .grid-part.part2 .mini-lobby > div,
 .galerij-round-grid .part2 #galerijPreMiniLobby,
 .galerij-round-grid .part2 #galerijMainMiniLobby,
 .galerij-round-grid .part2 #galerijSlideshowMiniLobby,
@@ -1660,8 +1812,15 @@ body {
 
 #galerijMainImageContainer,
 #galerijSlideshowImageContainer {
+  position: absolute;
+  top: 88px;
+  left: 114px;
+  width: 999px;
+  height: 902px;
+  box-sizing: border-box;
+  padding: 0;
   justify-content: center;
-  background-color: #bd321d;
+  background: transparent;
 }
 
 #galerijMainImageContainer img,
@@ -1673,7 +1832,7 @@ body {
   object-fit: contain;
   object-position: center;
   border-radius: 12px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  box-shadow: none;
 }
 
 
@@ -1878,23 +2037,6 @@ body {
   color: transparent;
 }
 
-
-#galerijSlideshowAnswerContainer {
-  width: 100%;
-  text-align: center;
-  margin-top: 30px;
-  padding: 10px;
-}
-
-.galerij-slideshow-answer-text {
-
-  font-family: 'Oracle Crimson Sans', 'DIN Black', Arial, sans-serif;
-  font-size: 5.0em;
-  font-weight: bold;
-  color: #ffd17a;
-  text-transform: uppercase;
-  text-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
-}
 
 /* ============================================
    BUMPER SCENE STYLES
@@ -2151,8 +2293,20 @@ body {
   z-index: 1;
 }
 
-#juryOverlay.mini-369 .jury-image {
+/* Mini-modus: vul het vlak en snij links/rechts bij */
+#juryOverlay:not(.fullscreen) {
+  container-type: size;
+  --jury-img-width: max(100cqw, calc(100cqh * 16 / 9));
+}
+
+#juryOverlay:not(.fullscreen) .jury-image {
   object-fit: cover;
+}
+
+#juryOverlay:not(.fullscreen) .jury-member-photo {
+  left: calc(50% + (44 - 50) * 0.01 * var(--jury-img-width));
+  top: calc(50% + (60 - 50) * 0.01 * var(--jury-img-width) * 9 / 16);
+  width: calc(33 * 0.01 * var(--jury-img-width));
 }
 
 #juryOverlay {

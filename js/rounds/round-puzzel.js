@@ -15,6 +15,7 @@ function sendPuzzelDisplayUpdate(scene, extraData = {}) {
     players: players.map((p, i) => ({
       name: p.name,
       seconds: p.seconds,
+      index: p.index,
       photoUrl: p.photoUrl,
       isActive: i === activePlayerIndex,
       
