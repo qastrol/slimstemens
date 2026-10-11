@@ -481,7 +481,26 @@ const desktopBridge = typeof window !== 'undefined' ? window.slimstemensDesktopB
 let desktopBridgeUnsubscribe = null;
 // Audio is altijd enabled voor OBS Studio - geen unlock nodig
 
+function disableElectronRoundVideoAutoplay() {
+  if (!desktopBridge) {
+    return;
+  }
+
+  ['openDeurIntroVideoPlayer', 'collectiefVideoPlayer'].forEach((id) => {
+    const videoPlayer = document.getElementById(id);
+    if (!videoPlayer) {
+      return;
+    }
+
+    videoPlayer.autoplay = false;
+    videoPlayer.removeAttribute('autoplay');
+    videoPlayer.pause();
+  });
+}
+
 function connectWebSocket() {
+  disableElectronRoundVideoAutoplay();
+
   if (desktopBridge && typeof desktopBridge.onMessage === 'function') {
     updateScene('waiting-host');
     ws = {
