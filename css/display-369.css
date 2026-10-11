@@ -1,6 +1,6 @@
 @font-face {
   font-family: 'DIN Black Text';
-  src: url('../assets/fonts/FF_DIN_Condensed_Black.otf') format('opentype');
+  src: url('../assets/fonts/FF_DIN_Condensed_Black.woff2') format('woff2');
   font-weight: normal;
   font-style: normal;
 }
@@ -10,7 +10,7 @@ body {
   height: 1080px;
   background-color: transparent;
   color: white;
-  font-family: 'Oracle Crimson Sans', 'DIN Black', Arial, sans-serif;
+  font-family: 'DIN Black', Arial, sans-serif;
   padding: 0;
   overflow: hidden;
   display: flex;

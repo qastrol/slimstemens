@@ -7,6 +7,12 @@ const UNIVERSAL_PERSPECTIVE_VERTICAL_OFFSET = -55; // Pas dit getal aan om de ka
 let showingStandings = false;
 let showingLobbyStandings = false;
 let showingThreeSixNineLobbyPerspective = false;
+let questionQuarterPerspective = null;
+let questionQuarterPerspectiveViewport = null;
+let questionQuarterPerspectiveTarget = null;
+let questionQuarterTargetPreviousPosition = '';
+let questionQuarterHiddenMiniLobby = null;
+const questionQuarterTransformedElements = new Set();
 const canonicalRoundDisplayNames = {
   '369': '3-6-9',
   threesixnine: '3-6-9',
@@ -25,6 +31,7 @@ function getCanonicalRoundDisplayName(value) {
 
 let currentRoundDisplayName = '';
 let currentRoundDisplayKey = '';
+let finaleGameComplete = false;
 let defaultThreeSixNineMax = 12;
 let perRoundState = { max: defaultThreeSixNineMax };
 let allGalleryAnswers = []; 
@@ -33,6 +40,9 @@ let openDeurIntroVideoActive = false;
 let openDeurPendingVraagData = null;
 const openDeurPreparedThumbUrls = new Set();
 const openDeurPreloadedIntroUrls = new Set();
+let electronOpenDeurPreloader = null;
+let electronOpenDeurPreloadedUrl = '';
+let collectiefPreloadedVideoUrl = '';
 let threeSixNineVideoActive = false;
 let lastThreeSixNineData = null;
 let threeSixNineActiveAudio = null;
@@ -43,6 +53,48 @@ const DEFAULT_DISPLAY_BRANDING = {
 };
 const DISPLAY_DEBUG_WS = false;
 let displayBranding = { ...DEFAULT_DISPLAY_BRANDING };
+
+function hideFinaleCandidatePerspective() {
+  const overlay = document.getElementById('finaleCandidatePerspectiveOverlay');
+  if (!overlay) return;
+  overlay.style.display = 'none';
+  overlay.setAttribute('aria-hidden', 'true');
+}
+
+function updatePresenterOverlayTheme() {
+  const overlay = document.getElementById('presenterOverlay');
+  if (!overlay) return;
+  const finaleInProgress = currentRoundDisplayKey === 'finale' && !finaleGameComplete;
+  const background = overlay.querySelector('.presenter-background');
+  const desk = overlay.querySelector('.presenter-desk');
+  if (background) {
+    background.src = finaleInProgress
+      ? 'assets/finale/achtergrondpresentator.png'
+      : 'assets/presentator.png';
+    background.alt = finaleInProgress ? 'Finale presentatorachtergrond' : 'Presentator achtergrond';
+  }
+  if (desk) desk.style.display = finaleInProgress ? 'none' : '';
+}
+
+function showFinaleCandidatePerspective(data) {
+  const overlay = document.getElementById('finaleCandidatePerspectiveOverlay');
+  const photo = document.getElementById('finaleCandidatePerspectivePhoto');
+  if (!overlay || !photo) return;
+  if (!data.showing) {
+    hideFinaleCandidatePerspective();
+    return;
+  }
+  if (currentRoundDisplayKey !== 'finale' || finaleGameComplete) {
+    console.warn('Finalistperspectief niet toegepast buiten de actieve finale.');
+    hideFinaleCandidatePerspective();
+    return;
+  }
+
+  photo.src = data.photoUrl || 'assets/avatar.png';
+  photo.alt = data.playerName || 'Finalist';
+  overlay.style.display = 'flex';
+  overlay.setAttribute('aria-hidden', 'false');
+}
 
 function animateNewlyFoundAnswers(container, stateKey) {
   if (!container) return;
@@ -150,6 +202,7 @@ if (window.pendingUiConfig) {
 
 function updateScene(sceneName) {
     if (currentScene !== sceneName) {
+      clearQuestionQuarterPerspective();
       if (sceneName !== 'round-369') {
         showingThreeSixNineLobbyPerspective = false;
       }
@@ -171,6 +224,7 @@ function updateScene(sceneName) {
       wideLobby.style.display = sceneName === 'round-369' && showingThreeSixNineLobbyPerspective ? 'block' : 'none';
     }
     currentScene = sceneName;
+  renderQuestionQuarterPerspective();
   refreshVisibleOverlaysPosition();
 }
 
@@ -205,6 +259,27 @@ function getOpenDeurIntroThumbnailUrl(questioner) {
 
 function preloadOpenDeurIntroVideo(videoUrl) {
   const candidate = String(videoUrl || '').trim();
+  if (desktopBridge) {
+    if (!candidate || electronOpenDeurPreloadedUrl === candidate) {
+      return;
+    }
+
+    if (electronOpenDeurPreloader) {
+      electronOpenDeurPreloader.pause();
+      electronOpenDeurPreloader.removeAttribute('src');
+      electronOpenDeurPreloader.load();
+    }
+
+    electronOpenDeurPreloader = document.createElement('video');
+    electronOpenDeurPreloader.preload = 'auto';
+    electronOpenDeurPreloader.muted = true;
+    electronOpenDeurPreloader.playsInline = true;
+    electronOpenDeurPreloader.src = candidate;
+    electronOpenDeurPreloader.load();
+    electronOpenDeurPreloadedUrl = candidate;
+    return;
+  }
+
   if (!candidate || openDeurPreloadedIntroUrls.has(candidate)) {
     return;
   }
@@ -218,7 +293,7 @@ function preloadOpenDeurIntroVideo(videoUrl) {
   preloader.load();
 }
 
-function prepareOpenDeurQuestionerVideo(videoEl, videoUrl) {
+function prepareOpenDeurQuestionerVideo(videoEl, videoUrl, preload = 'metadata') {
   if (!videoEl || !videoUrl) {
     return;
   }
@@ -237,12 +312,12 @@ function prepareOpenDeurQuestionerVideo(videoEl, videoUrl) {
     return;
   }
 
-  videoEl.preload = 'metadata';
+  videoEl.preload = preload;
   videoEl.muted = true;
   videoEl.playsInline = true;
   videoEl.setAttribute('playsinline', '');
   videoEl.setAttribute('muted', '');
-  videoEl.setAttribute('preload', 'metadata');
+  videoEl.setAttribute('preload', preload);
 
   const showFallbackState = () => {
     if (container) {
@@ -470,6 +545,12 @@ function connectWebSocket() {
       case 'round_start':
         currentRoundDisplayName = getCanonicalRoundDisplayName(data.name || data.key);
         currentRoundDisplayKey = data.key || '';
+        finaleGameComplete = false;
+        document.querySelectorAll(
+          '#finale-main-grid, #finale-pre-grid, #scene-finale-standings .finale-standings-grid'
+        ).forEach(grid => grid.classList.remove('finale-faceoff-wide'));
+        hideFinaleCandidatePerspective();
+        updatePresenterOverlayTheme();
         
         if (data.key === 'threeSixNine') {
           if (data.players) players = data.players;
@@ -693,6 +774,8 @@ function handleAudioMessage(data) {
         const presenterOverlay = document.getElementById('presenterOverlay');
         const presenterPhoto = document.getElementById('presenterPhoto');
         const juryOverlay = document.getElementById('juryOverlay');
+        updatePresenterOverlayTheme();
+        if (data.showing) hideFinaleCandidatePerspective();
 
         if (data.showing && showingStandings) {
           showingStandings = false;
@@ -714,6 +797,23 @@ function handleAudioMessage(data) {
         }
         break;
 
+      case 'finale_candidate_perspective': {
+        if (data.showing) {
+          const presenterOverlay = document.getElementById('presenterOverlay');
+          const juryOverlay = document.getElementById('juryOverlay');
+          if (presenterOverlay) presenterOverlay.style.display = 'none';
+          if (juryOverlay) juryOverlay.style.display = 'none';
+        }
+        showFinaleCandidatePerspective(data);
+        break;
+      }
+
+      case 'finale_faceoff_perspective':
+        document.querySelectorAll(
+          '#finale-main-grid, #finale-pre-grid, #scene-finale-standings .finale-standings-grid'
+        ).forEach(grid => grid.classList.toggle('finale-faceoff-wide', !!data.showing));
+        break;
+
       case 'jury_toggle': {
         const juryOverlay = document.getElementById('juryOverlay');
         const presenterOverlay = document.getElementById('presenterOverlay');
@@ -725,6 +825,7 @@ function handleAudioMessage(data) {
         }
         if (data.showing) {
           if (presenterOverlay) presenterOverlay.style.display = 'none';
+          hideFinaleCandidatePerspective();
           const customJury = data.mode === 'custom' && data.photoData;
           if (juryImage) juryImage.src = customJury ? 'assets/jurystoel.png' : 'assets/jury.png';
           if (juryMemberPhoto) {
@@ -800,6 +901,11 @@ function handleAudioMessage(data) {
         handleUniversalPerspectiveChange(data);
         break;
 
+      case 'question_quarter_perspective':
+        questionQuarterPerspective = data.perspective || null;
+        renderQuestionQuarterPerspective();
+        break;
+
       case 'intro_stop':
         handleIntroStop();
         break;
@@ -846,6 +952,7 @@ function renderMiniLobby(players, containerId){
     const el = document.getElementById(containerId);
     if(!el) return;
     el.innerHTML = players.map(p => `<div class="player" data-player-index="${p.index}"><img src="${p.photoUrl || 'assets/avatar.png'}"></div>`).join('');
+    renderQuestionQuarterPerspective();
 }
 
 function renderFinaleCandidatePhotos(
@@ -1307,26 +1414,48 @@ function renderOpenDeurVragensteller(data) {
       `;
     }).join('');
 
-    const maxPreloadedQuestioners = 1;
-    data.questioners
-      .filter((questioner) => !!questioner.introVideoUrl)
-      .slice(0, maxPreloadedQuestioners)
-      .forEach((questioner) => {
-        preloadOpenDeurIntroVideo(questioner.introVideoUrl);
-
-        const introThumbnailUrl = getOpenDeurIntroThumbnailUrl(questioner);
+    const nextQuestioner = data.questioners.find((questioner) => (
+      !!questioner.introVideoUrl && !questioner.isChosen
+    ));
+    if (desktopBridge) {
+      if (nextQuestioner) {
+        const introThumbnailUrl = getOpenDeurIntroThumbnailUrl(nextQuestioner);
         if (introThumbnailUrl) {
-          return;
+          preloadOpenDeurIntroVideo(nextQuestioner.introVideoUrl);
+        } else {
+          const videoEl = container.querySelector(
+            `.vragensteller-box[data-questioner-index="${nextQuestioner.index}"] .vragensteller-thumb`
+          );
+          const box = videoEl?.closest('.vragensteller-box');
+          if (box && !openDeurPreparedThumbUrls.has(nextQuestioner.introVideoUrl)) {
+            box.classList.add('loading-video-thumb');
+          }
+          prepareOpenDeurQuestionerVideo(videoEl, nextQuestioner.introVideoUrl, 'auto');
+          openDeurPreparedThumbUrls.add(nextQuestioner.introVideoUrl);
         }
+      }
+    } else {
+      const maxPreloadedQuestioners = 1;
+      data.questioners
+        .filter((questioner) => !!questioner.introVideoUrl)
+        .slice(0, maxPreloadedQuestioners)
+        .forEach((questioner) => {
+          preloadOpenDeurIntroVideo(questioner.introVideoUrl);
 
-        const videoEl = container.querySelector(`.vragensteller-box[data-questioner-index="${questioner.index}"] .vragensteller-thumb`);
-        const box = videoEl?.closest('.vragensteller-box');
-        if (box && !openDeurPreparedThumbUrls.has(questioner.introVideoUrl)) {
-          box.classList.add('loading-video-thumb');
-        }
-        prepareOpenDeurQuestionerVideo(videoEl, questioner.introVideoUrl);
-        openDeurPreparedThumbUrls.add(questioner.introVideoUrl);
-      });
+          const introThumbnailUrl = getOpenDeurIntroThumbnailUrl(questioner);
+          if (introThumbnailUrl) {
+            return;
+          }
+
+          const videoEl = container.querySelector(`.vragensteller-box[data-questioner-index="${questioner.index}"] .vragensteller-thumb`);
+          const box = videoEl?.closest('.vragensteller-box');
+          if (box && !openDeurPreparedThumbUrls.has(questioner.introVideoUrl)) {
+            box.classList.add('loading-video-thumb');
+          }
+          prepareOpenDeurQuestionerVideo(videoEl, questioner.introVideoUrl);
+          openDeurPreparedThumbUrls.add(questioner.introVideoUrl);
+        });
+    }
 
     renderPlayersBarCompact(data.players, data.activeChoosingPlayerIndex, 'od-vragensteller-scores');
 }
@@ -1898,6 +2027,17 @@ function handleGalerijDisplayUpdate(data) {
       case 'scene-round-collectief-pre': {
         renderMiniLobby(displayPlayers, 'collectiefPreMiniLobby');
         renderPlayersBarCompact(displayPlayers, activeIndex, 'collectiefPrePlayersBar');
+        if (desktopBridge && data.preloadVideoSrc) {
+          const videoPlayer = document.getElementById('collectiefVideoPlayer');
+          const videoSource = document.getElementById('collectiefVideoSource');
+          if (videoPlayer && videoSource && collectiefPreloadedVideoUrl !== data.preloadVideoSrc) {
+            videoPlayer.pause();
+            videoPlayer.preload = 'auto';
+            videoSource.setAttribute('src', data.preloadVideoSrc);
+            videoPlayer.load();
+            collectiefPreloadedVideoUrl = data.preloadVideoSrc;
+          }
+        }
         break;
       }
 
@@ -1906,9 +2046,13 @@ function handleGalerijDisplayUpdate(data) {
         const videoSource = document.getElementById('collectiefVideoSource');
       
         if (videoSource && data.videoSrc) {
-          videoSource.src = data.videoSrc;
           if (videoPlayer) {
-            videoPlayer.load();
+            const sourceAlreadyPrepared = desktopBridge &&
+              videoSource.getAttribute('src') === data.videoSrc;
+            if (!sourceAlreadyPrepared) {
+              videoSource.src = data.videoSrc;
+              videoPlayer.load();
+            }
             videoPlayer.play().catch(err => console.warn('Video autoplay geblokkeerd:', err));
           }
         }
@@ -1987,12 +2131,19 @@ function handleGalerijDisplayUpdate(data) {
   }
 
   function handleFinaleDisplayUpdate(data) {
+    currentRoundDisplayKey = 'finale';
+    currentRoundDisplayName = 'Finale';
     const playersData = data.players || [];
     const activeIndex = data.activeIndex ?? -1;
 
     
     let sceneToShow = data.scene;
     if (!sceneToShow) sceneToShow = 'scene-round-finale-pre';
+    if (sceneToShow === 'scene-round-finale-end') {
+      finaleGameComplete = true;
+      hideFinaleCandidatePerspective();
+      updatePresenterOverlayTheme();
+    }
 
     
     const sceneId = sceneToShow.replace(/^scene-/, '');
@@ -2270,6 +2421,186 @@ function clearUniversalPerspective() {
     if (styles.overflow !== undefined) element.style.overflow = styles.overflow;
   });
   universalPerspectiveStyles.clear();
+}
+
+function clearQuestionQuarterPerspective() {
+  questionQuarterTransformedElements.forEach(element => {
+    const styles = universalPerspectiveStyles.get(element);
+    if (!styles) return;
+    element.style.transform = styles.transform;
+    element.style.transformOrigin = styles.transformOrigin;
+    element.style.transition = styles.transition;
+    if (styles.overflow !== undefined) element.style.overflow = styles.overflow;
+    universalPerspectiveStyles.delete(element);
+  });
+  questionQuarterTransformedElements.clear();
+
+  if (questionQuarterHiddenMiniLobby) {
+    questionQuarterHiddenMiniLobby.element.style.display =
+      questionQuarterHiddenMiniLobby.display;
+    questionQuarterHiddenMiniLobby = null;
+  }
+
+  if (questionQuarterPerspectiveTarget) {
+    questionQuarterPerspectiveTarget.style.position = questionQuarterTargetPreviousPosition;
+    questionQuarterPerspectiveTarget = null;
+  }
+
+  questionQuarterPerspectiveViewport?.remove();
+  questionQuarterPerspectiveViewport = null;
+}
+
+function renderQuestionQuarterPerspective() {
+  clearQuestionQuarterPerspective();
+  const perspective = questionQuarterPerspective;
+  if (!perspective || !currentScene) return;
+
+  const targetSelectors = {
+    'round-369': '.round-grid > .grid-part.part2',
+    'round-opendeur-vragensteller': '#opendeur-vragensteller-grid .grid-part.part2',
+    'round-opendeur-vraag': '#opendeur-vraag-grid .part4-status',
+    'round-puzzel-waiting': '#puzzel-pre-grid .part4-status',
+    'round-puzzel-active': '.grid-part.part3',
+    'round-galerij-pre': '#galerij-pre-grid .part4-status',
+    'round-galerij-main': '#galerij-main-grid .part4-status',
+    'round-galerij-slideshow': '#galerij-slideshow-grid .part4-status',
+    'round-galerij-aanvul': '#galerij-aanvul-grid .part4-status',
+    'round-galerij-done': '#galerij-done-grid .part4-status',
+    'round-collectief-pre': '#collectief-pre-grid .part4-status',
+    'round-collectief-main': '.part4-status',
+    'round-collectief-done': '#scene-round-collectief-done .part4-status'
+  };
+  const isFullscreenLobby = currentScene === 'lobby' && !!universalPerspectivePreviousScene;
+  const perspectiveSceneName = isFullscreenLobby ? universalPerspectivePreviousScene : currentScene;
+  const perspectiveScene = document.getElementById(`scene-${perspectiveSceneName}`);
+  const scene = document.getElementById(`scene-${currentScene}`);
+  const target = isFullscreenLobby
+    ? scene
+    : perspectiveScene?.querySelector(targetSelectors[perspectiveSceneName] || '');
+  if (!target) return;
+
+  questionQuarterPerspectiveTarget = target;
+  questionQuarterTargetPreviousPosition = target.style.position;
+  if (getComputedStyle(target).position === 'static') {
+    target.style.position = 'relative';
+  }
+
+  const viewport = document.createElement('div');
+  viewport.className = 'question-quarter-perspective-viewport grid-part part2';
+  viewport.style.position = 'absolute';
+  viewport.style.display = 'block';
+  viewport.style.padding = '0';
+  if (isFullscreenLobby) {
+    const upperRightScenes = new Set([
+      'round-369',
+      'round-opendeur-vragensteller'
+    ]);
+    viewport.style.inset = 'auto';
+    viewport.style.left = '960px';
+    viewport.style.top = upperRightScenes.has(perspectiveSceneName) ? '0px' : '540px';
+    viewport.style.width = '960px';
+    viewport.style.height = '540px';
+  }
+  questionQuarterPerspectiveViewport = viewport;
+  target.appendChild(viewport);
+
+  const removeIds = element => {
+    if (element.id) element.removeAttribute('id');
+    element.querySelectorAll('[id]').forEach(child => child.removeAttribute('id'));
+  };
+
+  if (perspective.type === 'lobby' || perspective.type === 'player') {
+    const sourceMiniLobby = perspectiveScene?.querySelector('.mini-lobby');
+    if (!sourceMiniLobby) {
+      console.warn('Vraagkwartierperspectief niet toegepast: mini-lobby ontbreekt.', currentScene);
+      clearQuestionQuarterPerspective();
+      return;
+    }
+    const miniLobby = sourceMiniLobby.cloneNode(true);
+    miniLobby.classList.add('question-quarter-mini-lobby');
+    viewport.appendChild(miniLobby);
+    Array.from(miniLobby.children)
+      .filter(element => !element.matches('.mini-bg'))
+      .forEach(element => {
+        element.style.position = 'absolute';
+        element.style.top = '0';
+        element.style.left = '0';
+        element.style.width = '100%';
+        element.style.height = '100%';
+      });
+
+    if (perspective.type === 'lobby') {
+      questionQuarterHiddenMiniLobby = {
+        element: sourceMiniLobby,
+        display: sourceMiniLobby.style.display
+      };
+      sourceMiniLobby.style.display = 'none';
+      return;
+    }
+
+    const player = Array.from(miniLobby.querySelectorAll('.player[data-player-index]'))
+      .find(candidate => Number(candidate.dataset.playerIndex) === Number(perspective.playerIndex));
+    if (!player) {
+      console.warn('Vraagkwartierperspectief niet toegepast: kandidaat niet gevonden.', perspective.playerIndex);
+      clearQuestionQuarterPerspective();
+      return;
+    }
+
+    miniLobby.style.overflow = 'hidden';
+    Array.from(miniLobby.children).forEach(element => {
+      if (applyUniversalPerspectiveZoom(
+        element,
+        player,
+        miniLobby,
+        UNIVERSAL_PERSPECTIVE_ZOOM_SCALE
+      )) {
+        questionQuarterTransformedElements.add(element);
+      }
+    });
+    return;
+  }
+
+  if (perspective.type === 'presenter') {
+    const source = document.getElementById('presenterOverlay');
+    if (!source || !perspective.photoData) {
+      console.warn('Vraagkwartierperspectief niet toegepast: presentatorfoto ontbreekt.');
+      clearQuestionQuarterPerspective();
+      return;
+    }
+    const presenter = source.cloneNode(true);
+    removeIds(presenter);
+    presenter.className = 'question-quarter-presenter-overlay';
+    presenter.style.display = 'flex';
+    presenter.style.position = 'absolute';
+    presenter.style.inset = '0';
+    presenter.style.width = '100%';
+    presenter.style.height = '100%';
+    presenter.querySelector('.presenter-photo').src = perspective.photoData;
+    viewport.appendChild(presenter);
+    return;
+  }
+
+  if (perspective.type === 'jury') {
+    const source = document.getElementById('juryOverlay');
+    if (!source) return;
+    const jury = source.cloneNode(true);
+    removeIds(jury);
+    jury.className = 'question-quarter-jury-overlay';
+    jury.style.display = 'flex';
+    jury.style.position = 'absolute';
+    jury.style.inset = '0';
+    jury.style.width = '100%';
+    jury.style.height = '100%';
+    const customJury = perspective.mode === 'custom' && perspective.photoData;
+    const juryImage = jury.querySelector('.jury-image');
+    const juryMemberPhoto = jury.querySelector('.jury-member-photo');
+    if (juryImage) juryImage.src = customJury ? 'assets/jurystoel.png' : 'assets/jury.png';
+    if (juryMemberPhoto) {
+      juryMemberPhoto.src = customJury ? perspective.photoData : '';
+      juryMemberPhoto.style.display = customJury ? 'block' : 'none';
+    }
+    viewport.appendChild(jury);
+  }
 }
 
 function applyUniversalPerspectiveZoom(element, target, frame, zoom) {
@@ -2647,6 +2978,9 @@ let finaleEndViewState = {
 
 function handleFinaleViewChange(data) {
   console.log('🎬 Finale view wisselen naar:', data.view, data);
+  finaleGameComplete = true;
+  hideFinaleCandidatePerspective();
+  updatePresenterOverlayTheme();
   finaleEndViewState.currentView = data.view;
   
   // Als spelers meekomen (bijv. van restore), update finaleEndViewState
@@ -2747,7 +3081,7 @@ function handleFinaleViewChange(data) {
       if (finaleEndViewState.allPlayers) {
         renderFinaleCandidatePhotos(
           finaleEndViewState.allPlayers,
-          0,
+          data.winnerIndex ?? finaleEndViewState.winner?.index ?? 0,
           ['finaleEndPhotoLeft', 'finaleEndPhotoRight'],
           ['finaleEndScoreLeft', 'finaleEndScoreRight']
         );

@@ -264,8 +264,9 @@ async function remapConfigMediaFromZip(config, zip) {
   const mediaUrlByZipPath = new Map();
   const generatedBlobUrls = [];
   const unresolvedPaths = [];
+  const desktopBridge = typeof window !== 'undefined' ? window.slimstemensDesktopBridge : null;
 
-  const getMediaUrlForMatch = async (match) => {
+  const getMediaUrlForMatch = async (match, cacheElectronVideo = false) => {
     if (!match || !match.path || !match.entry) {
       return null;
     }
@@ -276,14 +277,28 @@ async function remapConfigMediaFromZip(config, zip) {
 
     // Gebruik data-URL's i.p.v. blob-URL's zodat media ook in display.html werkt
     // wanneer host en display als losse file:// documenten draaien.
-    const mimeType = guessMimeType(match.path);
+    const mimeType = cacheElectronVideo && /\.(ogg|ogv)$/i.test(match.path)
+      ? 'video/ogg'
+      : guessMimeType(match.path);
+    if (
+      cacheElectronVideo &&
+      mimeType.startsWith('video/') &&
+      desktopBridge &&
+      typeof desktopBridge.cacheMedia === 'function'
+    ) {
+      const bytes = await match.entry.async('uint8array');
+      const mediaUrl = await desktopBridge.cacheMedia(bytes, mimeType);
+      mediaUrlByZipPath.set(match.path, mediaUrl);
+      return mediaUrl;
+    }
+
     const base64Data = await match.entry.async('base64');
     const dataUrl = `data:${mimeType};base64,${base64Data}`;
     mediaUrlByZipPath.set(match.path, dataUrl);
     return dataUrl;
   };
 
-  const tryMapPath = async (rawPath, label) => {
+  const tryMapPath = async (rawPath, label, cacheElectronVideo = false) => {
     const path = typeof rawPath === 'string' ? rawPath.trim() : '';
     if (!path || shouldSkipRemoteMediaPath(path)) {
       return { mapped: path, found: true };
@@ -295,7 +310,7 @@ async function remapConfigMediaFromZip(config, zip) {
       return { mapped: path, found: false };
     }
 
-    const mediaUrl = await getMediaUrlForMatch(match);
+    const mediaUrl = await getMediaUrlForMatch(match, cacheElectronVideo);
     return { mapped: mediaUrl, found: true };
   };
 
@@ -393,7 +408,8 @@ async function remapConfigMediaFromZip(config, zip) {
 
       const introVideoResult = await tryMapPath(
         question.introVideoUrl || question.videoUrl || question.introVideo || question.video,
-        `Open Deur vraag ${questionIndex + 1} introvideo`
+        `Open Deur vraag ${questionIndex + 1} introvideo`,
+        true
       );
 
       if (introVideoResult.found && introVideoResult.mapped) {
@@ -437,7 +453,11 @@ async function remapConfigMediaFromZip(config, zip) {
       }
 
       const currentVideoPath = entry.video || entry.videoUrl || entry.clip;
-      const result = await tryMapPath(currentVideoPath, `Collectief Geheugen fragment ${entryIndex + 1}`);
+      const result = await tryMapPath(
+        currentVideoPath,
+        `Collectief Geheugen fragment ${entryIndex + 1}`,
+        true
+      );
 
       if (result.found && result.mapped) {
         if (typeof entry.video === 'string') entry.video = result.mapped;

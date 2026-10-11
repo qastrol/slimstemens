@@ -1,6 +1,6 @@
 @font-face {
   font-family: 'DIN Black Text';
-  src: url('../assets/fonts/FF_DIN_Condensed_Black.otf') format('opentype');
+  src: url('../assets/fonts/FF_DIN_Condensed_Black.woff2') format('woff2');
   font-weight: normal;
   font-style: normal;
 }
@@ -32,7 +32,7 @@ body {
   margin: 0;
   background-color: transparent;
   color: white;
-  font-family: 'Oracle Crimson Sans', 'DIN Black', Arial, sans-serif;
+  font-family: 'DIN Black', Arial, sans-serif;
   padding: 0;
   overflow: hidden;
   display: flex;
@@ -1459,6 +1459,46 @@ body {
   background: #000;
 }
 
+#collectief-pre-grid,
+#collectief-main-grid,
+#collectief-done-grid {
+  position: relative;
+  --collectief-blue-divider-width: 15px;
+  --collectief-black-divider-width: 14px;
+}
+
+#collectief-pre-grid::before,
+#collectief-main-grid::before,
+#collectief-done-grid::before,
+#collectief-pre-grid::after,
+#collectief-main-grid::after,
+#collectief-done-grid::after {
+  content: '';
+  position: absolute;
+  z-index: 30;
+  pointer-events: none;
+}
+
+#collectief-pre-grid::before,
+#collectief-main-grid::before,
+#collectief-done-grid::before {
+  top: 0;
+  left: calc(50% - var(--collectief-blue-divider-width));
+  width: var(--collectief-blue-divider-width);
+  height: 100%;
+  background: #004186;
+}
+
+#collectief-pre-grid::after,
+#collectief-main-grid::after,
+#collectief-done-grid::after {
+  top: calc(50% - var(--collectief-black-divider-width) / 2);
+  left: 50%;
+  width: 50%;
+  height: var(--collectief-black-divider-width);
+  background: #000;
+}
+
 #scene-round-puzzel-active .grid-part.part1 {
   grid-column: 1;
   grid-row: 1 / span 2;
@@ -2197,6 +2237,28 @@ body {
 }
 
 /* Presentator Overlay Styling */
+#finaleCandidatePerspectiveOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10002;
+  display: none;
+  width: 1920px;
+  height: 1080px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: url("../assets/finale/achtergrondkandidatentussenstand.png") center / cover no-repeat;
+}
+
+#finaleCandidatePerspectivePhoto {
+  width: 720px;
+  height: 720px;
+  border: 4px solid rgba(255, 255, 255, 0.45);
+  border-radius: 10px;
+  object-fit: cover;
+}
+
 #presenterOverlay,
 #juryOverlay {
   position: fixed;
@@ -2326,6 +2388,62 @@ body {
   z-index: 2;
 }
 
+.question-quarter-perspective-viewport {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  overflow: hidden;
+  background: #080c12;
+}
+
+.question-quarter-mini-lobby {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.question-quarter-mini-lobby .mini-bg {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+}
+
+.question-quarter-presenter-overlay,
+.question-quarter-jury-overlay {
+  z-index: 1;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+}
+
+.question-quarter-presenter-overlay .presenter-container {
+  width: 100%;
+  height: 100%;
+}
+
+.question-quarter-presenter-overlay .presenter-photo {
+  width: 40%;
+}
+
+.question-quarter-jury-overlay {
+  container-type: size;
+  --jury-img-width: max(100cqw, calc(100cqh * 16 / 9));
+  --jury-member-width: 33%;
+  --jury-member-left: 44%;
+  --jury-member-top: 60%;
+}
+
+.question-quarter-jury-overlay .jury-image {
+  object-fit: cover;
+}
+
+.question-quarter-jury-overlay .jury-member-photo {
+  left: calc(50% + (44 - 50) * 0.01 * var(--jury-img-width));
+  top: calc(50% + (60 - 50) * 0.01 * var(--jury-img-width) * 9 / 16);
+  width: calc(33 * 0.01 * var(--jury-img-width));
+}
+
 /* ===== INTRO SCENE STYLING ===== */
 .intro-container {
   position: relative;
@@ -2411,7 +2529,7 @@ body {
   text-align: center;
   color: white;
   line-height: 1.5;
-  font-family: 'Oracle Crimson Sans', 'DIN Black', Arial, sans-serif;
+  font-family: 'DIN Black', Arial, sans-serif;
   min-height: 120px;
   display: flex;
   align-items: center;
@@ -2437,7 +2555,7 @@ body {
   border-radius: 8px;
   cursor: pointer;
   font-weight: bold;
-  font-family: 'Oracle Crimson Sans', 'DIN Black', Arial, sans-serif;
+  font-family: 'DIN Black', Arial, sans-serif;
   transition: all 0.3s ease;
   text-transform: uppercase;
 }
@@ -2807,6 +2925,18 @@ body {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.65fr);
 }
 
+#finale-main-grid.finale-faceoff-wide,
+#finale-pre-grid.finale-faceoff-wide,
+#scene-finale-standings .finale-standings-grid.finale-faceoff-wide {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+#finale-main-grid.finale-faceoff-wide .finale-display-info,
+#finale-pre-grid.finale-faceoff-wide .finale-display-info,
+#scene-finale-standings .finale-standings-grid.finale-faceoff-wide .finale-display-info {
+  display: none;
+}
+
 #finale-main-grid::after,
 #finale-pre-grid::after,
 #finale-end-grid::after,
@@ -2834,6 +2964,12 @@ body {
 .finale-candidate-panel-right {
   grid-column: 2;
   grid-row: 1;
+}
+
+#finale-main-grid.finale-faceoff-wide .finale-candidate-panel-right,
+#finale-pre-grid.finale-faceoff-wide .finale-candidate-panel-right,
+#scene-finale-standings .finale-standings-grid.finale-faceoff-wide .finale-candidate-panel-right {
+  border-right: 0;
 }
 
 .finale-candidate-panel::before {

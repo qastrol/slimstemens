@@ -761,6 +761,15 @@ function sendCollectiefDisplayUpdate(action, scene) {
     if (scene === 'scene-round-collectief-video' && hasCurrentQuestion && currentQuestion.video) {
         extraData.videoSrc = currentQuestion.video;
     }
+    if (
+        scene === 'scene-round-collectief-pre' &&
+        hasCurrentQuestion &&
+        currentQuestion.video &&
+        typeof window !== 'undefined' &&
+        window.slimstemensDesktopBridge
+    ) {
+        extraData.preloadVideoSrc = currentQuestion.video;
+    }
 
     if (typeof sendRoundDisplayUpdate === 'function') {
         sendRoundDisplayUpdate({

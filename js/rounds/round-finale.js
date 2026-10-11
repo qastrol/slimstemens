@@ -533,25 +533,13 @@ function endFinaleGame(winner) {
         `;
     }
     
-    controlsHTML += `
-        <div style="margin-top:20px;">
-            <button id="restoreFinaleCeelsBtn" class="secondary">🔧 Stoelen Herstellen</button>
-        </div>
-    `;
-    
     controlsEl.innerHTML = controlsHTML;
     
-    // Zet event listeners op knoppen
     if (outroEnabled) {
         const startOutroBtn = document.getElementById('startOutroBtn');
         if (startOutroBtn) {
             startOutroBtn.addEventListener('click', startOutro);
         }
-    }
-    
-    const restoreStoelBtn = document.getElementById('restoreFinaleCeelsBtn');
-    if (restoreStoelBtn) {
-        restoreStoelBtn.addEventListener('click', restoreFinaleStoelen);
     }
 
     
@@ -559,7 +547,11 @@ function endFinaleGame(winner) {
     perRoundState.finale.endGameState = {
         showing: 'winner', // 'winner', 'lastquestion' of 'lobby'
         winner: winner,
-        loser: loser
+        loser: loser,
+        players: players.map(player => ({
+            ...player,
+            isActive: player.index === winner.index
+        }))
     };
     perRoundState.finale.gameEnded = true;
     perRoundState.finale.awaitingHostNext = true;
@@ -573,7 +565,6 @@ function endFinaleGame(winner) {
         finaleQuestionHostEl.innerHTML = `
             <h3>Finale Voorbij</h3>
             <p><strong>Winnaar:</strong> ${winner.name}</p>
-            <p>Antwoordinvoer is nu vergrendeld.</p>
         `;
     }
     
@@ -583,7 +574,10 @@ function endFinaleGame(winner) {
         loserName: loser ? loser.name : null,
         preFinaleAfvallerName: preFinaleAfvallerName,
         lowestOut: collectiefEndOption === 'lowestOut',
-        collectiefEndOption: collectiefEndOption 
+        collectiefEndOption: collectiefEndOption,
+        activePlayer: winner.name,
+        activeIndex: winner.index,
+        winnerIndex: winner.index
     });
     
     
@@ -599,12 +593,18 @@ function showFinaleWinner() {
     }
     
     perRoundState.finale.endGameState.showing = 'winner';
+    if (typeof window.updatePerspectiveMenu === 'function') {
+        window.updatePerspectiveMenu();
+    }
     
     console.log('🏆 showFinaleWinner aangeroepen - stuur finale_view_change');
     
     sendDisplayUpdate({
         type: 'finale_view_change',
-        view: 'winner'
+        view: 'winner',
+        players: perRoundState.finale.endGameState.players,
+        activeIndex: perRoundState.finale.endGameState.winner.index,
+        winnerIndex: perRoundState.finale.endGameState.winner.index
     });
     
     flash('Winnaarscherm weergegeven', 'success');
@@ -617,6 +617,9 @@ function showFinaleLastQuestion() {
     }
     
     perRoundState.finale.endGameState.showing = 'lastquestion';
+    if (typeof window.updatePerspectiveMenu === 'function') {
+        window.updatePerspectiveMenu();
+    }
     
     console.log('❓ showFinaleLastQuestion aangeroepen');
     
@@ -628,11 +631,11 @@ function showFinaleLastQuestion() {
         finderName: ''  // Geen finder tonen
     })) : [];
     
-    const playersData = players.map(p => ({
-        name: p.name,
-        seconds: p.seconds,
-        photoUrl: p.photoUrl,
-        isActive: p.index === activePlayerIndex,
+    const finalePlayers = perRoundState.finale.endGameState.players || players;
+    const winner = perRoundState.finale.endGameState.winner;
+    const playersData = finalePlayers.map(p => ({
+        ...p,
+        isActive: p.index === winner.index,
         isFinalist: true
     }));
     
@@ -645,8 +648,9 @@ function showFinaleLastQuestion() {
         key: 'finale',
         currentQuestionIndex: perRoundState.finale.currentQuestionIndex + 1,
         maxQuestions: perRoundState.finale.questions.length,
-        activePlayer: players.find(p => p.index === activePlayerIndex)?.name || '-',
-        activeIndex: activePlayerIndex,
+        activePlayer: winner.name,
+        activeIndex: winner.index,
+        winnerIndex: winner.index,
         players: playersData,
         question: currentQuestion?.question || '',
         answers: allAnswersRevealed,
@@ -664,6 +668,9 @@ function showFinaleFullLobby() {
     }
     
     perRoundState.finale.endGameState.showing = 'lobby';
+    if (typeof window.updatePerspectiveMenu === 'function') {
+        window.updatePerspectiveMenu();
+    }
     
     // Gebruik alle spelers voor de lobby (inclusief afgevallen kandidaat)
     const playersToShow = perRoundState?.finale?.allOriginalPlayersForOutro || players;
@@ -677,23 +684,6 @@ function showFinaleFullLobby() {
     });
     
     flash('Fullscreen lobby weergegeven', 'success');
-}
-
-function restoreFinaleStoelen() {
-    // Herstel originele speler-volgorde uit perRoundState.finale.allOriginalPlayersForOutro
-    const originalPlayers = perRoundState?.finale?.allOriginalPlayersForOutro;
-    
-    if (originalPlayers && originalPlayers.length > 0) {
-        // Herstel ALLE 3 de originele spelers (inclusief de afgevallen kandidaat)
-        players = JSON.parse(JSON.stringify(originalPlayers));
-        activePlayerIndex = players[0].index;
-        
-        console.log('🔧 Stoelen hersteld! Alle originele spelers:', players.map(p => p.name));
-        
-        flash('Stoelen hersteld naar originele volgorde! Gebruik de perspectiefknoppen om de display bij te werken.', 'success');
-    } else {
-        flash('Kan originele volgorde niet herstellen - niet beschikbaar', 'error');
-    }
 }
 
 function endFinaleRound() {
@@ -858,6 +848,7 @@ function renderFinaleHostUI(phase = 'main', afvallerIndex = -1) {
 function sendFinaleDisplayUpdate(action, scene, extraData = {}) {
     const qIndex = perRoundState.finale.currentQuestionIndex;
     const currentQuestion = perRoundState.finale.currentQuestion;
+    const displayActiveIndex = extraData.activeIndex ?? activePlayerIndex;
     
     let activePlayer = players.find(p => p.index === activePlayerIndex);
     let opponentIndex = getOpponentIndex(activePlayerIndex);
@@ -868,7 +859,7 @@ function sendFinaleDisplayUpdate(action, scene, extraData = {}) {
         name: p.name,
         seconds: p.seconds,
         photoUrl: p.photoUrl,
-        isActive: p.index === activePlayerIndex,
+        isActive: p.index === displayActiveIndex,
         isFinalist: true, 
         isOut: false
     }));
@@ -935,7 +926,7 @@ function sendFinaleDisplayUpdate(action, scene, extraData = {}) {
             type: action,
             key: 'finale',
             scene,
-            activeIndex: activePlayerIndex,
+            activeIndex: displayActiveIndex,
             playersData: finalPlayersArray,
             extraData: payloadExtraData
         });
@@ -944,7 +935,7 @@ function sendFinaleDisplayUpdate(action, scene, extraData = {}) {
             type: action,
             key: 'finale',
             scene,
-            activeIndex: activePlayerIndex,
+            activeIndex: displayActiveIndex,
             players: finalPlayersArray,
             ...payloadExtraData
         });

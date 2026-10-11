@@ -4,6 +4,9 @@ contextBridge.exposeInMainWorld('slimstemensDesktopBridge', {
   send(message) {
     ipcRenderer.send('quiz-message', message);
   },
+  cacheMedia(bytes, mimeType) {
+    return ipcRenderer.invoke('cache-quiz-media', bytes, mimeType);
+  },
   onMessage(callback) {
     const handler = (_event, message) => callback(message);
     ipcRenderer.on('quiz-message', handler);

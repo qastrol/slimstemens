@@ -515,6 +515,11 @@ function niceRoundName(key){
 }
 
 function startRound(roundKey) {
+  const roundControls = document.getElementById('roundControls');
+  if (roundControls) {
+    roundControls.innerHTML = '';
+  }
+
   // Als bumpers enabled zijn, toon eerst de bumper
   if (bumpersEnabled) {
     showRoundBumper(roundKey, () => {
@@ -938,6 +943,22 @@ loopTimerInterval = setInterval(() => {
 
 // Intro Start knop
 document.addEventListener('DOMContentLoaded', () => {
+  const introPerspectives = {
+    'introPerspectiveFull': 'full',
+    'introPerspectiveCand1': 'cand1',
+    'introPerspectiveCand2': 'cand2',
+    'introPerspectiveCand3': 'cand3'
+  };
+  let activeIntroPerspective = 'full';
+  const updateIntroPerspectiveButtons = () => {
+    for (const [btnId, perspective] of Object.entries(introPerspectives)) {
+      document.getElementById(btnId)?.setAttribute(
+        'aria-pressed',
+        String(activeIntroPerspective === perspective)
+      );
+    }
+  };
+
   const startIntroBtn = document.getElementById('startIntroBtn');
   if (startIntroBtn) {
     startIntroBtn.addEventListener('click', function() {
@@ -962,6 +983,8 @@ document.addEventListener('DOMContentLoaded', () => {
         type: 'intro_start',
         text: finalIntroText || ''
       });
+      activeIntroPerspective = 'full';
+      updateIntroPerspectiveButtons();
       
       // Toon intro script voor presentator
       const introScriptArea = document.getElementById('introScriptArea');
@@ -1004,21 +1027,19 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   
   // Perspectief knoppen
-  const introPerspectives = {
-    'introPerspectiveFull': 'full',
-    'introPerspectiveCand1': 'cand1',
-    'introPerspectiveCand2': 'cand2',
-    'introPerspectiveCand3': 'cand3'
-  };
-  
   for (const [btnId, perspective] of Object.entries(introPerspectives)) {
     const btn = document.getElementById(btnId);
     if (btn) {
       btn.addEventListener('click', function() {
-        console.log(`🔄 Perspectief wissel naar: ${perspective}`);
+        activeIntroPerspective =
+          activeIntroPerspective === perspective && perspective !== 'full'
+            ? 'full'
+            : perspective;
+        updateIntroPerspectiveButtons();
+        console.log(`🔄 Perspectief wissel naar: ${activeIntroPerspective}`);
         sendDisplayUpdate({ 
           type: 'intro_perspective',
-          perspective: perspective
+          perspective: activeIntroPerspective
         });
       });
     }
@@ -1030,6 +1051,8 @@ document.addEventListener('DOMContentLoaded', () => {
     stopIntroBtn.addEventListener('click', function() {
       console.log('⏹️ Stop Intro knop geklikt');
       sendDisplayUpdate({ type: 'intro_stop' });
+      activeIntroPerspective = 'full';
+      updateIntroPerspectiveButtons();
       
       // Verberg intro script
       const introScriptArea = document.getElementById('introScriptArea');

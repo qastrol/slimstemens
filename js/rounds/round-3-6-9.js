@@ -189,6 +189,10 @@ function nextThreeSixNineQuestion() {
     flash('Einde van de 3-6-9 ronde!');
     currentQuestionEl.innerHTML = '<em>Ronde afgelopen.</em>';
     perRoundState.currentQuestion = null;
+    const controlsEl = document.getElementById('roundControls');
+    if (controlsEl) {
+      controlsEl.innerHTML = '';
+    }
     if (typeof markCurrentRoundComplete === 'function') {
       markCurrentRoundComplete();
     }
