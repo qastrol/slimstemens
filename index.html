@@ -1466,6 +1466,16 @@
         );
         const presenterButton = document.getElementById('togglePresenterView');
         const juryButton = document.getElementById('toggleJuryView');
+        const presenterControlArea = document.getElementById('presenterControlArea');
+        const juryControlArea = document.getElementById('juryControlArea');
+        if (presenterControlArea) {
+          presenterControlArea.style.display =
+            presenterEnabled && presenterPhotoData && !isFinaleRound && !finaleComplete ? 'flex' : 'none';
+        }
+        if (juryControlArea) {
+          juryControlArea.style.display =
+            juryEnabled && !isFinaleRound && !finaleComplete ? 'flex' : 'none';
+        }
         if (presenterButton) {
           presenterButton.setAttribute(
             'aria-pressed',
