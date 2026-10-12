@@ -854,22 +854,27 @@ function getQuestionsForRound(roundKey, defaultQuestions = []) {
         };
       });
 
-      // Optioneel: shuffle multiple-choice opties (alleen voor JSON config)
-      const shuffleMcOptions = !!(gameConfig.settings && gameConfig.settings.threeSixNine && gameConfig.settings.threeSixNine.shuffleMultipleChoiceOptions);
-      if (shuffleMcOptions) {
-        normalizedQuestions = normalizedQuestions.map(q => {
-          if (q.type !== 'multiple-choice' || !q.options) {
-            return q;
-          }
+      // Per-vraag instelling heeft voorrang; de ronde-instelling blijft werken voor oudere configs.
+      const legacyShuffleMcOptions = !!(gameConfig.settings && gameConfig.settings.threeSixNine && gameConfig.settings.threeSixNine.shuffleMultipleChoiceOptions);
+      normalizedQuestions = normalizedQuestions.map(q => {
+        if (q.type !== 'multiple-choice' || !q.options) {
+          return q;
+        }
 
-          const shuffled = shuffleMultipleChoiceOptions(q.options, q.correctAnswer);
-          return {
-            ...q,
-            options: shuffled.options,
-            correctAnswer: shuffled.correctAnswer
-          };
-        });
-      }
+        const shouldShuffleOptions = typeof q.shuffleOptions === 'boolean'
+          ? q.shuffleOptions
+          : legacyShuffleMcOptions;
+        if (!shouldShuffleOptions) {
+          return q;
+        }
+
+        const shuffled = shuffleMultipleChoiceOptions(q.options, q.correctAnswer);
+        return {
+          ...q,
+          options: shuffled.options,
+          correctAnswer: shuffled.correctAnswer
+        };
+      });
     }
 
     // Normaliseer Open Deur vragen

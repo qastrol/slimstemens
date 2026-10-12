@@ -1305,8 +1305,8 @@ function renderThreeSixNine(data){
         // Multiple choice opties
         if (qType === 'multiple-choice' && data.options) {
             questionHTML += '<div class="multiple-choice-options">';
-            for (const [key, value] of Object.entries(data.options)) {
-                questionHTML += `<div><strong>${key}:</strong> ${value}</div>`;
+            for (const key of ['A', 'B', 'C', 'D']) {
+                questionHTML += `<div>${key}) ${data.options[key] || '-'}</div>`;
             }
             questionHTML += '</div>';
         }

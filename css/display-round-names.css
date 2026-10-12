@@ -8,7 +8,7 @@
   margin: 0 auto 0.3em;
   padding: 0.18em 0.72em 0.22em;
   border: 4px solid #004186;
-  border-width: 6px 3px;
+  border-width: 6px 2px;
   border-radius: 50%;
   background: transparent;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
@@ -32,6 +32,59 @@
 .finale-standings-score,
 .puzzel-link-points {
   border-width: 6px 3px;
+}
+
+#scene-round-369 .player-seconds,
+#scene-standings .player-seconds,
+.lobby-standings-players .player-seconds,
+.players-bar-compact .player-seconds,
+#puzzelActivePlayersBar .player-seconds,
+.finale-candidate-score,
+.finale-standings-score,
+.od-answer-points,
+.answer-points,
+.collectief-answer-points,
+.puzzel-link-points {
+  box-sizing: border-box;
+  border: 4px solid #004186;
+  border-width: 6px 1px;
+  border-radius: 50%;
+  background-color: transparent;
+  color: white;
+  box-shadow: none;
+}
+
+#scene-round-369 .player-card.active-player .player-seconds,
+#scene-standings .player-card.active-player .player-seconds,
+.players-bar-compact .player-card.active-player .player-seconds,
+#puzzelActivePlayersBar .player-card.active-player .player-seconds,
+.finale-candidate-score.active-player,
+.od-answer-line.found .od-answer-points,
+.answer-line.found .answer-points,
+.collectief-answer-line.found .collectief-answer-points {
+  background-color: #2874b8;
+}
+
+.od-answer-line:not(.found) .od-answer-points,
+.answer-line.unfound .answer-points,
+.collectief-answer-line:not(.found) .collectief-answer-points,
+.puzzel-link-line.unguessed .puzzel-link-points {
+  background-color: transparent;
+}
+
+.puzzel-link-line.found-link-0 .puzzel-link-points {
+  background-color: #004186;
+  color: #e3f1f8;
+}
+
+.puzzel-link-line.found-link-1 .puzzel-link-points {
+  background-color: #cee5f7;
+  color: #003e7b;
+}
+
+.puzzel-link-line.found-link-2 .puzzel-link-points {
+  background-color: #001d3c;
+  color: #e3f1f8;
 }
 
 .answer-correct .od-answer-text,

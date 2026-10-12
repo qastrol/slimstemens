@@ -1288,8 +1288,9 @@
     width: 60px;
     height: 60px;
     box-sizing: border-box;
-    border: 3px solid #004186;
+    border: 3px solid #2874b8;
     border-radius: 50%;
+    background-color: #2874b8;
     opacity: 0;
     pointer-events: none;
     z-index: 0;

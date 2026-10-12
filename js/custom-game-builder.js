@@ -669,7 +669,21 @@
     correctSelect.classList.add('field-369-correct');
     correctLabel.appendChild(correctSelect);
 
-    mcWrapper.append(optionA.label, optionB.label, optionC.label, optionD.label, correctLabel);
+    const shuffleOptionsLabel = document.createElement('label');
+    const shuffleOptionsCheckbox = document.createElement('input');
+    shuffleOptionsCheckbox.type = 'checkbox';
+    shuffleOptionsCheckbox.checked = data.shuffleOptions === true;
+    shuffleOptionsCheckbox.classList.add('field-369-shuffle-options');
+    shuffleOptionsLabel.append(shuffleOptionsCheckbox, document.createTextNode(' Antwoorden husselen'));
+
+    mcWrapper.append(
+      optionA.label,
+      optionB.label,
+      optionC.label,
+      optionD.label,
+      correctLabel,
+      shuffleOptionsLabel
+    );
 
     const questionPhotoField = createMediaInput(
       'Vraag: foto pad',
@@ -1107,6 +1121,7 @@
         };
         q.options = options;
         q.correctAnswer = item.querySelector('.field-369-correct')?.value || 'A';
+        q.shuffleOptions = !!item.querySelector('.field-369-shuffle-options')?.checked;
       }
 
       if (type === 'classic') {
