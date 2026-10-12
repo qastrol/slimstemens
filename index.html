@@ -221,6 +221,9 @@
               data-perspective-hotkey-group="candidate" data-perspective-hotkey-index="3"
               aria-pressed="false">Volledig beeld</button>
             <div id="candidatePerspectiveButtons" class="perspective-actions"></div>
+            <p id="fullscreenCandidatePerspectiveTitle" class="small perspective-menu-message"
+              style="display:none;">Fullscreen inzoom</p>
+            <div id="fullscreenCandidatePerspectiveButtons" class="perspective-actions perspective-actions-compact"></div>
           </div>
           <div id="finaleCandidatePerspectives" style="display:none;">
             <p class="small perspective-menu-message">Finalisten &amp; face-off</p>
@@ -677,9 +680,10 @@
         const clickedButton = event.target instanceof Element ? event.target.closest('button') : null;
         if (!showingScoreboard || !clickedButton ||
             clickedButton === toggleScoreboardBtn ||
-            clickedButton === lobbyStartScoreRevealBtn) return;
+            clickedButton === lobbyStartScoreRevealBtn ||
+            clickedButton.closest('#candidatePerspectives')) return;
 
-        dismissScoreboard(true);
+        dismissScoreboard(clickedButton.id !== 'nextRound');
       }, true);
 
       if (lobbyStartScoreRevealBtn) {
@@ -1055,6 +1059,7 @@
       }
 
       let selectedPerspectivePlayerIndex = null;
+      let fullscreenPerspectivePlayerIndex = null;
       let previousPerspectiveContext = null;
       let fullscreenLobbyPerspectiveActive = false;
       let threeSixNineLobbyPerspectiveActive = false;
@@ -1083,6 +1088,20 @@
         const introPlayerCount = typeof players !== 'undefined' && Array.isArray(players)
           ? players.length
           : 0;
+        document.querySelectorAll('[data-perspective-hotkey-group][data-perspective-hotkey-index]')
+          .forEach(button => {
+            const group = perspectiveHotkeyGroups[button.dataset.perspectiveHotkeyGroup];
+            if (!group) return;
+            const baseLabel = button.textContent.trim().replace(/\s+\([^)]*\)$/, '');
+            if (button.dataset.perspectiveBaseLabel !== baseLabel) {
+              button.dataset.perspectiveBaseLabel = baseLabel;
+            }
+            const label =
+              `${button.dataset.perspectiveBaseLabel} (${group.label} + ${button.dataset.perspectiveHotkeyIndex})`;
+            if (button.textContent !== label) {
+              button.textContent = label;
+            }
+          });
         document.querySelectorAll('[data-perspective-hotkey-group="intro"]').forEach(button => {
           const playerNumber = Number(button.dataset.perspectiveHotkeyIndex) - 1;
           const shouldDisable = playerNumber > 0 && playerNumber > introPlayerCount;
@@ -1169,6 +1188,7 @@
 
         if (showing) {
           selectedPerspectivePlayerIndex = null;
+          fullscreenPerspectivePlayerIndex = null;
           fullscreenLobbyPerspectiveActive = false;
           showingPresenter = false;
           showingPresenterFullscreen = false;
@@ -1198,6 +1218,7 @@
       const resetPerspectiveMenuSelection = () => {
         clearPerspectiveHotkeyGroup();
         selectedPerspectivePlayerIndex = null;
+        fullscreenPerspectivePlayerIndex = null;
         fullscreenLobbyPerspectiveActive = false;
         threeSixNineLobbyPerspectiveActive = false;
         questionQuarterPerspective = null;
@@ -1257,6 +1278,7 @@
         if (previousPerspectiveContext !== null && previousPerspectiveContext !== perspectiveContext) {
           clearPerspectiveHotkeyGroup();
           selectedPerspectivePlayerIndex = null;
+          fullscreenPerspectivePlayerIndex = null;
           fullscreenLobbyPerspectiveActive = false;
           threeSixNineLobbyPerspectiveActive = false;
           finaleFaceoffPerspectiveActive = false;
@@ -1299,18 +1321,36 @@
         }
 
         const candidatePerspectiveButtons = document.getElementById('candidatePerspectiveButtons');
+        const fullscreenCandidatePerspectiveButtons =
+          document.getElementById('fullscreenCandidatePerspectiveButtons');
         candidatePerspectiveButtons.replaceChildren();
+        fullscreenCandidatePerspectiveButtons.replaceChildren();
         currentPlayers.forEach((player, index) => {
           const button = document.createElement('button');
           button.type = 'button';
           button.className = 'secondary';
-          button.textContent = `Zoom in op ${player.name || `Kandidaat ${index + 1}`}`;
+          button.dataset.perspectiveBaseLabel =
+            `Zoom: ${player.name || `Kandidaat ${index + 1}`}`;
+          button.textContent = button.dataset.perspectiveBaseLabel;
+          button.title = `Zoom in op ${player.name || `Kandidaat ${index + 1}`}`;
+          button.setAttribute(
+            'aria-label',
+            `Zoom in op ${player.name || `Kandidaat ${index + 1}`}`
+          );
           button.dataset.perspectiveHotkeyGroup = 'candidate';
           button.dataset.perspectiveHotkeyIndex = String(index + 4);
           button.setAttribute('aria-pressed', String(player.index === selectedPerspectivePlayerIndex));
           button.addEventListener('click', () => {
             const isActive = selectedPerspectivePlayerIndex === player.index;
             if (!isActive && threeSixNineLobbyPerspectiveActive) setThreeSixNineLobbyPerspective(false);
+            if (!isActive && fullscreenPerspectivePlayerIndex !== null) {
+              fullscreenPerspectivePlayerIndex = null;
+              sendDisplayUpdate({
+                type: 'universal_perspective',
+                fullscreenPlayer: false,
+                playerIndex: null
+              });
+            }
             selectedPerspectivePlayerIndex = isActive ? null : player.index;
             updatePerspectiveMenu();
             sendDisplayUpdate({
@@ -1320,7 +1360,56 @@
             });
           });
           candidatePerspectiveButtons.appendChild(button);
+
+          const fullscreenButton = document.createElement('button');
+          fullscreenButton.type = 'button';
+          fullscreenButton.className = 'secondary';
+          fullscreenButton.dataset.perspectiveBaseLabel =
+            player.name || `Kandidaat ${index + 1}`;
+          fullscreenButton.textContent = fullscreenButton.dataset.perspectiveBaseLabel;
+          fullscreenButton.title =
+            `Fullscreen inzoomen op ${player.name || `Kandidaat ${index + 1}`}`;
+          fullscreenButton.setAttribute(
+            'aria-label',
+            `Fullscreen inzoomen op ${player.name || `Kandidaat ${index + 1}`}`
+          );
+          fullscreenButton.dataset.perspectiveHotkeyGroup = 'candidate';
+          fullscreenButton.dataset.perspectiveHotkeyIndex = String(index + 7);
+          fullscreenButton.setAttribute(
+            'aria-pressed',
+            String(player.index === fullscreenPerspectivePlayerIndex)
+          );
+          fullscreenButton.addEventListener('click', () => {
+            const isActive = fullscreenPerspectivePlayerIndex === player.index;
+            if (!isActive && threeSixNineLobbyPerspectiveActive) setThreeSixNineLobbyPerspective(false);
+            if (!isActive && selectedPerspectivePlayerIndex !== null) {
+              selectedPerspectivePlayerIndex = null;
+            }
+            fullscreenPerspectivePlayerIndex = isActive ? null : player.index;
+            updatePerspectiveMenu();
+            sendDisplayUpdate({
+              type: 'universal_perspective',
+              fullscreenPlayer: !isActive,
+              playerIndex: isActive ? null : player.index,
+              playerName: isActive ? null : player.name
+            });
+          });
+          fullscreenCandidatePerspectiveButtons.appendChild(fullscreenButton);
         });
+        const showFullscreenCandidateButtons =
+          gameCreated && !isLobby && !isFinaleRound && !finaleComplete;
+        document.getElementById('fullscreenCandidatePerspectiveTitle').style.display =
+          showFullscreenCandidateButtons ? 'block' : 'none';
+        fullscreenCandidatePerspectiveButtons.style.display =
+          showFullscreenCandidateButtons ? 'flex' : 'none';
+        if (!showFullscreenCandidateButtons && fullscreenPerspectivePlayerIndex !== null) {
+          fullscreenPerspectivePlayerIndex = null;
+          sendDisplayUpdate({
+            type: 'universal_perspective',
+            fullscreenPlayer: false,
+            playerIndex: null
+          });
+        }
         candidatePerspectives.style.display = gameCreated && !isFinaleRound ? 'grid' : 'none';
         const finaleCandidatePerspectives = document.getElementById('finaleCandidatePerspectives');
         finaleCandidatePerspectives.style.display =
@@ -1509,8 +1598,13 @@
       document.getElementById('fullScenePerspectiveBtn').addEventListener('click', () => {
         if (threeSixNineLobbyPerspectiveActive) setThreeSixNineLobbyPerspective(false);
         selectedPerspectivePlayerIndex = null;
+        fullscreenPerspectivePlayerIndex = null;
         updatePerspectiveMenu();
-        sendDisplayUpdate({ type: 'universal_perspective', playerIndex: null });
+        sendDisplayUpdate({
+          type: 'universal_perspective',
+          fullscreenPlayer: false,
+          playerIndex: null
+        });
       });
 
       document.getElementById('questionQuarterLobbyBtn').addEventListener('click', () => {

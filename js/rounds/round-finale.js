@@ -257,9 +257,8 @@ function nextFinaleQuestion() {
     } else {
         
         const prevStarterIndex = perRoundState.finale.lastActivePlayerIndex; 
-        const otherPlayer = players.find(p => p.index !== prevStarterIndex);
-        startingPlayer = otherPlayer || p1; 
-        flash(`Gelijke stand! Beurt naar ${startingPlayer.name} (wissel).`, 'info');
+        startingPlayer = players.find(p => p.index === prevStarterIndex) || p1;
+        flash(`Gelijke stand! ${startingPlayer.name} begint opnieuw.`, 'info');
     }
     
     activePlayerIndex = startingPlayer.index; 

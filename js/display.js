@@ -2,7 +2,9 @@ let currentScene = null;
 let players = [];
 const universalPerspectiveStyles = new Map();
 let universalPerspectivePreviousScene = null;
+let universalPerspectivePreviousStandings = null;
 const UNIVERSAL_PERSPECTIVE_ZOOM_SCALE = 2.6;
+const UNIVERSAL_PERSPECTIVE_FULLSCREEN_ZOOM_SCALE = 4.2;
 const UNIVERSAL_PERSPECTIVE_VERTICAL_OFFSET = -55; // Pas dit getal aan om de kandidaat hoger of lager te plaatsen.
 let showingStandings = false;
 let showingLobbyStandings = false;
@@ -796,8 +798,9 @@ function handleAudioMessage(data) {
         updatePresenterOverlayTheme();
         if (data.showing) hideFinaleCandidatePerspective();
 
-        if (data.showing && showingStandings) {
+        if (data.showing && (showingStandings || showingLobbyStandings)) {
           showingStandings = false;
+          showingLobbyStandings = false;
           updateScene(currentScene || 'lobby');
         }
         
@@ -838,8 +841,9 @@ function handleAudioMessage(data) {
         const presenterOverlay = document.getElementById('presenterOverlay');
         const juryImage = document.getElementById('juryImage');
         const juryMemberPhoto = document.getElementById('juryMemberPhoto');
-        if (data.showing && showingStandings) {
+        if (data.showing && (showingStandings || showingLobbyStandings)) {
           showingStandings = false;
+          showingLobbyStandings = false;
           updateScene(currentScene || 'lobby');
         }
         if (data.showing) {
@@ -1700,7 +1704,6 @@ function renderThreeSixNineLobbyPerspective(playersData) {
       'galerijDonePlayersBar',
       'collectiefPrePlayersBar',
       'collectiefMainPlayersBar',
-      'collectiefDonePlayersBar',
       'finalePrePlayersBar',
       'soloEndPlayersBar'
     ];
@@ -2128,24 +2131,6 @@ function handleGalerijDisplayUpdate(data) {
         break;
       }
 
-      case 'scene-round-collectief-done': {
-        renderMiniLobby(displayPlayers, 'collectiefDoneMiniLobby');
-      
-        
-        const slimsteEl = document.getElementById('collectiefSlimsteVanDeDag');
-        if (slimsteEl && data.slimsteVanDeDag) {
-          slimsteEl.textContent = `Slimste van de dag: ${data.slimsteVanDeDag}`;
-        }
-      
-        
-        const finalistenEl = document.getElementById('collectiefFinalisten');
-        if (finalistenEl && data.finalisten) {
-          finalistenEl.textContent = data.finalisten.join(', ');
-        }
-      
-        renderPlayersBarCompact(displayPlayers, activeIndex, 'collectiefDonePlayersBar');
-        break;
-      }
     }
   }
 
@@ -2486,8 +2471,7 @@ function renderQuestionQuarterPerspective() {
     'round-galerij-aanvul': '#galerij-aanvul-grid .part4-status',
     'round-galerij-done': '#galerij-done-grid .part4-status',
     'round-collectief-pre': '#collectief-pre-grid .part4-status',
-    'round-collectief-main': '.part4-status',
-    'round-collectief-done': '#scene-round-collectief-done .part4-status'
+    'round-collectief-main': '.part4-status'
   };
   const isFullscreenLobby = currentScene === 'lobby' && !!universalPerspectivePreviousScene;
   const perspectiveSceneName = isFullscreenLobby ? universalPerspectivePreviousScene : currentScene;
@@ -2637,7 +2621,8 @@ function applyUniversalPerspectiveZoom(element, target, frame, zoom) {
   universalPerspectiveStyles.set(element, {
     transform: element.style.transform,
     transformOrigin: element.style.transformOrigin,
-    transition: element.style.transition
+    transition: element.style.transition,
+    overflow: element.style.overflow
   });
   element.style.transformOrigin = `${(targetRect.left + targetRect.width / 2 - elementRect.left) * (element.offsetWidth / elementRect.width)}px ${(targetRect.top + targetRect.height / 2 - elementRect.top) * (element.offsetHeight / elementRect.height)}px`;
   element.style.transition = 'none';
@@ -2650,12 +2635,22 @@ function handleUniversalPerspectiveChange(data) {
     if (data.fullscreenLobby) {
       if (!universalPerspectivePreviousScene) {
         universalPerspectivePreviousScene = currentScene;
+        universalPerspectivePreviousStandings = {
+          showingStandings,
+          showingLobbyStandings
+        };
       }
+      showingStandings = false;
+      showingLobbyStandings = false;
       renderLobby(players);
       updateScene('lobby');
     } else if (universalPerspectivePreviousScene) {
       const previousScene = universalPerspectivePreviousScene;
       universalPerspectivePreviousScene = null;
+      const previousStandings = universalPerspectivePreviousStandings;
+      universalPerspectivePreviousStandings = null;
+      showingStandings = previousStandings?.showingStandings || false;
+      showingLobbyStandings = previousStandings?.showingLobbyStandings || false;
       updateScene(previousScene);
     }
   }
@@ -2670,7 +2665,13 @@ function handleUniversalPerspectiveChange(data) {
     return;
   }
 
-  const scene = document.getElementById(`scene-${currentScene}`);
+  const scene = document.getElementById(
+    showingLobbyStandings
+      ? 'scene-lobby-standings'
+      : showingStandings
+        ? 'scene-standings'
+        : `scene-${currentScene}`
+  );
   if (!scene) return;
 
   const playerPosition = players.findIndex(candidate => candidate.index === data.playerIndex);
@@ -2692,22 +2693,24 @@ function handleUniversalPerspectiveChange(data) {
     return;
   }
 
+  if (data.fullscreenPlayer) {
+    applyUniversalPerspectiveZoom(
+      scene,
+      target,
+      scene,
+      UNIVERSAL_PERSPECTIVE_FULLSCREEN_ZOOM_SCALE
+    );
+    return;
+  }
+
   if (miniLobby && miniLobby.contains(target)) {
-    universalPerspectiveStyles.set(miniLobby, {
-      transform: miniLobby.style.transform,
-      transformOrigin: miniLobby.style.transformOrigin,
-      transition: miniLobby.style.transition,
-      overflow: miniLobby.style.overflow
-    });
+    applyUniversalPerspectiveZoom(
+      miniLobby,
+      target,
+      miniLobby,
+      UNIVERSAL_PERSPECTIVE_ZOOM_SCALE
+    );
     miniLobby.style.overflow = 'hidden';
-    Array.from(miniLobby.children).forEach(element => {
-      applyUniversalPerspectiveZoom(
-        element,
-        target,
-        miniLobby,
-        UNIVERSAL_PERSPECTIVE_ZOOM_SCALE
-      );
-    });
     return;
   }
 

@@ -363,7 +363,11 @@ updateAnswerButton(answerIndex);
         
         stopLoopTimer(); 
         flash(`Alle antwoorden gevonden. ${currentPlayer.name} was de laatste vinder.`, 'success');
-        renderCollectiefHostUI('answered'); 
+        if (perRoundState.collectief.currentQuestionIndex + 1 >= perRoundState.collectief.questions.length) {
+            endCollectiefRound();
+        } else {
+            renderCollectiefHostUI('answered');
+        }
     } 
     
 }
@@ -410,8 +414,11 @@ function passCollectief(isScoreAnnounced = false) {
         
         sendCollectiefDisplayUpdate('update', 'scene-round-collectief-main');
         
-        
-        renderCollectiefHostUI('answered');
+        if (perRoundState.collectief.currentQuestionIndex + 1 >= perRoundState.collectief.questions.length) {
+            endCollectiefRound();
+        } else {
+            renderCollectiefHostUI('answered');
+        }
     }
 }
 
@@ -469,92 +476,12 @@ function nextCollectiefQuestion() {
     }
 }
 
-function endCollectiefRound() {
+function finishCollectiefRoundResult(slimsteVanDeDag, afvaller, finalistNames) {
+    perRoundState.collectief.tieBreakPending = false;
     roundRunning = false;
-    if (typeof markCurrentRoundComplete === 'function') {
-        markCurrentRoundComplete();
-    }
+    if (typeof markCurrentRoundComplete === 'function') markCurrentRoundComplete();
     stopAllTimers();
-
-    
-    const sortedPlayers = [...players].sort((a, b) => b.seconds - a.seconds);
-
-    let slimsteVanDeDag = null;
-    let afvaller = null;
-    let finalistNames = [];
-    
-    // Check voor 1 speler: toon eindstand, geen finale
-    if (players.length === 1) {
-        const player = players[0];
-        
-        document.getElementById('roundControls').innerHTML = `
-            <div style="margin-bottom: 10px;">
-                <p><strong>Collectief Geheugen - Solo Modus</strong></p>
-                <p><strong>Kandidaat:</strong> ${player.name}</p>
-                <p><strong>Eindstand:</strong> ${Math.floor(player.seconds)} seconden</p>
-            </div>
-        `;
-        
-        currentQuestionEl.innerHTML = `
-            <em>Spel afgelopen! ${player.name} heeft ${Math.floor(player.seconds)} seconden behaald.</em>
-        `;
-        
-        // Speel finale geluid af
-        if (typeof playSFX === 'function') playSFX('SFX/finale.mp3');
-        
-        sendDisplayUpdate({
-            type: 'game_end',
-            key: 'solo_end',
-            scene: 'solo-game-end',
-            player: player,
-            finalSeconds: Math.floor(player.seconds)
-        });
-        return;
-    }
-
-    // Check voor 2 spelers: niemand valt af
-    if (players.length === 2) {
-        finalistNames = sortedPlayers.map(p => p.name);
-        
-        document.getElementById('roundControls').innerHTML = `
-            <div style="margin-bottom: 10px;">
-                <p><strong>Collectief Geheugen</strong></p>
-                <p><strong>Bij 2 spelers:</strong> Beide spelers gaan door naar de finale!</p>
-                <p><strong>Finalisten:</strong> ${finalistNames.join(' en ')}.</p>
-            </div>
-            <button onclick="document.getElementById('nextRound').click()" class="primary">Start Finale</button>
-        `;
-        
-        currentQuestionEl.innerHTML = `
-            <em>Collectief Geheugen afgelopen. Bij 2 spelers valt er niemand af! Beide spelers spelen de finale.</em>
-        `;
-        
-        sendDisplayUpdate({
-            type: 'round_end',
-            key: 'collectief',
-            scene: 'scene-round-collectief-done',
-            slimsteVanDeDag: null,
-            afvaller: null,
-            finalists: finalistNames, 
-            players: players 
-        });
-        return;
-    }
-    
-    const collectiefEndOption = document.getElementById('collectiefEndOption')?.value || 'lowestOut';
-
-    if (collectiefEndOption === 'highestWinner') {
-        
-        slimsteVanDeDag = sortedPlayers[0];
-        finalistNames = sortedPlayers.slice(1).map(p => p.name);
-    } else { 
-        
-        afvaller = sortedPlayers[sortedPlayers.length - 1];
-        finalistNames = sortedPlayers.slice(0, 2).map(p => p.name);
-    }
-    
-    
-    activePlayerIndex = -1; 
+    activePlayerIndex = -1;
     highlightActive();
     renderPlayers();
 
@@ -566,23 +493,128 @@ function endCollectiefRound() {
             ${slimsteVanDeDag ? `<p><strong>Slimste van de Dag:</strong> ${slimsteVanDeDag.name}</p>` : ''}
             <p><strong>Finalisten:</strong> ${finalistNames.join(' en ')}.</p>
         </div>
-        <button onclick="document.getElementById('nextRound').click()" class="primary">Start Finale</button>
     `;
 
     currentQuestionEl.innerHTML = `
-        <em>Collectief Geheugen afgelopen. Druk op 'Start Finale' om de Finalisten vast te stellen.</em>
+        <em>Collectief Geheugen afgelopen. De finalisten en einduitslag zijn vastgesteld. Druk op 'Volgende ronde' om naar de finale te gaan.</em>
     `;
 
-    
-    sendDisplayUpdate({
-        type: 'round_end',
-        key: 'collectief',
-        scene: 'scene-round-collectief-done',
-        slimsteVanDeDag: slimsteVanDeDag ? slimsteVanDeDag.name : null,
-        afvaller: afvaller ? afvaller.name : null,
-        finalists: finalistNames, 
-        players: players 
-    });
+}
+
+function resolveCollectiefTieBreak(playerIndex) {
+    const tieBreak = perRoundState.collectief?.tieBreak;
+    const selectedPlayer = players.find(player => player.index === playerIndex);
+    if (!tieBreak || !selectedPlayer) {
+        flash('Ongeldige keuze voor de gelijke stand.', 'wrong');
+        return;
+    }
+
+    if (tieBreak.option === 'highestWinner') {
+        selectedPlayer.seconds += 10;
+        finishCollectiefRoundResult(
+            selectedPlayer,
+            null,
+            players.filter(player => player.index !== playerIndex).map(player => player.name)
+        );
+    } else {
+        const finalists = players
+            .filter(player => player.index !== playerIndex)
+            .sort((a, b) => b.seconds - a.seconds || a.index - b.index);
+        const scoreDifference = finalists[0].seconds - finalists[1].seconds;
+
+        finalists[0].seconds += 10;
+        if (scoreDifference >= 2 && scoreDifference < 10) {
+            finalists[1].seconds += scoreDifference - 1;
+        } else if (scoreDifference === 1) {
+            selectedPlayer.seconds = Math.max(0, selectedPlayer.seconds - 1);
+        } else {
+            finalists[1].seconds += 10;
+        }
+
+        finishCollectiefRoundResult(
+            null,
+            selectedPlayer,
+            finalists.map(player => player.name)
+        );
+    }
+}
+
+function endCollectiefRound() {
+    roundRunning = false;
+    if (typeof markCurrentRoundComplete === 'function') markCurrentRoundComplete();
+    stopAllTimers();
+
+    const sortedPlayers = [...players].sort((a, b) => b.seconds - a.seconds);
+
+    if (players.length === 1) {
+        const player = players[0];
+        document.getElementById('roundControls').innerHTML = `
+            <div style="margin-bottom: 10px;">
+                <p><strong>Collectief Geheugen - Solo Modus</strong></p>
+                <p><strong>Kandidaat:</strong> ${player.name}</p>
+                <p><strong>Eindstand:</strong> ${Math.floor(player.seconds)} seconden</p>
+            </div>
+        `;
+        currentQuestionEl.innerHTML = `
+            <em>Spel afgelopen! ${player.name} heeft ${Math.floor(player.seconds)} seconden behaald.</em>
+        `;
+        if (typeof playSFX === 'function') playSFX('SFX/finale.mp3');
+        sendDisplayUpdate({
+            type: 'game_end',
+            key: 'solo_end',
+            scene: 'solo-game-end',
+            player: player,
+            finalSeconds: Math.floor(player.seconds)
+        });
+        return;
+    }
+
+    if (players.length === 2) {
+        finishCollectiefRoundResult(null, null, sortedPlayers.map(player => player.name));
+        return;
+    }
+
+    const collectiefEndOption = document.getElementById('collectiefEndOption')?.value || 'lowestOut';
+    const boundaryScore = collectiefEndOption === 'highestWinner'
+        ? sortedPlayers[0].seconds
+        : sortedPlayers[sortedPlayers.length - 1].seconds;
+    const tiedBoundaryPlayers = sortedPlayers.filter(player => player.seconds === boundaryScore);
+
+    if (tiedBoundaryPlayers.length > 1) {
+        perRoundState.collectief.tieBreakPending = true;
+        perRoundState.collectief.tieBreak = { option: collectiefEndOption };
+        const decisionLabel = collectiefEndOption === 'highestWinner'
+            ? 'Slimste van de Dag'
+            : 'afvaller';
+        const bonusLabel = collectiefEndOption === 'highestWinner'
+            ? 'Deze kandidaat krijgt 10 seconden.'
+            : 'De overige kandidaten krijgen ieder 10 seconden, tenzij hun scores minder dan 10 seconden uit elkaar liggen.';
+        document.getElementById('roundControls').innerHTML = `
+            <div style="margin-bottom: 10px;">
+                <p><strong>Gelijke stand na Collectief Geheugen</strong></p>
+                <p>De host bepaalt wie de ${decisionLabel} wordt:</p>
+                <p>${bonusLabel}</p>
+                <div class="button-row">
+                    ${tiedBoundaryPlayers.map(player => `
+                        <button class="primary" onclick="resolveCollectiefTieBreak(${player.index})">
+                            ${decisionLabel}: ${player.name}
+                        </button>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+        currentQuestionEl.innerHTML = `
+            <em>Maak eerst de keuze bij de gelijke stand. Daarna kan de finale worden gestart.</em>
+        `;
+        updateRoundNavigationButtons();
+        return;
+    }
+
+    if (collectiefEndOption === 'highestWinner') {
+        finishCollectiefRoundResult(sortedPlayers[0], null, sortedPlayers.slice(1).map(player => player.name));
+    } else {
+        finishCollectiefRoundResult(null, sortedPlayers[sortedPlayers.length - 1], sortedPlayers.slice(0, 2).map(player => player.name));
+    }
 }
 
 function renderCollectiefHostUI(phase = 'pre') {
@@ -681,7 +713,7 @@ function renderCollectiefHostUI(phase = 'pre') {
                     <div style="margin-top:10px; padding:10px; border:1px solid #c084fc; font-weight:bold;">
                         Laatste fragment afgerond.
                     </div>
-                    <button onclick="nextCollectiefQuestion()">Einde Ronde (N)</button>
+                    <button onclick="endCollectiefRound()">Einde Ronde (N)</button>
                 `;
             } else {
                 html = `

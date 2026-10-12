@@ -153,6 +153,271 @@ body {
   background: #bd321d;
 }
 
+/*
+ * Rode studioscènes: de panelnaden blijven in een eigen achtergrondlaag,
+ * zodat quizinhoud en antwoordvlakken altijd boven de decoratie blijven.
+ */
+.scene#scene-no-connection,
+.scene#scene-round-bumper,
+.scene#scene-waiting-host,
+.scene#scene-waiting-game,
+.scene#scene-standings,
+.scene#scene-lobby-standings,
+.scene#scene-round-369,
+.scene#scene-round-opendeur-lobby,
+.scene#scene-round-opendeur-vragensteller,
+.scene#scene-round-opendeur-vraag,
+.scene#scene-round-puzzel-waiting,
+.scene#scene-round-puzzel-active,
+.scene#scene-round-puzzel-done,
+.scene#scene-round-galerij-pre,
+.scene#scene-round-galerij-main,
+.scene#scene-round-galerij-slideshow,
+.scene#scene-round-galerij-aanvul,
+.scene#scene-round-galerij-done,
+.scene#scene-round-collectief-pre,
+.scene#scene-round-collectief-main,
+.scene#scene-finale-standings,
+.scene#scene-round-finale-pre,
+.scene#scene-round-finale-main,
+.scene#scene-round-finale-end,
+.scene#scene-solo-game-end {
+  --studio-arc-rotation: 0deg;
+  --studio-arc-shift: 0px;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 58% 48% at 50% 7%, rgba(214, 59, 34, 0.96) 0%, rgba(190, 42, 27, 0.72) 42%, rgba(115, 19, 8, 0.3) 100%),
+    linear-gradient(155deg, #9c2111 0%, #85170b 48%, #731308 100%) !important;
+}
+
+.scene#scene-no-connection::before,
+.scene#scene-round-bumper::before,
+.scene#scene-waiting-host::before,
+.scene#scene-waiting-game::before,
+.scene#scene-standings::before,
+.scene#scene-lobby-standings::before,
+.scene#scene-round-369::before,
+.scene#scene-round-opendeur-lobby::before,
+.scene#scene-round-opendeur-vragensteller::before,
+.scene#scene-round-opendeur-vraag::before,
+.scene#scene-round-puzzel-waiting::before,
+.scene#scene-round-puzzel-active::before,
+.scene#scene-round-puzzel-done::before,
+.scene#scene-round-galerij-pre::before,
+.scene#scene-round-galerij-main::before,
+.scene#scene-round-galerij-slideshow::before,
+.scene#scene-round-galerij-aanvul::before,
+.scene#scene-round-galerij-done::before,
+.scene#scene-round-collectief-pre::before,
+.scene#scene-round-collectief-main::before,
+.scene#scene-finale-standings::before,
+.scene#scene-round-finale-pre::before,
+.scene#scene-round-finale-main::before,
+.scene#scene-round-finale-end::before,
+.scene#scene-solo-game-end::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  width: 1700px;
+  height: 1120px;
+  left: -1040px;
+  top: 430px;
+  border: 2px solid rgba(76, 8, 4, 0.55);
+  border-radius: 50%;
+  transform: rotate(var(--studio-arc-rotation)) translateX(var(--studio-arc-shift));
+  box-shadow:
+    0 0 0 1px rgba(242, 91, 57, 0.2),
+    0 0 22px rgba(53, 5, 2, 0.18);
+}
+
+.scene#scene-no-connection::after,
+.scene#scene-round-bumper::after,
+.scene#scene-waiting-host::after,
+.scene#scene-waiting-game::after,
+.scene#scene-standings::after,
+.scene#scene-lobby-standings::after,
+.scene#scene-round-369::after,
+.scene#scene-round-opendeur-lobby::after,
+.scene#scene-round-opendeur-vragensteller::after,
+.scene#scene-round-opendeur-vraag::after,
+.scene#scene-round-puzzel-waiting::after,
+.scene#scene-round-puzzel-active::after,
+.scene#scene-round-puzzel-done::after,
+.scene#scene-round-galerij-pre::after,
+.scene#scene-round-galerij-main::after,
+.scene#scene-round-galerij-slideshow::after,
+.scene#scene-round-galerij-aanvul::after,
+.scene#scene-round-galerij-done::after,
+.scene#scene-round-collectief-pre::after,
+.scene#scene-round-collectief-main::after,
+.scene#scene-finale-standings::after,
+.scene#scene-round-finale-pre::after,
+.scene#scene-round-finale-main::after,
+.scene#scene-round-finale-end::after,
+.scene#scene-solo-game-end::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  width: 1380px;
+  height: 1900px;
+  right: -1020px;
+  top: -480px;
+  border: 2px solid rgba(65, 7, 3, 0.48);
+  border-radius: 50%;
+  transform: rotate(calc(var(--studio-arc-rotation) - 7deg)) translateX(var(--studio-arc-shift));
+  box-shadow:
+    0 0 0 1px rgba(231, 76, 48, 0.18),
+    0 0 22px rgba(53, 5, 2, 0.16);
+}
+
+.scene#scene-round-bumper {
+  --studio-arc-rotation: -5deg;
+}
+
+.scene#scene-standings,
+.scene#scene-lobby-standings {
+  --studio-arc-rotation: 4deg;
+  --studio-arc-shift: 22px;
+}
+
+.scene#scene-round-369,
+.scene#scene-round-opendeur-lobby,
+.scene#scene-round-opendeur-vragensteller,
+.scene#scene-round-opendeur-vraag {
+  --studio-arc-rotation: -2deg;
+}
+
+.scene#scene-round-puzzel-waiting,
+.scene#scene-round-puzzel-active,
+.scene#scene-round-puzzel-done {
+  --studio-arc-rotation: 5deg;
+  --studio-arc-shift: -18px;
+}
+
+.scene#scene-round-galerij-pre,
+.scene#scene-round-galerij-main,
+.scene#scene-round-galerij-slideshow,
+.scene#scene-round-galerij-aanvul,
+.scene#scene-round-galerij-done {
+  --studio-arc-rotation: -4deg;
+  --studio-arc-shift: 14px;
+}
+
+.scene#scene-round-collectief-pre,
+.scene#scene-round-collectief-main {
+  --studio-arc-rotation: 2deg;
+  --studio-arc-shift: -12px;
+}
+
+.scene#scene-finale-standings,
+.scene#scene-round-finale-pre,
+.scene#scene-round-finale-main,
+.scene#scene-round-finale-end,
+.scene#scene-solo-game-end {
+  --studio-arc-rotation: 6deg;
+}
+
+#scene-round-369 {
+  --studio-arc-rotation: 0deg;
+  --studio-arc-shift: 0px;
+  background:
+    linear-gradient(135deg, #bd321d 0%, #8b2416 50%, #bd321d 100%) !important;
+  background-size: 200% 200%;
+  animation: gradientShift 4.5s ease-in-out;
+}
+
+#scene-round-369::before {
+  width: 2500px;
+  height: 1000px;
+  left: -1850px;
+  top: 650px;
+  border: 0;
+  border-top: 1px solid rgba(242, 91, 57, 0.32);
+  background: transparent !important;
+  border-color: rgba(76, 8, 4, 0.42);
+  box-shadow:
+    0 0 16px rgba(53, 5, 2, 0.12);
+}
+
+#scene-round-369::after {
+  width: 1800px;
+  height: 2600px;
+  right: -1400px;
+  top: -820px;
+  border: 0;
+  border-left: 1px solid rgba(231, 76, 48, 0.3);
+  background: transparent !important;
+  box-shadow:
+    0 0 16px rgba(53, 5, 2, 0.1);
+}
+
+#scene-round-369 .round-grid {
+  --369-lobby-divider-x: 960px;
+  --369-lobby-divider-y: 57.97%;
+  --369-lobby-divider-thickness: 14px;
+  --369-lobby-divider-color: #003b70;
+  --369-lobby-side-color: #000;
+  position: relative;
+}
+
+#scene-round-369 .round-grid::before,
+#scene-round-369 .round-grid::after {
+  content: "";
+  position: absolute;
+  z-index: 10;
+  pointer-events: none;
+}
+
+#scene-round-369 .round-grid::before {
+  top: var(--369-lobby-divider-y);
+  left: 0;
+  width: 100%;
+  height: var(--369-lobby-divider-thickness);
+  background: var(--369-lobby-divider-color);
+}
+
+#scene-round-369 .round-grid::after {
+  top: 0;
+  left: var(--369-lobby-divider-x);
+  width: var(--369-lobby-divider-thickness);
+  height: var(--369-lobby-divider-y);
+  background: var(--369-lobby-side-color);
+}
+
+.scene:is(
+  #scene-no-connection,
+  #scene-round-bumper,
+  #scene-waiting-host,
+  #scene-waiting-game,
+  #scene-standings,
+  #scene-lobby-standings,
+  #scene-round-369,
+  #scene-round-opendeur-lobby,
+  #scene-round-opendeur-vragensteller,
+  #scene-round-opendeur-vraag,
+  #scene-round-puzzel-waiting,
+  #scene-round-puzzel-active,
+  #scene-round-puzzel-done,
+  #scene-round-galerij-pre,
+  #scene-round-galerij-main,
+  #scene-round-galerij-slideshow,
+  #scene-round-galerij-aanvul,
+  #scene-round-galerij-done,
+  #scene-round-collectief-pre,
+  #scene-round-collectief-main,
+  #scene-finale-standings,
+  #scene-round-finale-pre,
+  #scene-round-finale-main,
+  #scene-round-finale-end,
+  #scene-solo-game-end
+) > * {
+  position: relative;
+  z-index: 1;
+}
+
 .scene#scene-lobby {
   background-color: #bd321d;
   background-image: url("../assets/kandidatenstoelen.jpg");
@@ -247,7 +512,10 @@ body {
   z-index: 10001;
   width: 1920px;
   height: 1080px;
-  background-color: #bd321d;
+  background:
+    linear-gradient(135deg, #bd321d 0%, #8b2416 50%, #bd321d 100%) !important;
+  background-size: 200% 200%;
+  animation: gradientShift 4.5s ease-in-out;
 }
 
 #scene-standings .round-grid {
@@ -275,6 +543,9 @@ body {
   left: 0;
   width: 100%;
   height: var(--369-lobby-divider-thickness);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
   background: var(--369-lobby-divider-color);
 }
 
@@ -283,6 +554,9 @@ body {
   left: var(--369-lobby-divider-x);
   width: var(--369-lobby-divider-thickness);
   height: var(--369-lobby-divider-y);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
   background: var(--369-lobby-side-color);
 }
 

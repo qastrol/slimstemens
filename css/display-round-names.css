@@ -151,6 +151,718 @@
   }
 }
 
+/*
+ * Laat de studiosgradient doorlopen achter de ronde-indelingen.
+ * Individuele antwoordkaarten, score-ovalen en lobbyfoto's behouden hun eigen laag.
+ */
+#opendeur-vraag-grid .left-half,
+#opendeur-vraag-grid .part2-mini-lobby,
+#opendeur-vraag-grid .part4-status,
+#opendeur-vragensteller-grid,
+#scene-round-puzzel-active .round-grid,
+#scene-round-puzzel-waiting .grid-part.part1,
+#scene-round-puzzel-active .grid-part.part1,
+#scene-round-puzzel-active .grid-part.part3,
+#puzzel-pre-grid,
+#galerij-pre-grid,
+#galerij-main-grid,
+#galerij-slideshow-grid,
+#galerij-aanvul-grid,
+#galerij-done-grid,
+#collectief-pre-grid,
+#collectief-main-grid,
+#finale-main-grid,
+#finale-pre-grid,
+#finale-end-grid,
+.finale-standings-grid {
+  background: transparent !important;
+}
+
+#scene-round-opendeur-vragensteller {
+  background:
+    radial-gradient(ellipse 58% 48% at 50% 7%, rgba(214, 59, 34, 0.96) 0%, rgba(190, 42, 27, 0.72) 42%, rgba(115, 19, 8, 0.3) 100%),
+    linear-gradient(155deg, #9c2111 0%, #85170b 48%, #731308 100%) !important;
+}
+
+#opendeur-vragensteller-grid {
+  background: transparent !important;
+}
+
+#scene-round-opendeur-vragensteller {
+  background:
+    linear-gradient(135deg, #bd321d 0%, #8b2416 50%, #bd321d 100%) !important;
+  background-size: 200% 200%;
+  animation: gradientShift 4.5s ease-in-out;
+}
+
+#scene-round-opendeur-vragensteller::before,
+#scene-round-opendeur-vragensteller::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  display: block;
+  pointer-events: none;
+  background: transparent !important;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+#scene-round-opendeur-vragensteller::before {
+  width: 2500px;
+  height: 1000px;
+  left: -1850px;
+  top: 650px;
+  border: 0;
+  border-top: 1px solid rgba(242, 91, 57, 0.32);
+  box-shadow: 0 0 16px rgba(53, 5, 2, 0.12);
+}
+
+#scene-round-opendeur-vragensteller::after {
+  width: 1800px;
+  height: 2600px;
+  right: -1400px;
+  top: -820px;
+  border: 0;
+  border-left: 1px solid rgba(231, 76, 48, 0.3);
+  box-shadow: 0 0 16px rgba(53, 5, 2, 0.1);
+}
+
+/* Elke rode scène krijgt een eigen, buiten de quizinhoud gehouden boogpositie. */
+.scene#scene-no-connection {
+  --studio-arc-rotation: -2deg;
+  --studio-arc-shift: -18px;
+}
+
+.scene#scene-round-bumper {
+  --studio-arc-rotation: -5deg;
+  --studio-arc-shift: 28px;
+}
+
+.scene#scene-waiting-host {
+  --studio-arc-rotation: 2deg;
+  --studio-arc-shift: -28px;
+}
+
+.scene#scene-waiting-game {
+  --studio-arc-rotation: 4deg;
+  --studio-arc-shift: 16px;
+}
+
+.scene#scene-standings {
+  --studio-arc-rotation: 1deg;
+  --studio-arc-shift: -12px;
+}
+
+.scene#scene-lobby-standings {
+  --studio-arc-rotation: -4deg;
+  --studio-arc-shift: 24px;
+}
+
+.scene#scene-round-369 {
+  --studio-arc-rotation: 0deg;
+  --studio-arc-shift: 0px;
+}
+
+#scene-round-369::before {
+  width: 1650px;
+  height: 760px;
+  left: -1600px !important;
+  right: auto !important;
+  top: 710px;
+  border: 0;
+  border-top: 1px solid rgba(242, 91, 57, 0.32);
+  background: transparent !important;
+  box-shadow: 0 0 16px rgba(53, 5, 2, 0.12);
+  transform: none !important;
+}
+
+#scene-round-369::after {
+  width: 1650px;
+  height: 760px;
+  right: -1320px !important;
+  left: auto !important;
+  top: 1090px;
+  border: 0;
+  border-top: 1px solid rgba(231, 76, 48, 0.3);
+  background: transparent !important;
+  box-shadow: 0 0 16px rgba(53, 5, 2, 0.1);
+  transform: none !important;
+}
+
+.scene#scene-round-opendeur-lobby {
+  --studio-arc-rotation: 3deg;
+  --studio-arc-shift: -20px;
+}
+
+.scene#scene-round-opendeur-vragensteller {
+  --studio-arc-rotation: -3deg;
+  --studio-arc-shift: 18px;
+}
+
+.scene#scene-round-opendeur-vraag {
+  --studio-arc-rotation: 5deg;
+  --studio-arc-shift: -30px;
+}
+
+.scene#scene-round-puzzel-waiting {
+  --studio-arc-rotation: -1deg;
+  --studio-arc-shift: 32px;
+}
+
+.scene#scene-round-puzzel-active {
+  --studio-arc-rotation: 4deg;
+  --studio-arc-shift: -24px;
+}
+
+.scene#scene-round-puzzel-done {
+  --studio-arc-rotation: -6deg;
+  --studio-arc-shift: 12px;
+}
+
+.scene#scene-round-galerij-pre {
+  --studio-arc-rotation: 2deg;
+  --studio-arc-shift: -16px;
+}
+
+.scene#scene-round-galerij-main {
+  --studio-arc-rotation: -4deg;
+  --studio-arc-shift: 26px;
+}
+
+.scene#scene-round-galerij-slideshow {
+  --studio-arc-rotation: 5deg;
+  --studio-arc-shift: -20px;
+}
+
+.scene#scene-round-galerij-aanvul {
+  --studio-arc-rotation: -2deg;
+  --studio-arc-shift: 18px;
+}
+
+.scene#scene-round-galerij-done {
+  --studio-arc-rotation: 6deg;
+  --studio-arc-shift: -10px;
+}
+
+.scene#scene-round-collectief-pre {
+  --studio-arc-rotation: -3deg;
+  --studio-arc-shift: 30px;
+}
+
+.scene#scene-round-collectief-main {
+  --studio-arc-rotation: 1deg;
+  --studio-arc-shift: -22px;
+}
+
+.scene#scene-finale-standings {
+  --studio-arc-rotation: 3deg;
+  --studio-arc-shift: 14px;
+}
+
+.scene#scene-round-finale-pre {
+  --studio-arc-rotation: -5deg;
+  --studio-arc-shift: -16px;
+}
+
+.scene#scene-round-finale-main {
+  --studio-arc-rotation: 2deg;
+  --studio-arc-shift: 20px;
+}
+
+.scene#scene-round-finale-end {
+  --studio-arc-rotation: -1deg;
+  --studio-arc-shift: -26px;
+}
+
+.scene#scene-solo-game-end {
+  --studio-arc-rotation: 5deg;
+  --studio-arc-shift: 8px;
+}
+
+/*
+ * Ronde-specifieke boogposities. De zichtbare delen blijven beperkt tot
+ * de buitenranden, zodat ze geen vraag-, antwoord- of scoregebieden kruisen.
+ */
+#scene-round-opendeur-vragensteller,
+#scene-round-puzzel-waiting,
+#scene-round-puzzel-active,
+#scene-round-puzzel-done,
+#scene-round-galerij-pre,
+#scene-round-galerij-main,
+#scene-round-galerij-slideshow,
+#scene-round-galerij-aanvul,
+#scene-round-galerij-done,
+#scene-round-collectief-pre,
+#scene-round-collectief-main,
+#scene-finale-standings,
+#scene-round-finale-pre,
+#scene-round-finale-main,
+#scene-round-finale-end,
+#scene-solo-game-end {
+  --edge-arc-left: -1600px;
+  --edge-arc-right: -1300px;
+  --edge-arc-left-top: 710px;
+  --edge-arc-right-top: 690px;
+}
+
+#scene-round-opendeur-vragensteller {
+  --edge-arc-left: -920px;
+  --edge-arc-right: -340px;
+  --edge-arc-left-top: 720px;
+  --edge-arc-right-top: 670px;
+}
+
+#scene-round-puzzel-waiting {
+  --edge-arc-left: -1590px;
+  --edge-arc-right: -1310px;
+  --edge-arc-left-top: 725px;
+  --edge-arc-right-top: 680px;
+}
+
+#scene-round-puzzel-active {
+  --edge-arc-left: -310px;
+  --edge-arc-right: -1355px;
+  --edge-arc-left-top: 700px;
+  --edge-arc-right-top: 675px;
+}
+
+#scene-round-puzzel-done {
+  --edge-arc-left: -1580px;
+  --edge-arc-right: -1290px;
+  --edge-arc-left-top: 740px;
+  --edge-arc-right-top: 700px;
+}
+
+#scene-round-galerij-pre,
+#scene-round-galerij-main,
+#scene-round-galerij-slideshow,
+#scene-round-galerij-aanvul,
+#scene-round-galerij-done {
+  --edge-arc-left: -1640px;
+  --edge-arc-right: -1300px;
+  --edge-arc-left-top: 730px;
+  --edge-arc-right-top: 685px;
+}
+
+#scene-round-galerij-main {
+  --edge-arc-left: -1660px;
+  --edge-arc-right-top: 670px;
+}
+
+#scene-round-galerij-slideshow {
+  --edge-arc-left-top: 750px;
+  --edge-arc-right: -1320px;
+}
+
+#scene-round-galerij-aanvul {
+  --edge-arc-left: -1650px;
+  --edge-arc-right-top: 700px;
+}
+
+#scene-round-collectief-pre,
+#scene-round-collectief-main {
+  --edge-arc-left: -1630px;
+  --edge-arc-right: -1315px;
+  --edge-arc-left-top: 735px;
+  --edge-arc-right-top: 680px;
+}
+
+#scene-round-collectief-main {
+  --edge-arc-left: -1650px;
+  --edge-arc-right-top: 695px;
+}
+
+#scene-finale-standings,
+#scene-round-finale-pre,
+#scene-round-finale-main,
+#scene-round-finale-end,
+#scene-solo-game-end {
+  --edge-arc-left: -1625px;
+  --edge-arc-right: -1310px;
+  --edge-arc-left-top: 720px;
+  --edge-arc-right-top: 675px;
+}
+
+#scene-round-finale-main {
+  --edge-arc-left: -1645px;
+  --edge-arc-right: -1330px;
+  --edge-arc-left-top: 740px;
+}
+
+#scene-round-finale-end {
+  --edge-arc-left-top: 755px;
+  --edge-arc-right-top: 705px;
+}
+
+#scene-solo-game-end {
+  --edge-arc-left: -1605px;
+  --edge-arc-right: -1295px;
+  --edge-arc-left-top: 745px;
+  --edge-arc-right-top: 690px;
+}
+
+/*
+ * Veilige boogzones voor het 1920 x 1080-canvas.
+ * Met een boogbreedte van 1650px blijft alleen een klein segment aan de
+ * buitenrand zichtbaar; zo kan geen boog door een quiz- of tekstvlak lopen.
+ */
+#scene-round-369::before,
+#scene-round-opendeur-vragensteller::before,
+#scene-round-puzzel-waiting::before,
+#scene-round-puzzel-active::before,
+#scene-round-puzzel-done::before,
+#scene-round-galerij-pre::before,
+#scene-round-galerij-main::before,
+#scene-round-galerij-slideshow::before,
+#scene-round-galerij-aanvul::before,
+#scene-round-galerij-done::before,
+#scene-round-collectief-pre::before,
+#scene-round-collectief-main::before,
+#scene-finale-standings::before,
+#scene-round-finale-pre::before,
+#scene-round-finale-main::before,
+#scene-round-finale-end::before,
+#scene-solo-game-end::before {
+  width: 1650px !important;
+  height: 760px !important;
+  left: -1560px !important;
+  right: auto !important;
+  top: 700px !important;
+  bottom: auto !important;
+  border: 0 !important;
+  border-top: 1px solid rgba(242, 91, 57, 0.32) !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  box-shadow: 0 0 16px rgba(53, 5, 2, 0.12) !important;
+  transform: none !important;
+}
+
+#scene-round-369::after,
+#scene-round-opendeur-vragensteller::after,
+#scene-round-opendeur-vraag::after,
+#scene-round-puzzel-waiting::after,
+#scene-round-puzzel-active::after,
+#scene-round-puzzel-done::after,
+#scene-round-galerij-pre::after,
+#scene-round-galerij-main::after,
+#scene-round-galerij-slideshow::after,
+#scene-round-galerij-aanvul::after,
+#scene-round-galerij-done::after,
+#scene-round-collectief-pre::after,
+#scene-round-collectief-main::after,
+#scene-finale-standings::after,
+#scene-round-finale-pre::after,
+#scene-round-finale-main::after,
+#scene-round-finale-end::after,
+#scene-solo-game-end::after {
+  width: 1650px !important;
+  height: 760px !important;
+  left: auto !important;
+  right: -1450px !important;
+  top: 650px !important;
+  bottom: auto !important;
+  border: 0 !important;
+  border-top: 1px solid rgba(231, 76, 48, 0.3) !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  box-shadow: 0 0 16px rgba(53, 5, 2, 0.1) !important;
+  transform: none !important;
+}
+
+/* Kleine, unieke afwijkingen per ronde binnen de veilige randzones. */
+#scene-round-opendeur-vragensteller::before {
+  left: -1580px !important;
+  top: 715px !important;
+}
+
+#scene-round-opendeur-vragensteller::after {
+  right: -1430px !important;
+  top: 660px !important;
+}
+
+#scene-round-opendeur-vraag::before {
+  display: none !important;
+}
+
+#scene-round-opendeur-vraag::after {
+  right: -1480px !important;
+  top: 675px !important;
+}
+
+#scene-round-puzzel-waiting::before {
+  left: -1540px !important;
+  top: 725px !important;
+}
+
+#scene-round-puzzel-waiting::after {
+  right: -1460px !important;
+  top: 665px !important;
+}
+
+#scene-round-puzzel-active::before {
+  left: -1585px !important;
+  top: 710px !important;
+}
+
+#scene-round-puzzel-active::after {
+  right: -1490px !important;
+  top: 660px !important;
+}
+
+#scene-round-galerij-pre::before,
+#scene-round-galerij-main::before,
+#scene-round-galerij-slideshow::before,
+#scene-round-galerij-aanvul::before,
+#scene-round-galerij-done::before,
+#scene-round-collectief-pre::before,
+#scene-round-collectief-main::before,
+#scene-finale-standings::before,
+#scene-round-finale-pre::before,
+#scene-round-finale-main::before,
+#scene-round-finale-end::before,
+#scene-solo-game-end::before {
+  left: -1600px !important;
+}
+
+#scene-round-galerij-pre::after,
+#scene-round-galerij-main::after,
+#scene-round-galerij-slideshow::after,
+#scene-round-galerij-aanvul::after,
+#scene-round-galerij-done::after,
+#scene-round-collectief-pre::after,
+#scene-round-collectief-main::after,
+#scene-finale-standings::after,
+#scene-round-finale-pre::after,
+#scene-round-finale-main::after,
+#scene-round-finale-end::after,
+#scene-solo-game-end::after {
+  right: -1470px !important;
+}
+
+#scene-round-galerij-main::before { top: 730px !important; }
+#scene-round-galerij-slideshow::before { left: -1620px !important; top: 745px !important; }
+#scene-round-galerij-aanvul::after { top: 675px !important; }
+#scene-round-collectief-main::before { left: -1630px !important; top: 720px !important; }
+#scene-round-collectief-main::after { right: -1490px !important; top: 670px !important; }
+#scene-round-finale-main::before { left: -1625px !important; top: 735px !important; }
+#scene-round-finale-main::after { right: -1500px !important; top: 665px !important; }
+#scene-round-finale-end::before { left: -1615px !important; top: 750px !important; }
+#scene-round-finale-end::after { top: 690px !important; }
+#scene-solo-game-end::before { left: -1575px !important; top: 740px !important; }
+
+#scene-round-opendeur-vragensteller::before,
+#scene-round-puzzel-waiting::before,
+#scene-round-puzzel-active::before,
+#scene-round-puzzel-done::before,
+#scene-round-galerij-pre::before,
+#scene-round-galerij-main::before,
+#scene-round-galerij-slideshow::before,
+#scene-round-galerij-aanvul::before,
+#scene-round-galerij-done::before,
+#scene-round-collectief-pre::before,
+#scene-round-collectief-main::before,
+#scene-finale-standings::before,
+#scene-round-finale-pre::before,
+#scene-round-finale-main::before,
+#scene-round-finale-end::before,
+#scene-solo-game-end::before,
+#scene-round-opendeur-vragensteller::after,
+#scene-round-puzzel-waiting::after,
+#scene-round-puzzel-active::after,
+#scene-round-puzzel-done::after,
+#scene-round-galerij-pre::after,
+#scene-round-galerij-main::after,
+#scene-round-galerij-slideshow::after,
+#scene-round-galerij-aanvul::after,
+#scene-round-galerij-done::after,
+#scene-round-collectief-pre::after,
+#scene-round-collectief-main::after,
+#scene-finale-standings::after,
+#scene-round-finale-pre::after,
+#scene-round-finale-main::after,
+#scene-round-finale-end::after,
+#scene-solo-game-end::after {
+  width: 1650px !important;
+  height: 760px !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  transform: none !important;
+}
+
+#scene-round-opendeur-vragensteller::before,
+#scene-round-puzzel-waiting::before,
+#scene-round-puzzel-active::before,
+#scene-round-puzzel-done::before,
+#scene-round-galerij-pre::before,
+#scene-round-galerij-main::before,
+#scene-round-galerij-slideshow::before,
+#scene-round-galerij-aanvul::before,
+#scene-round-galerij-done::before,
+#scene-round-collectief-pre::before,
+#scene-round-collectief-main::before,
+#scene-finale-standings::before,
+#scene-round-finale-pre::before,
+#scene-round-finale-main::before,
+#scene-round-finale-end::before,
+#scene-solo-game-end::before {
+  top: var(--edge-arc-left-top) !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: var(--edge-arc-left) !important;
+  border-top: 1px solid rgba(242, 91, 57, 0.32) !important;
+  box-shadow: 0 0 16px rgba(53, 5, 2, 0.12) !important;
+}
+
+#scene-round-opendeur-vragensteller::after,
+#scene-round-puzzel-waiting::after,
+#scene-round-puzzel-active::after,
+#scene-round-puzzel-done::after,
+#scene-round-galerij-pre::after,
+#scene-round-galerij-main::after,
+#scene-round-galerij-slideshow::after,
+#scene-round-galerij-aanvul::after,
+#scene-round-galerij-done::after,
+#scene-round-collectief-pre::after,
+#scene-round-collectief-main::after,
+#scene-finale-standings::after,
+#scene-round-finale-pre::after,
+#scene-round-finale-main::after,
+#scene-round-finale-end::after,
+#scene-solo-game-end::after {
+  top: var(--edge-arc-right-top) !important;
+  right: var(--edge-arc-right) !important;
+  bottom: auto !important;
+  left: auto !important;
+  border-top: 1px solid rgba(231, 76, 48, 0.3) !important;
+  box-shadow: 0 0 16px rgba(53, 5, 2, 0.1) !important;
+}
+
+/* De Open Deur-vraag heeft alleen de subtiele rechterboog. */
+#scene-round-opendeur-vraag::before {
+  display: none;
+}
+
+#scene-round-opendeur-vraag::after {
+  width: 1650px !important;
+  height: 760px !important;
+  top: 680px !important;
+  right: -1360px !important;
+  bottom: auto !important;
+  left: auto !important;
+  border: 0 !important;
+  border-top: 1px solid rgba(231, 76, 48, 0.3) !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  box-shadow: 0 0 16px rgba(53, 5, 2, 0.1) !important;
+  transform: none !important;
+}
+
+#opendeur-vragensteller-grid,
+#opendeur-vragensteller-grid .part2,
+#opendeur-vragensteller-grid .part3 {
+  background: transparent !important;
+}
+
+#vragenstellersContainer .vragensteller-box {
+  background: rgba(196, 70, 52, 0.72) !important;
+}
+
+#scene-round-puzzel-active .round-grid,
+#scene-round-puzzel-active .grid-part,
+#scene-round-puzzel-waiting .galerij-round-grid,
+.galerij-round-grid,
+.finale-display-grid {
+  background-color: transparent !important;
+}
+
+#scene-round-puzzel-waiting .grid-part.part1,
+#scene-round-puzzel-active .grid-part.part1 {
+  box-shadow: none;
+}
+
+.galerij-round-grid .part-left-full {
+  background: transparent;
+}
+
+/* De tussenstand gebruikt dezelfde expliciete scheidingen als 3-6-9. */
+#scene-standings {
+  background:
+    linear-gradient(135deg, #bd321d 0%, #8b2416 50%, #bd321d 100%) !important;
+  background-size: 200% 200%;
+  animation: gradientShift 4.5s ease-in-out;
+}
+
+#scene-standings::before,
+#scene-standings::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  display: block;
+  pointer-events: none;
+  background: transparent !important;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+#scene-standings::before {
+  width: 2500px;
+  height: 1000px;
+  left: -1850px;
+  top: 650px;
+  border: 0;
+  border-top: 1px solid rgba(242, 91, 57, 0.32);
+  box-shadow: 0 0 16px rgba(53, 5, 2, 0.12);
+}
+
+#scene-standings::after {
+  width: 1800px;
+  height: 2600px;
+  right: -1400px;
+  top: -820px;
+  border: 0;
+  border-left: 1px solid rgba(231, 76, 48, 0.3);
+  box-shadow: 0 0 16px rgba(53, 5, 2, 0.1);
+}
+
+#scene-standings .round-grid {
+  position: relative;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  --standings-divider-x: 960px;
+  --standings-divider-y: 57.97%;
+  --standings-divider-thickness: 14px;
+}
+
+#scene-standings .round-grid::before,
+#scene-standings .round-grid::after {
+  content: "";
+  position: absolute;
+  z-index: 30;
+  display: block;
+  pointer-events: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+#scene-standings .round-grid::before {
+  top: var(--standings-divider-y);
+  left: 0;
+  width: 100%;
+  height: var(--standings-divider-thickness);
+  background: #003b70;
+}
+
+#scene-standings .round-grid::after {
+  top: 0;
+  left: var(--standings-divider-x);
+  width: var(--standings-divider-thickness);
+  height: var(--standings-divider-y);
+  background: #000;
+}
+
 #scene-round-369 .round-title-badge,
 #scene-standings .round-title-badge,
 #scene-round-opendeur-lobby .round-title-badge,
@@ -174,4 +886,301 @@
 .galerij-aanvul-answers-list .answer-text,
 #collectiefMainAnswers .collectief-answer-text {
   font-weight: 400;
+}
+
+/*
+ * Definitieve booglaag: deze regels staan bewust als laatste, zodat eerdere
+ * scène-specifieke experimenten de veilige randposities niet kunnen overschrijven.
+ */
+body :is(
+  #scene-round-369,
+  #scene-round-opendeur-vragensteller,
+  #scene-round-puzzel-waiting,
+  #scene-round-puzzel-active,
+  #scene-round-puzzel-done,
+  #scene-round-galerij-pre,
+  #scene-round-galerij-main,
+  #scene-round-galerij-slideshow,
+  #scene-round-galerij-aanvul,
+  #scene-round-galerij-done,
+  #scene-round-collectief-pre,
+  #scene-round-collectief-main,
+  #scene-finale-standings,
+  #scene-round-finale-pre,
+  #scene-round-finale-main,
+  #scene-round-finale-end,
+  #scene-solo-game-end
+)::before {
+  width: 1650px !important;
+  height: 760px !important;
+  top: 710px !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: -1580px !important;
+  border: 0 !important;
+  border-top: 1px solid rgba(242, 91, 57, 0.32) !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  box-shadow: 0 0 16px rgba(53, 5, 2, 0.12) !important;
+  transform: none !important;
+}
+
+body :is(
+  #scene-round-369,
+  #scene-round-opendeur-vragensteller,
+  #scene-round-opendeur-vraag,
+  #scene-round-puzzel-waiting,
+  #scene-round-puzzel-active,
+  #scene-round-puzzel-done,
+  #scene-round-galerij-pre,
+  #scene-round-galerij-main,
+  #scene-round-galerij-slideshow,
+  #scene-round-galerij-aanvul,
+  #scene-round-galerij-done,
+  #scene-round-collectief-pre,
+  #scene-round-collectief-main,
+  #scene-finale-standings,
+  #scene-round-finale-pre,
+  #scene-round-finale-main,
+  #scene-round-finale-end,
+  #scene-solo-game-end
+)::after {
+  width: 1650px !important;
+  height: 760px !important;
+  top: 660px !important;
+  right: -1450px !important;
+  bottom: auto !important;
+  left: auto !important;
+  border: 0 !important;
+  border-top: 1px solid rgba(231, 76, 48, 0.3) !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  box-shadow: 0 0 16px rgba(53, 5, 2, 0.1) !important;
+  transform: none !important;
+}
+
+body #scene-round-369::before {
+  left: -1600px !important;
+  top: 710px !important;
+}
+
+body #scene-round-369::after {
+  right: -1450px !important;
+  top: 650px !important;
+}
+
+body #scene-round-opendeur-vragensteller::before {
+  left: -1620px !important;
+  top: 715px !important;
+}
+
+body #scene-round-opendeur-vragensteller::after {
+  right: -1430px !important;
+  top: 80px !important;
+}
+
+body #scene-round-opendeur-vraag::before {
+  display: none !important;
+}
+
+body #scene-round-opendeur-vraag::after {
+  right: -1480px !important;
+  top: 675px !important;
+}
+
+body #scene-round-puzzel-waiting::before {
+  left: -1540px !important;
+  top: 725px !important;
+}
+
+body #scene-round-puzzel-waiting::after {
+  right: -1460px !important;
+  top: 665px !important;
+}
+
+body #scene-round-puzzel-active::before {
+  left: -1585px !important;
+  top: 710px !important;
+}
+
+body #scene-round-puzzel-active::after {
+  right: -1490px !important;
+  top: 660px !important;
+}
+
+body :is(
+  #scene-round-galerij-pre,
+  #scene-round-galerij-main,
+  #scene-round-galerij-slideshow,
+  #scene-round-galerij-aanvul,
+  #scene-round-galerij-done,
+  #scene-round-collectief-pre,
+  #scene-round-collectief-main,
+  #scene-finale-standings,
+  #scene-round-finale-pre,
+  #scene-round-finale-main,
+  #scene-round-finale-end,
+  #scene-solo-game-end
+)::before {
+  left: -1600px !important;
+  top: 730px !important;
+}
+
+body :is(
+  #scene-round-galerij-pre,
+  #scene-round-galerij-main,
+  #scene-round-galerij-slideshow,
+  #scene-round-galerij-aanvul,
+  #scene-round-galerij-done,
+  #scene-round-collectief-pre,
+  #scene-round-collectief-main,
+  #scene-finale-standings,
+  #scene-round-finale-pre,
+  #scene-round-finale-main,
+  #scene-round-finale-end,
+  #scene-solo-game-end
+)::after {
+  right: -1470px !important;
+  top: 675px !important;
+}
+
+body #scene-round-galerij-slideshow::before { left: -1620px !important; top: 745px !important; }
+body #scene-round-galerij-aanvul::after { top: 690px !important; }
+body #scene-round-collectief-main::before { left: -1630px !important; top: 720px !important; }
+body #scene-round-collectief-main::after { right: -1490px !important; top: 670px !important; }
+body #scene-round-finale-main::before { left: -1625px !important; top: 735px !important; }
+body #scene-round-finale-main::after { right: -1500px !important; top: 665px !important; }
+body #scene-round-finale-end::before { left: -1615px !important; top: 750px !important; }
+body #scene-round-finale-end::after { top: 690px !important; }
+body #scene-solo-game-end::before { left: -1575px !important; top: 740px !important; }
+
+/*
+ * Linkerbogen gebruiken een compactere ellips dan rechterbogen. Daardoor is
+ * de kromming binnen het 1920 x 1080-canvas zichtbaar in plaats van onder de
+ * onderrand te verdwijnen.
+ */
+body :is(
+  #scene-round-puzzel-waiting,
+  #scene-round-puzzel-active,
+  #scene-round-puzzel-done,
+  #scene-round-galerij-pre,
+  #scene-round-galerij-main,
+  #scene-round-galerij-slideshow,
+  #scene-round-galerij-aanvul,
+  #scene-round-galerij-done,
+  #scene-round-collectief-pre,
+  #scene-round-collectief-main,
+  #scene-finale-standings,
+  #scene-round-finale-pre,
+  #scene-round-finale-main,
+  #scene-round-finale-end,
+  #scene-solo-game-end
+)::before {
+  width: 1200px !important;
+  height: 760px !important;
+  left: -1110px !important;
+  top: 700px !important;
+}
+
+body #scene-round-puzzel-waiting::before { left: -1090px !important; top: 715px !important; }
+body #scene-round-puzzel-active::before { left: -1120px !important; top: 705px !important; }
+body #scene-round-galerij-main::before { left: -1130px !important; top: 720px !important; }
+body #scene-round-galerij-slideshow::before { left: -1140px !important; top: 735px !important; }
+body #scene-round-galerij-aanvul::before { left: -1125px !important; top: 715px !important; }
+body #scene-round-collectief-main::before { left: -1135px !important; top: 710px !important; }
+body #scene-round-finale-main::before { left: -1125px !important; top: 725px !important; }
+body #scene-round-finale-end::before { left: -1140px !important; top: 740px !important; }
+body #scene-solo-game-end::before { left: -1100px !important; top: 730px !important; }
+
+body #scene-round-opendeur-vraag::before {
+  display: block !important;
+  width: 1200px !important;
+  height: 760px !important;
+  top: 730px !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: -1130px !important;
+  border: 0 !important;
+  border-top: 1px solid rgba(242, 91, 57, 0.32) !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  box-shadow: 0 0 16px rgba(53, 5, 2, 0.12) !important;
+  transform: none !important;
+}
+
+/* Puzzel gebruikt in beide fasen één doorlopende 3-6-9-studiobasis. */
+body #scene-round-puzzel-waiting,
+body #scene-round-puzzel-active {
+  background:
+    linear-gradient(135deg, #bd321d 0%, #8b2416 50%, #bd321d 100%) !important;
+  background-size: 200% 200%;
+  animation: gradientShift 4.5s ease-in-out;
+}
+
+body #puzzel-pre-grid,
+body #scene-round-puzzel-active .round-grid,
+body #puzzel-pre-grid .grid-part,
+body #scene-round-puzzel-active .grid-part {
+  background: transparent !important;
+}
+
+body #puzzel-pre-grid .part-left-full,
+body #scene-round-puzzel-active .grid-part.part1 {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Galerij gebruikt één doorlopende studiobasis in alle rondefasen. */
+body :is(
+  #scene-round-galerij-pre,
+  #scene-round-galerij-main,
+  #scene-round-galerij-slideshow,
+  #scene-round-galerij-aanvul,
+  #scene-round-galerij-done
+) {
+  background:
+    linear-gradient(135deg, #bd321d 0%, #8b2416 50%, #bd321d 100%) !important;
+  background-size: 200% 200%;
+  animation: gradientShift 4.5s ease-in-out;
+}
+
+body :is(
+  #galerij-pre-grid,
+  #galerij-main-grid,
+  #galerij-slideshow-grid,
+  #galerij-aanvul-grid,
+  #galerij-done-grid
+),
+body :is(
+  #galerij-pre-grid,
+  #galerij-main-grid,
+  #galerij-slideshow-grid,
+  #galerij-aanvul-grid,
+  #galerij-done-grid
+) .grid-part {
+  background: transparent !important;
+}
+
+/*
+ * 375px op een 2557px-uitvoer komt overeen met circa 282px in het vaste
+ * 1920px-canvas. De scoreovaal is het eerste element van elke aanvulregel.
+ */
+body #galerijAanvulAnswers {
+  padding-left: 282px;
+}
+
+/* Collectief Geheugen gebruikt één doorlopende 3-6-9-studiobasis. */
+body #scene-round-collectief-pre,
+body #scene-round-collectief-main {
+  background:
+    linear-gradient(135deg, #bd321d 0%, #8b2416 50%, #bd321d 100%) !important;
+  background-size: 200% 200%;
+  animation: gradientShift 4.5s ease-in-out;
+}
+
+body #collectief-pre-grid,
+body #collectief-main-grid,
+body #collectief-pre-grid .grid-part,
+body #collectief-main-grid .grid-part {
+  background: transparent !important;
 }

@@ -360,7 +360,8 @@ function grantPreFinaleBonus(seconds = 30) {
   });
 
   renderPlayers();
-  flash(`Quizmaster bonus: iedereen +${seconds}s.`);
+  if (typeof playSFX === 'function') playSFX('SFX/goed.mp3');
+  flash(`Quizmaster bonus: iedereen +${seconds} seconden.`);
   clearPreFinaleBonusControls();
 }
 
@@ -374,7 +375,7 @@ function showPreFinaleBonusControls(seconds = 30) {
   const btn = document.createElement('button');
   btn.id = 'preFinaleBonusBtn';
   btn.className = 'secondary';
-  btn.textContent = `Geef iedereen +${seconds}s`;
+  btn.textContent = `Geef iedereen ${seconds} seconden`;
   btn.addEventListener('click', () => grantPreFinaleBonus(seconds));
   area.appendChild(btn);
 }
@@ -602,7 +603,9 @@ function updateRoundNavigationButtons() {
   }
 
   const canStartFirstRound = hasValidPlayers && !hasStartedRound;
-  const canGoNext = hasValidPlayers && hasStartedRound && perRoundState.roundComplete === true && canAdvanceToNextRound();
+  const hasPendingCollectiefTieBreak = perRoundState?.collectief?.tieBreakPending === true;
+  const canGoNext = hasValidPlayers && hasStartedRound && perRoundState.roundComplete === true &&
+    !hasPendingCollectiefTieBreak && canAdvanceToNextRound();
 
   startRoundBtn.style.display = canStartFirstRound ? '' : 'none';
   nextRoundBtn.style.display = canGoNext ? '' : 'none';
@@ -775,6 +778,11 @@ document.getElementById('startRound').addEventListener('click', ()=>{
 });
 
 document.getElementById('nextRound').addEventListener('click', ()=>{
+  if (perRoundState?.collectief?.tieBreakPending === true) {
+    flash('Bepaal eerst de afvaller of de Slimste van de Dag.');
+    return;
+  }
+
   if (safeRoundNavigationEnabled && (!perRoundState?.round || perRoundState.roundComplete !== true)) {
     flash('Veilige modus: deze ronde is nog niet klaar om door te gaan.');
     return;
@@ -800,7 +808,7 @@ document.getElementById('nextRound').addEventListener('click', ()=>{
     flash('Solo spel afgelopen! Eindstand wordt getoond op display.');
     return;
   }
-  
+
   currentRoundIndex++;
   if(currentRoundIndex>=roundsSequence.length) currentRoundIndex = roundsSequence.length-1;
   startRound(roundsSequence[currentRoundIndex]);
