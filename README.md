@@ -8,5 +8,3 @@ Hoe speel je het zelf?
 7. Veel speelplezier!
 
 display.html werkt het beste bij een scherm van 1920 pixels breed en 1080 pixels hoog
-
-Het display gebruikt lokaal het webfont `FF_DIN_Condensed_Black.woff2`.
