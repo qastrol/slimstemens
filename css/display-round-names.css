@@ -1393,3 +1393,16 @@ body :is(
   background-size: 200% 200% !important;
   animation: gradientShift 4.5s ease-in-out !important;
 }
+
+#scene-round-369 .question-numbers .question-current-indicator {
+  border-color: #004186;
+}
+
+#scene-round-369 > #threeSixNineWideLobby {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 57.97%;
+  z-index: 11;
+}
