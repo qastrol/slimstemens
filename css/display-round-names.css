@@ -58,32 +58,101 @@
 #scene-standings .player-card.active-player .player-seconds,
 .players-bar-compact .player-card.active-player .player-seconds,
 #puzzelActivePlayersBar .player-card.active-player .player-seconds,
-.finale-candidate-score.active-player,
-.od-answer-line.found .od-answer-points,
-.answer-line.found .answer-points,
-.collectief-answer-line.found .collectief-answer-points {
-  background-color: #2874b8;
+.finale-candidate-score.active-player {
+  background: linear-gradient(135deg, #3283c2 0%, #2874b8 52%, #2166a3 100%);
+}
+
+#scene-round-369 .player-seconds,
+#scene-standings .player-seconds,
+.lobby-standings-players .player-seconds,
+.players-bar-compact .player-seconds,
+#puzzelActivePlayersBar .player-seconds,
+.finale-candidate-score,
+.finale-standings-score {
+  background: linear-gradient(135deg, #bd321d 0%, #8b2416 52%, #bd321d 100%);
+}
+
+.finale-candidate-score {
+  width: 4.3ch;
+  height: 4.3ch;
+  flex: 0 0 4.3ch;
+}
+
+.finale-candidate-score.active-player {
+  background: #2874b8;
+}
+
+.finale-candidate-score::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    rgba(220, 68, 52, 0.12) 0deg,
+    rgba(255, 120, 95, 0.7) 330deg,
+    rgba(220, 68, 52, 0.12) 360deg
+  );
+  animation: finale-score-clockwise 10s linear infinite;
+  animation-play-state: paused;
+  content: "";
+  pointer-events: none;
+}
+
+.finale-candidate-score.active-player::before {
+  background: conic-gradient(
+    from 0deg,
+    rgba(72, 150, 224, 0.12) 0deg,
+    rgba(104, 181, 255, 0.7) 330deg,
+    rgba(72, 150, 224, 0.12) 360deg
+  );
+}
+
+.finale-candidate-score.active-player.timer-running::before {
+  animation-play-state: running;
+}
+
+.finale-candidate-score .score-oval-face {
+  background-color: transparent;
+}
+
+@keyframes finale-score-clockwise {
+  to {
+    transform: rotate(1turn);
+  }
 }
 
 .od-answer-line:not(.found) .od-answer-points,
 .answer-line.unfound .answer-points,
 .collectief-answer-line:not(.found) .collectief-answer-points,
+.galerij-aanvul-answers-list .answer-line:not(.found) .answer-points,
+#collectiefMainAnswers .collectief-answer-line:not(.found) .collectief-answer-points,
+#finaleMainAnswers .collectief-answer-line:not(.found) .collectief-answer-points,
 .puzzel-link-line.unguessed .puzzel-link-points {
-  background-color: transparent;
+  background: transparent;
+}
+
+.od-answer-line.found .od-answer-points,
+.answer-line.found .answer-points,
+.collectief-answer-line.found .collectief-answer-points,
+.galerij-aanvul-answers-list .answer-line.found .answer-points,
+#collectiefMainAnswers .collectief-answer-line.found .collectief-answer-points,
+#finaleMainAnswers .collectief-answer-line.found .collectief-answer-points {
+  background: linear-gradient(135deg, #3283c2 0%, #2874b8 52%, #2166a3 100%);
 }
 
 .puzzel-link-line.found-link-0 .puzzel-link-points {
-  background-color: #004186;
+  background: linear-gradient(135deg, #005092 0%, #004186 52%, #00376d 100%);
   color: #e3f1f8;
 }
 
 .puzzel-link-line.found-link-1 .puzzel-link-points {
-  background-color: #cee5f7;
+  background: linear-gradient(135deg, #e3f1f8 0%, #cee5f7 52%, #b9d9f0 100%);
   color: #003e7b;
 }
 
 .puzzel-link-line.found-link-2 .puzzel-link-points {
-  background-color: #001d3c;
+  background: linear-gradient(135deg, #00305c 0%, #001d3c 52%, #001329 100%);
   color: #e3f1f8;
 }
 
@@ -106,19 +175,10 @@
   perspective: 700px;
 }
 
-.answer-correct .od-answer-points::before,
-.answer-correct .answer-points::before,
-.answer-correct .collectief-answer-points::before,
-.answer-correct .puzzel-link-points::before,
-#lobbyStandingsScorePanel:not(.lobby-standings-scores-hidden) .player-seconds::before {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  border-radius: inherit;
-  background: #2874b8;
-  content: '';
-  pointer-events: none;
-  animation: answer-oval-flash 250ms ease-out both;
+.finale-candidate-score {
+  overflow: hidden;
+  isolation: isolate;
+  perspective: 700px;
 }
 
 .score-oval-face {
@@ -137,8 +197,9 @@
 }
 
 .answer-correct .score-oval-face,
-#lobbyStandingsScorePanel:not(.lobby-standings-scores-hidden) .score-oval-face {
-  animation: answer-oval-flip 250ms ease-out both;
+#lobbyStandingsScorePanel:not(.lobby-standings-scores-hidden) .score-oval-face,
+.finale-candidate-score.score-oval-reveal .score-oval-face {
+  animation: score-oval-appear 600ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
 }
 
 @keyframes answer-text-reveal {
@@ -152,34 +213,18 @@
   }
 }
 
-@keyframes answer-oval-flip {
+@keyframes score-oval-appear {
   from {
     opacity: 0;
-    transform: rotateX(-90deg);
+    transform: rotateX(-90deg) scaleY(0.7);
   }
-  72% {
+  58% {
     opacity: 1;
-    transform: rotateX(8deg);
+    transform: rotateX(10deg) scaleY(1.05);
   }
   to {
     opacity: 1;
-    transform: rotateX(0);
-  }
-}
-
-@keyframes answer-oval-flash {
-  0%,
-  42% {
-    opacity: 0;
-  }
-  52% {
-    opacity: 1;
-  }
-  72% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 0;
+    transform: rotateX(0) scaleY(1);
   }
 }
 
@@ -193,13 +238,10 @@
   .answer-correct .answer-points,
   .answer-correct .collectief-answer-points,
   .answer-correct .puzzel-link-points,
-  .answer-correct .od-answer-points::before,
-  .answer-correct .answer-points::before,
-  .answer-correct .collectief-answer-points::before,
-  .answer-correct .puzzel-link-points::before,
   .answer-correct .score-oval-face,
-  #lobbyStandingsScorePanel:not(.lobby-standings-scores-hidden) .player-seconds::before,
-  #lobbyStandingsScorePanel:not(.lobby-standings-scores-hidden) .score-oval-face {
+  #lobbyStandingsScorePanel:not(.lobby-standings-scores-hidden) .score-oval-face,
+  .finale-candidate-score.active-player.timer-running::before,
+  .finale-candidate-score.score-oval-reveal .score-oval-face {
     animation: none;
   }
 }

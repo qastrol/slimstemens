@@ -192,6 +192,9 @@ function setupPuzzelRound() {
   }
 
   sendPuzzelDisplayUpdate('scene-round-puzzel-waiting');
+  if (typeof window.applyAutomaticScenePerspective === 'function') {
+    window.applyAutomaticScenePerspective('miniLobby');
+  }
 }
 
 function nextPuzzelQuestion() {
@@ -246,6 +249,9 @@ highlightActive();
         timeGain: 30 
     }))
   });
+  if (typeof window.applyAutomaticScenePerspective === 'function') {
+    window.applyAutomaticScenePerspective('player', activePlayerIndex, 0);
+  }
 }
 
 function stopPuzzelTimerAndSound() {
@@ -450,6 +456,9 @@ if (puzzel.foundLinks.length === puzzel.links.length) {
             puzzelWords: [], 
             statusText: "Alle puzzels voltooid. Wacht op host."
         });
+        if (typeof window.applyAutomaticScenePerspective === 'function') {
+          window.applyAutomaticScenePerspective('miniLobby');
+        }
         
         
         document.getElementById('roundControls').innerHTML = '';
@@ -475,6 +484,9 @@ if (puzzel.foundLinks.length === puzzel.links.length) {
             
             statusText: `Puzzel voltooid. ${players[activePlayerIndex].name} start Puzzel ${perRoundState.currentPuzzelIndex + 1}.`
         });
+        if (typeof window.applyAutomaticScenePerspective === 'function') {
+          window.applyAutomaticScenePerspective('miniLobby');
+        }
 
         
         document.getElementById('roundControls').innerHTML = '<button onclick="nextPuzzelQuestion()">Start Volgende Puzzel</button>';
@@ -507,6 +519,9 @@ function passPuzzel() {
     highlightActive();
     renderPuzzelDisplay(puzzel);
     flash(`Beurt naar ${players[activePlayerIndex].name} (volgende laagste tijd).`);
+    if (typeof window.applyAutomaticScenePerspective === 'function') {
+      window.applyAutomaticScenePerspective('player', activePlayerIndex);
+    }
     // Geen aparte display-update sturen: renderPuzzelDisplay() verstuurt al de
     // correcte update (met linkIndex per gevonden woord). Een tweede update met
     // linkIndex: null zou de gevonden woorden in de tabel laten 'doven'.
@@ -590,6 +605,9 @@ function showPuzzelSolution(puzzel) {
     })),
     statusText: "Alle kandidaten hebben gepast. Volledige puzzel wordt getoond."
   });
+  if (typeof window.applyAutomaticScenePerspective === 'function') {
+    window.applyAutomaticScenePerspective('miniLobby');
+  }
 
   
   perRoundState.currentPuzzelIndex++;

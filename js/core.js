@@ -597,8 +597,8 @@ function updateRoundNavigationButtons() {
   if (!safeRoundNavigationEnabled) {
     startRoundBtn.style.display = '';
     nextRoundBtn.style.display = '';
-    startRoundBtn.disabled = false;
-    nextRoundBtn.disabled = false;
+    startRoundBtn.disabled = !hasValidPlayers;
+    nextRoundBtn.disabled = !hasValidPlayers;
     return;
   }
 
@@ -778,6 +778,13 @@ document.getElementById('startRound').addEventListener('click', ()=>{
 });
 
 document.getElementById('nextRound').addEventListener('click', ()=>{
+  const expectedCount = playerModeSettings.playerCount;
+  if (players.length !== expectedCount || players.length === 0) {
+    flash(`Maak eerst het spel aan met ${expectedCount} kandidaat/kandidaten`);
+    updateRoundNavigationButtons();
+    return;
+  }
+
   if (perRoundState?.collectief?.tieBreakPending === true) {
     flash('Bepaal eerst de afvaller of de Slimste van de Dag.');
     return;

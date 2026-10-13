@@ -54,6 +54,9 @@ function sendGalerijDisplayUpdate() {
         players: players,
         activeIndex: galleryPlayerIndex
       });
+      if (typeof window.applyAutomaticScenePerspective === 'function') {
+        window.applyAutomaticScenePerspective('miniLobby');
+      }
     }
   } else if (galleryPhase === 'main') {
     const img = galleryImages[galleryIndex];
@@ -232,6 +235,9 @@ function setupGalerijRound() {
     players: players,
     activeIndex: galleryPlayerIndex
   });
+  if (typeof window.applyAutomaticScenePerspective === 'function') {
+    window.applyAutomaticScenePerspective('miniLobby');
+  }
 }
 
 function isManualGalleryAssignmentEnabled(questionsToUse) {
@@ -542,6 +548,9 @@ function startGalerijForPlayer(playerIndex) {
     imageIndex: 0,
     totalImages: galleryImages.length
   });
+  if (typeof window.applyAutomaticScenePerspective === 'function') {
+    window.applyAutomaticScenePerspective('player', galleryPlayerIndex, 0);
+  }
 
   startGalerijTimer();
   renderGalerijHostUI();
@@ -653,6 +662,9 @@ function nextAanvulTurn() {
         activePlayer: currentAanvulPlayer,
         activeIndex: aanvulPlayerIndex 
     });
+    if (typeof window.applyAutomaticScenePerspective === 'function') {
+      window.applyAutomaticScenePerspective('player', aanvulPlayerIndex);
+    }
 }
 
 function markAanvulAnswer(img) {
@@ -707,6 +719,9 @@ function startSlideshowPhase() {
         imageIndex: galleryIndex, 
         totalImages: galleryImages.length 
     });
+    if (typeof window.applyAutomaticScenePerspective === 'function') {
+      window.applyAutomaticScenePerspective('miniLobby');
+    }
 }
 
 function showNextSlideshow() {

@@ -232,8 +232,8 @@
             <p id="fullscreenCandidatePerspectiveTitle" class="small perspective-menu-message"
               style="display:none;">Fullscreen inzoom</p>
             <div id="fullscreenCandidatePerspectiveButtons" class="perspective-actions perspective-actions-compact"></div>
-            <div id="openDeurForcedPerspectiveControls" style="display:none;">
-              <p id="openDeurForcedPerspectiveStatus" class="small perspective-menu-message">
+            <div id="automaticSceneChangesControls" style="display:none;">
+              <p id="automaticSceneChangesStatus" class="small perspective-menu-message">
                 Automatische scènewissels uit.
               </p>
             </div>
@@ -881,6 +881,14 @@
           }
         }
 
+        const automaticSceneChangesCheckbox =
+          document.getElementById('automaticSceneChangesCheckbox');
+        if (automaticSceneChangesCheckbox) {
+          automaticSceneChangesCheckbox.checked =
+            config.settings.automaticSceneChanges?.enabled === true;
+          automaticSceneChangesCheckbox.dispatchEvent(new Event('change'));
+        }
+
         // Intro / Outro instellingen
         const introSettings = config.settings.intro;
         if (introSettings) {
@@ -1077,7 +1085,8 @@
       let fullscreenLobbyPerspectiveActive = false;
       let threeSixNineLobbyPerspectiveActive = false;
       let questionQuarterPerspective = null;
-      let automaticSceneChangesEnabled = false;
+      let automaticSceneChangesEnabled =
+        window.pendingUiConfig?.settings?.automaticSceneChanges?.enabled === true;
       let finaleCandidatePerspectivePlayerIndex = null;
       let finaleFaceoffPerspectiveActive = false;
       let activePerspectiveHotkeyGroup = null;
@@ -1196,10 +1205,27 @@
         });
       }
 
-      function applyOpenDeurForcedPerspective(mode, playerIndex = null) {
+      const AUTOMATIC_SCENE_CHANGE_DELAY_MS = 1000;
+      let automaticScenePerspectiveTimer = null;
+      let automaticScenePerspectiveRequest = 0;
+
+      function cancelAutomaticScenePerspectiveChange() {
+        automaticScenePerspectiveRequest += 1;
+        if (automaticScenePerspectiveTimer !== null) {
+          clearTimeout(automaticScenePerspectiveTimer);
+          automaticScenePerspectiveTimer = null;
+        }
+      }
+
+      function applyAutomaticScenePerspectiveNow(mode, playerIndex) {
         if (
           !automaticSceneChangesEnabled ||
-          document.getElementById('currentRound')?.textContent.trim() !== 'Open Deur'
+          ![
+            'Open Deur',
+            'Puzzel',
+            'Galerij',
+            'Collectief Geheugen'
+          ].includes(document.getElementById('currentRound')?.textContent.trim())
         ) {
           return false;
         }
@@ -1249,7 +1275,46 @@
         return true;
       }
 
-      window.applyOpenDeurForcedPerspective = applyOpenDeurForcedPerspective;
+      function applyAutomaticScenePerspective(
+        mode,
+        playerIndex = null,
+        delay = AUTOMATIC_SCENE_CHANGE_DELAY_MS
+      ) {
+        if (
+          !automaticSceneChangesEnabled ||
+          ![
+            'Open Deur',
+            'Puzzel',
+            'Galerij',
+            'Collectief Geheugen'
+          ].includes(document.getElementById('currentRound')?.textContent.trim())
+        ) {
+          return false;
+        }
+        if (!['normal', 'miniLobby', 'player'].includes(mode)) return false;
+        if (
+          mode === 'player' &&
+          !players.some(candidate => candidate.index === playerIndex)
+        ) {
+          return false;
+        }
+
+        cancelAutomaticScenePerspectiveChange();
+        if (delay <= 0) {
+          return applyAutomaticScenePerspectiveNow(mode, playerIndex);
+        }
+        const request = automaticScenePerspectiveRequest;
+        automaticScenePerspectiveTimer = setTimeout(() => {
+          automaticScenePerspectiveTimer = null;
+          if (request !== automaticScenePerspectiveRequest) return;
+          applyAutomaticScenePerspectiveNow(mode, playerIndex);
+        }, delay);
+        return true;
+      }
+
+      window.cancelAutomaticScenePerspectiveChange = cancelAutomaticScenePerspectiveChange;
+      window.applyAutomaticScenePerspective = applyAutomaticScenePerspective;
+      window.applyOpenDeurForcedPerspective = applyAutomaticScenePerspective;
 
       function setFinaleCandidatePerspective(player) {
         const showing = finaleCandidatePerspectivePlayerIndex !== player.index;
@@ -1614,38 +1679,44 @@
           : 'Breedbeeld-lobby tonen';
         threeSixNineLobbyButton.setAttribute('aria-pressed', String(threeSixNineLobbyPerspectiveActive));
 
-        const openDeurForcedPerspectiveControls =
-          document.getElementById('openDeurForcedPerspectiveControls');
-        const openDeurForcedPerspectiveStatus =
-          document.getElementById('openDeurForcedPerspectiveStatus');
-        const isOpenDeur = currentRoundName === 'Open Deur' && gameCreated && !finaleComplete;
-        openDeurForcedPerspectiveControls.style.display = isOpenDeur ? 'block' : 'none';
+        const automaticSceneChangesControls =
+          document.getElementById('automaticSceneChangesControls');
+        const automaticSceneChangesStatus =
+          document.getElementById('automaticSceneChangesStatus');
+        const supportsAutomaticSceneChanges = [
+          'Open Deur',
+          'Puzzel',
+          'Galerij',
+          'Collectief Geheugen'
+        ].includes(currentRoundName);
+        automaticSceneChangesControls.style.display =
+          supportsAutomaticSceneChanges && gameCreated && !finaleComplete ? 'block' : 'none';
         if (!automaticSceneChangesEnabled) {
-          openDeurForcedPerspectiveStatus.textContent =
+          automaticSceneChangesStatus.textContent =
             'Automatische scènewissels uit.';
         } else if (fullscreenLobbyPerspectiveActive) {
-          openDeurForcedPerspectiveStatus.textContent =
+          automaticSceneChangesStatus.textContent =
             'Automatische scènewissels aan: volledige lobby.';
         } else if (questionQuarterPerspective?.type === 'lobby') {
-          openDeurForcedPerspectiveStatus.textContent =
+          automaticSceneChangesStatus.textContent =
             'Automatische scènewissels aan: mini-lobby.';
         } else if (selectedPerspectivePlayerIndex !== null) {
           const activePlayer = currentPlayers.find(
             player => player.index === selectedPerspectivePlayerIndex
           );
-          openDeurForcedPerspectiveStatus.textContent = activePlayer
+          automaticSceneChangesStatus.textContent = activePlayer
             ? `Automatische scènewissels aan: zoom op ${activePlayer.name}.`
             : 'Automatische scènewissels aan.';
         } else if (questionQuarterPerspective?.type === 'player') {
           const activePlayer = currentPlayers.find(
             player => player.index === questionQuarterPerspective.playerIndex
           );
-          openDeurForcedPerspectiveStatus.textContent = activePlayer
+          automaticSceneChangesStatus.textContent = activePlayer
             ? `Automatische scènewissels aan: zoom op ${activePlayer.name}.`
             : 'Automatische scènewissels aan.';
         } else {
-          openDeurForcedPerspectiveStatus.textContent =
-            'Automatische scènewissels aan: gewone Open Deur-weergave.';
+          automaticSceneChangesStatus.textContent =
+            `Automatische scènewissels aan: gewone ${currentRoundName}-weergave.`;
         }
 
         const fullPresenterButton = document.getElementById('fullPresenterPerspectiveBtn');
@@ -1816,6 +1887,9 @@
 
       document.getElementById('automaticSceneChangesCheckbox').addEventListener('change', event => {
         automaticSceneChangesEnabled = event.target.checked;
+        if (typeof window.cancelAutomaticScenePerspectiveChange === 'function') {
+          window.cancelAutomaticScenePerspectiveChange();
+        }
         if (typeof window.cancelOpenDeurForcedPerspectiveChange === 'function') {
           window.cancelOpenDeurForcedPerspectiveChange();
         }

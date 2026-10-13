@@ -985,7 +985,8 @@ function renderFinaleCandidatePhotos(
   players,
   activeIndex = null,
   photoIds = ['finaleCandidatePhotoLeft', 'finaleCandidatePhotoRight'],
-  scoreIds = ['finaleCandidateScoreLeft', 'finaleCandidateScoreRight']
+  scoreIds = ['finaleCandidateScoreLeft', 'finaleCandidateScoreRight'],
+  timerRunning = false
 ) {
   const finalists = (players || []).filter(player => !player.isOut).slice(0, 2);
   const normalizedActiveIndex = normalizeActiveIndex(finalists, activeIndex);
@@ -997,11 +998,19 @@ function renderFinaleCandidatePhotos(
       photo.alt = finalist.name || 'Kandidaat';
     }
     if (score && finalist) {
-      score.textContent = finalist.seconds ?? '';
+      let scoreFace = score.querySelector('.score-oval-face');
+      if (!scoreFace) {
+        scoreFace = document.createElement('span');
+        scoreFace.className = 'score-oval-face';
+        score.replaceChildren(scoreFace);
+        score.classList.add('score-oval-reveal');
+      }
+      scoreFace.textContent = finalist.seconds ?? '';
       score.classList.toggle(
         'active-player',
         !!finalist.isActive || index === normalizedActiveIndex
       );
+      score.classList.toggle('timer-running', timerRunning);
     }
   });
 }
@@ -2215,7 +2224,13 @@ function handleGalerijDisplayUpdate(data) {
       }
 
       case 'scene-round-finale-main': {
-        renderFinaleCandidatePhotos(displayPlayers, activeIndex);
+        renderFinaleCandidatePhotos(
+          displayPlayers,
+          activeIndex,
+          undefined,
+          undefined,
+          data.timerRunning
+        );
         const revealAllAnswers = !!data.revealAllAnswers;
         const deductionSeconds = Number(data.deductionSeconds) > 0 ? Number(data.deductionSeconds) : 20;
       
@@ -2498,10 +2513,60 @@ function renderQuestionQuarterPerspective() {
   const perspectiveSceneName = isFullscreenLobby ? universalPerspectivePreviousScene : currentScene;
   const perspectiveScene = document.getElementById(`scene-${perspectiveSceneName}`);
   const scene = document.getElementById(`scene-${currentScene}`);
+  const nativeMiniLobbyScenes = new Set([
+    'round-puzzel-waiting',
+    'round-puzzel-active',
+    'round-galerij-pre',
+    'round-galerij-main',
+    'round-galerij-aanvul',
+    'round-galerij-slideshow',
+    'round-galerij-done',
+    'round-collectief-pre',
+    'round-collectief-main'
+  ]);
+  const usesNativeMiniLobby = !isFullscreenLobby &&
+    nativeMiniLobbyScenes.has(perspectiveSceneName);
   const target = isFullscreenLobby
     ? scene
-    : perspectiveScene?.querySelector(targetSelectors[perspectiveSceneName] || '');
+    : usesNativeMiniLobby
+      ? perspectiveScene?.querySelector('.mini-lobby')
+      : perspectiveScene?.querySelector(targetSelectors[perspectiveSceneName] || '');
   if (!target) return;
+
+  if (
+    usesNativeMiniLobby &&
+    target.matches('.mini-lobby') &&
+    (perspective.type === 'lobby' || perspective.type === 'player')
+  ) {
+    if (perspective.type === 'lobby') return;
+
+    const player = Array.from(target.querySelectorAll('.player[data-player-index]'))
+      .find(candidate => Number(candidate.dataset.playerIndex) === Number(perspective.playerIndex));
+    if (!player) {
+      console.warn('Automatisch perspectief niet toegepast: kandidaat niet gevonden.', perspective.playerIndex);
+      return;
+    }
+
+    universalPerspectiveStyles.set(target, {
+      transform: target.style.transform,
+      transformOrigin: target.style.transformOrigin,
+      transition: target.style.transition,
+      overflow: target.style.overflow
+    });
+    target.style.overflow = 'hidden';
+    questionQuarterTransformedElements.add(target);
+    Array.from(target.children).forEach(element => {
+      if (applyUniversalPerspectiveZoom(
+        element,
+        player,
+        target,
+        UNIVERSAL_PERSPECTIVE_ZOOM_SCALE
+      )) {
+        questionQuarterTransformedElements.add(element);
+      }
+    });
+    return;
+  }
 
   if (
     perspectiveSceneName === 'round-opendeur-vraag' &&
@@ -3070,7 +3135,7 @@ function handleFinaleViewChange(data) {
     if (finaleMainScene) {
       // Render de finalistfoto's als players data beschikbaar is
       if (data.players) {
-        renderFinaleCandidatePhotos(data.players, data.activeIndex);
+        renderFinaleCandidatePhotos(data.players, data.activeIndex, undefined, undefined, data.timerRunning);
       }
       
       // Render antwoorden

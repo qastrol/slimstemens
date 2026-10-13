@@ -978,6 +978,9 @@
       safeRoundNavigation: {
         enabled: !!document.getElementById('settingSafeRoundNavigation')?.checked
       },
+      automaticSceneChanges: {
+        enabled: !!document.getElementById('settingAutomaticSceneChanges')?.checked
+      },
       game: {
         startSeconds: Math.max(10, parseInt(document.getElementById('settingStartSeconds')?.value, 10) || 60)
       },
@@ -1411,6 +1414,10 @@
 
     setCheckboxValue('settingBumpersEnabled', config?.settings?.bumpers?.enabled !== false);
     setCheckboxValue('settingSafeRoundNavigation', !!config?.settings?.safeRoundNavigation?.enabled);
+    setCheckboxValue(
+      'settingAutomaticSceneChanges',
+      config?.settings?.automaticSceneChanges?.enabled === true
+    );
     const startSecondsInput = document.getElementById('settingStartSeconds');
     if (startSecondsInput) {
       startSecondsInput.value = config?.settings?.game?.startSeconds || 60;

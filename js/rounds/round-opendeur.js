@@ -23,6 +23,9 @@ function cancelOpenDeurForcedPerspectiveChange() {
     clearTimeout(openDeurForcedPerspectiveTimer);
     openDeurForcedPerspectiveTimer = null;
   }
+  if (typeof window.cancelAutomaticScenePerspectiveChange === 'function') {
+    window.cancelAutomaticScenePerspectiveChange();
+  }
 }
 
 window.cancelOpenDeurForcedPerspectiveChange = cancelOpenDeurForcedPerspectiveChange;
@@ -196,7 +199,6 @@ function chooseOpenDeurQuestion(index){
 
   
   sendOpenDeurDisplayUpdate('update', 'scene-round-opendeur-vraag');
-  scheduleOpenDeurForcedPerspective('player', activePlayerIndex);
 }
 
 
@@ -236,6 +238,10 @@ function startOpenDeurTimer(){
   if (typeof startThinkingCountdownTimer !== 'function') {
     flash('Error: startThinkingCountdownTimer niet gevonden');
     return;
+  }
+
+  if (typeof window.applyAutomaticScenePerspective === 'function') {
+    window.applyAutomaticScenePerspective('player', activePlayerIndex, 0);
   }
 
   startThinkingCountdownTimer({
@@ -285,7 +291,7 @@ function markOpenDeurAnswer(ansIndex){
     
     perRoundState.openDeurAwaitingReturn = true;
     perRoundState.currentQuestion = null;
-    scheduleOpenDeurForcedPerspective('miniLobby', null, 1500);
+    scheduleOpenDeurForcedPerspective('miniLobby');
     return;
   }
 }
@@ -399,7 +405,7 @@ function passOpenDeur(){
     
     
     sendOpenDeurDisplayUpdate('update', 'scene-round-opendeur-vraag');
-    scheduleOpenDeurForcedPerspective('player', activePlayerIndex, 1500);
+    scheduleOpenDeurForcedPerspective('player', activePlayerIndex);
   } else {
     
     // Alle kandidaten hebben gepast - toon alle antwoorden en voeg knop toe
@@ -409,7 +415,7 @@ function passOpenDeur(){
     sendOpenDeurDisplayUpdate('update', 'scene-round-opendeur-vraag', q);
     showReturnToQuestionerButton();
     perRoundState.currentQuestion = null;
-    scheduleOpenDeurForcedPerspective('miniLobby', null, 1500);
+    scheduleOpenDeurForcedPerspective('miniLobby');
   }
 }
 

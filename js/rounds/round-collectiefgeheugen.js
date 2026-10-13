@@ -245,6 +245,9 @@ function setupCollectiefRound() {
     }
 
     sendCollectiefDisplayUpdate('round_start', 'scene-round-collectief-pre');
+    if (typeof window.applyAutomaticScenePerspective === 'function') {
+        window.applyAutomaticScenePerspective('miniLobby');
+    }
 
     flash(`Collectief Geheugen klaar. Speler ${players[activePlayerIndex].name} start met fragment 1.`);
 }
@@ -309,6 +312,10 @@ function startCollectiefTimer() {
 
     startLoopTimer(); 
     renderCollectiefHostUI('main');
+    sendCollectiefDisplayUpdate('update', 'scene-round-collectief-main');
+    if (typeof window.applyAutomaticScenePerspective === 'function') {
+        window.applyAutomaticScenePerspective('player', activePlayerIndex, 0);
+    }
     flash(`Klok gestart voor ${players[activePlayerIndex].name}.`);
 }
 
@@ -363,6 +370,9 @@ updateAnswerButton(answerIndex);
         
         stopLoopTimer(); 
         flash(`Alle antwoorden gevonden. ${currentPlayer.name} was de laatste vinder.`, 'success');
+        if (typeof window.applyAutomaticScenePerspective === 'function') {
+            window.applyAutomaticScenePerspective('miniLobby');
+        }
         if (perRoundState.collectief.currentQuestionIndex + 1 >= perRoundState.collectief.questions.length) {
             endCollectiefRound();
         } else {
@@ -406,6 +416,9 @@ function passCollectief(isScoreAnnounced = false) {
         
         
         sendCollectiefDisplayUpdate('update', 'scene-round-collectief-main');
+        if (typeof window.applyAutomaticScenePerspective === 'function') {
+            window.applyAutomaticScenePerspective('player', activePlayerIndex);
+        }
 
     } else {
         
@@ -413,6 +426,9 @@ function passCollectief(isScoreAnnounced = false) {
         
         
         sendCollectiefDisplayUpdate('update', 'scene-round-collectief-main');
+        if (typeof window.applyAutomaticScenePerspective === 'function') {
+            window.applyAutomaticScenePerspective('miniLobby');
+        }
         
         if (perRoundState.collectief.currentQuestionIndex + 1 >= perRoundState.collectief.questions.length) {
             endCollectiefRound();
