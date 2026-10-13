@@ -520,16 +520,9 @@ function resolveCollectiefTieBreak(playerIndex) {
         const finalists = players
             .filter(player => player.index !== playerIndex)
             .sort((a, b) => b.seconds - a.seconds || a.index - b.index);
-        const scoreDifference = finalists[0].seconds - finalists[1].seconds;
 
         finalists[0].seconds += 10;
-        if (scoreDifference >= 2 && scoreDifference < 10) {
-            finalists[1].seconds += scoreDifference - 1;
-        } else if (scoreDifference === 1) {
-            selectedPlayer.seconds = Math.max(0, selectedPlayer.seconds - 1);
-        } else {
-            finalists[1].seconds += 10;
-        }
+        finalists[1].seconds += 10;
 
         finishCollectiefRoundResult(
             null,
@@ -588,7 +581,7 @@ function endCollectiefRound() {
             : 'afvaller';
         const bonusLabel = collectiefEndOption === 'highestWinner'
             ? 'Deze kandidaat krijgt 10 seconden.'
-            : 'De overige kandidaten krijgen ieder 10 seconden, tenzij hun scores minder dan 10 seconden uit elkaar liggen.';
+            : 'De twee finalisten krijgen ieder 10 seconden.';
         document.getElementById('roundControls').innerHTML = `
             <div style="margin-bottom: 10px;">
                 <p><strong>Gelijke stand na Collectief Geheugen</strong></p>

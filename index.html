@@ -182,6 +182,14 @@
           </select>
         </div>
 
+        <hr class="divider" />
+        <div>
+          <label>
+            <input id="automaticSceneChangesCheckbox" type="checkbox" />
+            Automatische scènewissels
+          </label>
+        </div>
+
           </div>
         </aside>
 
@@ -224,6 +232,11 @@
             <p id="fullscreenCandidatePerspectiveTitle" class="small perspective-menu-message"
               style="display:none;">Fullscreen inzoom</p>
             <div id="fullscreenCandidatePerspectiveButtons" class="perspective-actions perspective-actions-compact"></div>
+            <div id="openDeurForcedPerspectiveControls" style="display:none;">
+              <p id="openDeurForcedPerspectiveStatus" class="small perspective-menu-message">
+                Automatische scènewissels uit.
+              </p>
+            </div>
           </div>
           <div id="finaleCandidatePerspectives" style="display:none;">
             <p class="small perspective-menu-message">Finalisten &amp; face-off</p>
@@ -1064,6 +1077,7 @@
       let fullscreenLobbyPerspectiveActive = false;
       let threeSixNineLobbyPerspectiveActive = false;
       let questionQuarterPerspective = null;
+      let automaticSceneChangesEnabled = false;
       let finaleCandidatePerspectivePlayerIndex = null;
       let finaleFaceoffPerspectiveActive = false;
       let activePerspectiveHotkeyGroup = null;
@@ -1182,6 +1196,61 @@
         });
       }
 
+      function applyOpenDeurForcedPerspective(mode, playerIndex = null) {
+        if (
+          !automaticSceneChangesEnabled ||
+          document.getElementById('currentRound')?.textContent.trim() !== 'Open Deur'
+        ) {
+          return false;
+        }
+        if (!['normal', 'miniLobby', 'player'].includes(mode)) return false;
+        if (
+          mode === 'player' &&
+          !players.some(candidate => candidate.index === playerIndex)
+        ) {
+          return false;
+        }
+
+        if (threeSixNineLobbyPerspectiveActive) setThreeSixNineLobbyPerspective(false);
+
+        showingPresenter = false;
+        showingPresenterFullscreen = false;
+        showingJury = false;
+        showingJuryFullscreen = false;
+        updatePresenterToggleLabel();
+        updateJuryToggleLabel();
+        sendDisplayUpdate({ type: 'presenter_toggle', showing: false, photoData: null });
+        sendJuryToggle(false);
+
+        questionQuarterPerspective = null;
+        fullscreenLobbyPerspectiveActive = false;
+        fullscreenPerspectivePlayerIndex = null;
+        selectedPerspectivePlayerIndex = null;
+        updatePerspectiveMenu();
+        sendDisplayUpdate({
+          type: 'question_quarter_perspective',
+          perspective: null
+        });
+        sendDisplayUpdate({
+          type: 'universal_perspective',
+          fullscreenLobby: false,
+          fullscreenPlayer: false,
+          playerIndex: null
+        });
+
+        if (mode === 'normal') {
+          return true;
+        } else if (mode === 'miniLobby') {
+          setQuestionQuarterPerspective({ type: 'lobby' });
+        } else if (mode === 'player') {
+          setQuestionQuarterPerspective({ type: 'player', playerIndex });
+        }
+
+        return true;
+      }
+
+      window.applyOpenDeurForcedPerspective = applyOpenDeurForcedPerspective;
+
       function setFinaleCandidatePerspective(player) {
         const showing = finaleCandidatePerspectivePlayerIndex !== player.index;
         finaleCandidatePerspectivePlayerIndex = showing ? player.index : null;
@@ -1276,6 +1345,19 @@
         ].includes(currentRoundName);
         const perspectiveContext = finaleComplete ? 'finale' : currentRoundName;
         if (previousPerspectiveContext !== null && previousPerspectiveContext !== perspectiveContext) {
+          if (previousPerspectiveContext === 'Open Deur' && perspectiveContext !== 'Open Deur') {
+            if (typeof window.cancelOpenDeurForcedPerspectiveChange === 'function') {
+              window.cancelOpenDeurForcedPerspectiveChange();
+            }
+            if (automaticSceneChangesEnabled) {
+              sendDisplayUpdate({
+                type: 'universal_perspective',
+                fullscreenLobby: false,
+                fullscreenPlayer: false,
+                playerIndex: null
+              });
+            }
+          }
           clearPerspectiveHotkeyGroup();
           selectedPerspectivePlayerIndex = null;
           fullscreenPerspectivePlayerIndex = null;
@@ -1532,6 +1614,40 @@
           : 'Breedbeeld-lobby tonen';
         threeSixNineLobbyButton.setAttribute('aria-pressed', String(threeSixNineLobbyPerspectiveActive));
 
+        const openDeurForcedPerspectiveControls =
+          document.getElementById('openDeurForcedPerspectiveControls');
+        const openDeurForcedPerspectiveStatus =
+          document.getElementById('openDeurForcedPerspectiveStatus');
+        const isOpenDeur = currentRoundName === 'Open Deur' && gameCreated && !finaleComplete;
+        openDeurForcedPerspectiveControls.style.display = isOpenDeur ? 'block' : 'none';
+        if (!automaticSceneChangesEnabled) {
+          openDeurForcedPerspectiveStatus.textContent =
+            'Automatische scènewissels uit.';
+        } else if (fullscreenLobbyPerspectiveActive) {
+          openDeurForcedPerspectiveStatus.textContent =
+            'Automatische scènewissels aan: volledige lobby.';
+        } else if (questionQuarterPerspective?.type === 'lobby') {
+          openDeurForcedPerspectiveStatus.textContent =
+            'Automatische scènewissels aan: mini-lobby.';
+        } else if (selectedPerspectivePlayerIndex !== null) {
+          const activePlayer = currentPlayers.find(
+            player => player.index === selectedPerspectivePlayerIndex
+          );
+          openDeurForcedPerspectiveStatus.textContent = activePlayer
+            ? `Automatische scènewissels aan: zoom op ${activePlayer.name}.`
+            : 'Automatische scènewissels aan.';
+        } else if (questionQuarterPerspective?.type === 'player') {
+          const activePlayer = currentPlayers.find(
+            player => player.index === questionQuarterPerspective.playerIndex
+          );
+          openDeurForcedPerspectiveStatus.textContent = activePlayer
+            ? `Automatische scènewissels aan: zoom op ${activePlayer.name}.`
+            : 'Automatische scènewissels aan.';
+        } else {
+          openDeurForcedPerspectiveStatus.textContent =
+            'Automatische scènewissels aan: gewone Open Deur-weergave.';
+        }
+
         const fullPresenterButton = document.getElementById('fullPresenterPerspectiveBtn');
         const fullJuryButton = document.getElementById('fullJuryPerspectiveBtn');
         const presenterJuryEnabled = presenterEnabled || juryEnabled;
@@ -1696,6 +1812,35 @@
           fullscreenLobby: fullscreenLobbyPerspectiveActive,
           playerIndex: fullscreenLobbyPerspectiveActive ? selectedPerspectivePlayerIndex : null
         });
+      });
+
+      document.getElementById('automaticSceneChangesCheckbox').addEventListener('change', event => {
+        automaticSceneChangesEnabled = event.target.checked;
+        if (typeof window.cancelOpenDeurForcedPerspectiveChange === 'function') {
+          window.cancelOpenDeurForcedPerspectiveChange();
+        }
+        updatePerspectiveMenu();
+        if (!automaticSceneChangesEnabled) {
+          sendDisplayUpdate({
+            type: 'question_quarter_perspective',
+            perspective: null
+          });
+          sendDisplayUpdate({
+            type: 'universal_perspective',
+            fullscreenLobby: false,
+            fullscreenPlayer: false,
+            playerIndex: null
+          });
+          return;
+        }
+
+        if (perRoundState?.openDeurAwaitingReturn && perRoundState.currentQuestion === null) {
+          applyOpenDeurForcedPerspective('miniLobby');
+        } else if (perRoundState?.currentQuestion && !perRoundState.openDeurAwaitingReturn) {
+          applyOpenDeurForcedPerspective('player', activePlayerIndex);
+        } else {
+          applyOpenDeurForcedPerspective('normal');
+        }
       });
 
       const finalePerspectiveButtons = [

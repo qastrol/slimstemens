@@ -947,6 +947,7 @@
  */
 body :is(
   #scene-round-369,
+  #scene-standings,
   #scene-round-opendeur-vragensteller,
   #scene-round-puzzel-waiting,
   #scene-round-puzzel-active,
@@ -980,6 +981,7 @@ body :is(
 
 body :is(
   #scene-round-369,
+  #scene-standings,
   #scene-round-opendeur-vragensteller,
   #scene-round-opendeur-vraag,
   #scene-round-puzzel-waiting,
@@ -1018,6 +1020,26 @@ body #scene-round-369::before {
 }
 
 body #scene-round-369::after {
+  right: -1450px !important;
+  top: 650px !important;
+}
+
+body #scene-lobby-standings::before {
+  left: -1600px !important;
+  top: 710px !important;
+}
+
+body #scene-lobby-standings::after {
+  right: -1050px !important;
+  top: 650px !important;
+}
+
+body #scene-standings::before {
+  left: -1600px !important;
+  top: 710px !important;
+}
+
+body #scene-standings::after {
   right: -1450px !important;
   top: 650px !important;
 }
@@ -1236,4 +1258,96 @@ body #collectief-main-grid,
 body #collectief-pre-grid .grid-part,
 body #collectief-main-grid .grid-part {
   background: transparent !important;
+}
+
+body :is(
+  #scene-standings,
+  #scene-lobby-standings,
+  #scene-round-369,
+  #scene-round-opendeur-lobby,
+  #scene-round-opendeur-vragensteller,
+  #scene-round-opendeur-vraag,
+  #scene-round-puzzel-waiting,
+  #scene-round-puzzel-active,
+  #scene-round-puzzel-done,
+  #scene-round-galerij-pre,
+  #scene-round-galerij-main,
+  #scene-round-galerij-slideshow,
+  #scene-round-galerij-aanvul,
+  #scene-round-galerij-done,
+  #scene-round-collectief-pre,
+  #scene-round-collectief-main,
+  #scene-finale-standings,
+  #scene-round-finale-pre,
+  #scene-round-finale-main,
+  #scene-round-finale-end,
+  #scene-solo-game-end
+)::before {
+  border: 2px solid rgba(76, 8, 4, 0.55) !important;
+  border-radius: 50% !important;
+  box-shadow:
+    0 0 0 1px rgba(242, 91, 57, 0.2),
+    0 0 22px rgba(53, 5, 2, 0.18) !important;
+}
+
+body :is(
+  #scene-standings,
+  #scene-lobby-standings,
+  #scene-round-369,
+  #scene-round-opendeur-lobby,
+  #scene-round-opendeur-vragensteller,
+  #scene-round-opendeur-vraag,
+  #scene-round-puzzel-waiting,
+  #scene-round-puzzel-active,
+  #scene-round-puzzel-done,
+  #scene-round-galerij-pre,
+  #scene-round-galerij-main,
+  #scene-round-galerij-slideshow,
+  #scene-round-galerij-aanvul,
+  #scene-round-galerij-done,
+  #scene-round-collectief-pre,
+  #scene-round-collectief-main,
+  #scene-finale-standings,
+  #scene-round-finale-pre,
+  #scene-round-finale-main,
+  #scene-round-finale-end,
+  #scene-solo-game-end
+)::after {
+  border: 2px solid rgba(65, 7, 3, 0.48) !important;
+  border-radius: 50% !important;
+  box-shadow:
+    0 0 0 1px rgba(231, 76, 48, 0.18),
+    0 0 22px rgba(53, 5, 2, 0.16) !important;
+}
+
+body :is(
+  #scene-no-connection,
+  #scene-round-bumper,
+  #scene-waiting-host,
+  #scene-waiting-game,
+  #scene-standings,
+  #scene-lobby-standings,
+  #scene-round-369,
+  #scene-round-opendeur-lobby,
+  #scene-round-opendeur-vragensteller,
+  #scene-round-opendeur-vraag,
+  #scene-round-puzzel-waiting,
+  #scene-round-puzzel-active,
+  #scene-round-puzzel-done,
+  #scene-round-galerij-pre,
+  #scene-round-galerij-main,
+  #scene-round-galerij-slideshow,
+  #scene-round-galerij-aanvul,
+  #scene-round-galerij-done,
+  #scene-round-collectief-pre,
+  #scene-round-collectief-main,
+  #scene-finale-standings,
+  #scene-round-finale-pre,
+  #scene-round-finale-main,
+  #scene-round-finale-end,
+  #scene-solo-game-end
+) {
+  background: linear-gradient(135deg, #bd321d 0%, #8b2416 50%, #bd321d 100%) !important;
+  background-size: 200% 200% !important;
+  animation: gradientShift 4.5s ease-in-out !important;
 }

@@ -3,6 +3,7 @@ let players = [];
 const universalPerspectiveStyles = new Map();
 let universalPerspectivePreviousScene = null;
 let universalPerspectivePreviousStandings = null;
+let activeUniversalPerspectiveData = null;
 const UNIVERSAL_PERSPECTIVE_ZOOM_SCALE = 2.6;
 const UNIVERSAL_PERSPECTIVE_FULLSCREEN_ZOOM_SCALE = 4.2;
 const UNIVERSAL_PERSPECTIVE_VERTICAL_OFFSET = -55; // Pas dit getal aan om de kandidaat hoger of lager te plaatsen.
@@ -925,7 +926,9 @@ function handleAudioMessage(data) {
         break;
 
       case 'question_quarter_perspective':
-        questionQuarterPerspective = data.perspective || null;
+        questionQuarterPerspective = currentScene === 'round-opendeur-vragensteller'
+          ? null
+          : data.perspective || null;
         renderQuestionQuarterPerspective();
         break;
 
@@ -1481,6 +1484,7 @@ function renderOpenDeurVragensteller(data) {
     }
 
     renderPlayersBarCompact(data.players, data.activeChoosingPlayerIndex, 'od-vragensteller-scores');
+    renderQuestionQuarterPerspective();
 }
 
   function stopOpenDeurIntroVideoPlayback() {
@@ -1540,9 +1544,21 @@ function renderOpenDeurVragensteller(data) {
       const vraagData = openDeurPendingVraagData || { ...data, showIntroVideo: false };
       openDeurPendingVraagData = null;
 
+      if (activeUniversalPerspectiveData?.fullscreenLobby === true) {
+        universalPerspectivePreviousScene = 'round-opendeur-vraag';
+        return;
+      }
+
       updateScene('round-opendeur-vraag');
       renderOpenDeurVraag(vraagData);
       renderPlayersBarUniversal(null, vraagData.activeIndex);
+      if (
+        activeUniversalPerspectiveData &&
+        activeUniversalPerspectiveData.playerIndex !== null &&
+        activeUniversalPerspectiveData.playerIndex !== undefined
+      ) {
+        handleUniversalPerspectiveChange(activeUniversalPerspectiveData);
+      }
     };
 
     updateScene('round-opendeur-video');
@@ -1612,6 +1628,7 @@ document.getElementById('od-antwoord-teller').textContent = `Geraden Antwoorden:
             `;
         }).join('');
     }
+    renderQuestionQuarterPerspective();
 }
 
 
@@ -2456,13 +2473,17 @@ function clearQuestionQuarterPerspective() {
 
 function renderQuestionQuarterPerspective() {
   clearQuestionQuarterPerspective();
+  if (currentScene === 'round-opendeur-vragensteller') {
+    questionQuarterPerspective = null;
+    return;
+  }
   const perspective = questionQuarterPerspective;
   if (!perspective || !currentScene) return;
 
   const targetSelectors = {
     'round-369': '.round-grid > .grid-part.part2',
     'round-opendeur-vragensteller': '#opendeur-vragensteller-grid .grid-part.part2',
-    'round-opendeur-vraag': '#opendeur-vraag-grid .part4-status',
+    'round-opendeur-vraag': '#opendeur-vraag-grid .part2-mini-lobby',
     'round-puzzel-waiting': '#puzzel-pre-grid .part4-status',
     'round-puzzel-active': '.grid-part.part3',
     'round-galerij-pre': '#galerij-pre-grid .part4-status',
@@ -2481,6 +2502,33 @@ function renderQuestionQuarterPerspective() {
     ? scene
     : perspectiveScene?.querySelector(targetSelectors[perspectiveSceneName] || '');
   if (!target) return;
+
+  if (
+    perspectiveSceneName === 'round-opendeur-vraag' &&
+    target.matches('.part2-mini-lobby') &&
+    (perspective.type === 'lobby' || perspective.type === 'player')
+  ) {
+    if (perspective.type === 'lobby') return;
+
+    const player = Array.from(target.querySelectorAll('.player[data-player-index]'))
+      .find(candidate => Number(candidate.dataset.playerIndex) === Number(perspective.playerIndex));
+    if (!player) {
+      console.warn('Open Deur-perspectief niet toegepast: kandidaat niet gevonden.', perspective.playerIndex);
+      return;
+    }
+
+    Array.from(target.children).forEach(element => {
+      if (applyUniversalPerspectiveZoom(
+        element,
+        player,
+        target,
+        UNIVERSAL_PERSPECTIVE_ZOOM_SCALE
+      )) {
+        questionQuarterTransformedElements.add(element);
+      }
+    });
+    return;
+  }
 
   questionQuarterPerspectiveTarget = target;
   questionQuarterTargetPreviousPosition = target.style.position;
@@ -2631,6 +2679,7 @@ function applyUniversalPerspectiveZoom(element, target, frame, zoom) {
 }
 
 function handleUniversalPerspectiveChange(data) {
+  activeUniversalPerspectiveData = data;
   if (typeof data.fullscreenLobby === 'boolean') {
     if (data.fullscreenLobby) {
       if (!universalPerspectivePreviousScene) {

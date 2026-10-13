@@ -14,8 +14,43 @@ function getOpenDeurIntroThumbnailUrl(question) {
   );
 }
 
+let openDeurForcedPerspectiveTimer = null;
+let openDeurForcedPerspectiveRequest = 0;
+
+function cancelOpenDeurForcedPerspectiveChange() {
+  openDeurForcedPerspectiveRequest += 1;
+  if (openDeurForcedPerspectiveTimer !== null) {
+    clearTimeout(openDeurForcedPerspectiveTimer);
+    openDeurForcedPerspectiveTimer = null;
+  }
+}
+
+window.cancelOpenDeurForcedPerspectiveChange = cancelOpenDeurForcedPerspectiveChange;
+
+function scheduleOpenDeurForcedPerspective(mode, playerIndex = null, delay = 0) {
+  cancelOpenDeurForcedPerspectiveChange();
+  const request = openDeurForcedPerspectiveRequest;
+  const question = perRoundState.currentQuestion;
+
+  openDeurForcedPerspectiveTimer = setTimeout(() => {
+    openDeurForcedPerspectiveTimer = null;
+    if (request !== openDeurForcedPerspectiveRequest) return;
+    if (typeof window.applyOpenDeurForcedPerspective !== 'function') return;
+
+    if (mode === 'player' && (
+      perRoundState.currentQuestion !== question ||
+      perRoundState.openDeurAwaitingReturn ||
+      activePlayerIndex !== playerIndex
+    )) {
+      return;
+    }
+    window.applyOpenDeurForcedPerspective(mode, playerIndex);
+  }, delay);
+}
+
 function setupOpenDeurRound() {
   // Stop klok als deze loopt (exclusief voor 3-6-9)
+  cancelOpenDeurForcedPerspectiveChange();
   if (typeof klok369_stopLoop === 'function') {
     klok369_stopLoop();
     klok369_resetTimer();
@@ -79,6 +114,7 @@ renderOpenDeurChoices();
 
   
   sendOpenDeurDisplayUpdate('round_start', 'scene-round-opendeur-vragensteller');
+  scheduleOpenDeurForcedPerspective('normal');
 }
 
 function renderOpenDeurChoices() {
@@ -160,6 +196,7 @@ function chooseOpenDeurQuestion(index){
 
   
   sendOpenDeurDisplayUpdate('update', 'scene-round-opendeur-vraag');
+  scheduleOpenDeurForcedPerspective('player', activePlayerIndex);
 }
 
 
@@ -248,6 +285,7 @@ function markOpenDeurAnswer(ansIndex){
     
     perRoundState.openDeurAwaitingReturn = true;
     perRoundState.currentQuestion = null;
+    scheduleOpenDeurForcedPerspective('miniLobby', null, 1500);
     return;
   }
 }
@@ -321,6 +359,8 @@ function nextOpenDeurTurn() {
       <div id="opendeurChoices" style="margin-top:1em"></div>
     `;
     renderOpenDeurChoices();
+    sendOpenDeurDisplayUpdate('update', 'scene-round-opendeur-vragensteller');
+    scheduleOpenDeurForcedPerspective('normal');
   } else {
     currentQuestionEl.innerHTML = '<em>Alle vragen zijn gespeeld.</em>';
     const cont = document.getElementById('opendeurChoices');
@@ -359,6 +399,7 @@ function passOpenDeur(){
     
     
     sendOpenDeurDisplayUpdate('update', 'scene-round-opendeur-vraag');
+    scheduleOpenDeurForcedPerspective('player', activePlayerIndex, 1500);
   } else {
     
     // Alle kandidaten hebben gepast - toon alle antwoorden en voeg knop toe
@@ -368,6 +409,7 @@ function passOpenDeur(){
     sendOpenDeurDisplayUpdate('update', 'scene-round-opendeur-vraag', q);
     showReturnToQuestionerButton();
     perRoundState.currentQuestion = null;
+    scheduleOpenDeurForcedPerspective('miniLobby', null, 1500);
   }
 }
 
@@ -463,6 +505,7 @@ if (scene === 'scene-round-opendeur-vragensteller') {
     }
 }
 function returnToOpenDeurQuestioners() {
+    cancelOpenDeurForcedPerspectiveChange();
     flash('Terug naar vragensteller-keuze');
 
     // Reset de state voor alle kandidaten gepast
@@ -489,6 +532,9 @@ function returnToOpenDeurQuestioners() {
     renderOpenDeurChoices();
     resetRoundControls();
 
+    if (typeof window.applyOpenDeurForcedPerspective === 'function') {
+      window.applyOpenDeurForcedPerspective('miniLobby');
+    }
     sendOpenDeurDisplayUpdate('update', 'scene-round-opendeur-vragensteller');
 }
 

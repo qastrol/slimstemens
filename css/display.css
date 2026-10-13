@@ -691,6 +691,10 @@ body {
   background: #bd321d;
 }
 
+#scene-lobby-standings .lobby-standings-score-panel {
+  background: transparent;
+}
+
 .lobby-standings-players {
   display: flex;
   align-items: center;
@@ -730,8 +734,8 @@ body {
   font-weight: bold;
 }
 
-.lobby-standings-scores-hidden .player-seconds {
-  color: transparent;
+#lobbyStandingsScorePanel.lobby-standings-scores-hidden .player-seconds {
+  color: transparent !important;
 }
 
 
