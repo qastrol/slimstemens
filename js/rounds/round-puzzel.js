@@ -25,6 +25,10 @@ function sendPuzzelDisplayUpdate(scene, extraData = {}) {
     currentPuzzelIndex: (perRoundState.currentPuzzelIndex ?? 0) + 1,
     maxPuzzles: perRoundState?.puzzles?.length ?? 3,
     currentTurnPlayer: players[activePlayerIndex]?.name || '-',
+    timerRunning: !!perRoundState.timerRunning,
+    automaticSceneChangesEnabled: window.automaticSceneChangesEnabled === true,
+    activePlayerPassed: false,
+    showScoreboard: false,
     ...extraData
   };
 
@@ -306,6 +310,7 @@ function startPuzzelTimer() {
   });
 
   perRoundState.timerRunning = true;
+  sendPuzzelDisplayUpdate('scene-round-puzzel-active');
   
   
   document.getElementById('startTimerBtn').disabled = true;
@@ -454,7 +459,8 @@ if (puzzel.foundLinks.length === puzzel.links.length) {
         
         sendPuzzelDisplayUpdate('scene-round-puzzel-active', {
             puzzelWords: [], 
-            statusText: "Alle puzzels voltooid. Wacht op host."
+            statusText: "Alle puzzels voltooid. Wacht op host.",
+            showScoreboard: true
         });
         if (typeof window.applyAutomaticScenePerspective === 'function') {
           window.applyAutomaticScenePerspective('miniLobby');
@@ -482,7 +488,8 @@ if (puzzel.foundLinks.length === puzzel.links.length) {
         sendPuzzelDisplayUpdate('scene-round-puzzel-active', {
             puzzelWords: [], 
             
-            statusText: `Puzzel voltooid. ${players[activePlayerIndex].name} start Puzzel ${perRoundState.currentPuzzelIndex + 1}.`
+            statusText: `Puzzel voltooid. ${players[activePlayerIndex].name} start Puzzel ${perRoundState.currentPuzzelIndex + 1}.`,
+            showScoreboard: true
         });
         if (typeof window.applyAutomaticScenePerspective === 'function') {
           window.applyAutomaticScenePerspective('miniLobby');
@@ -507,6 +514,7 @@ function passPuzzel() {
   if (!perRoundState.playerOrder.includes(activePlayerIndex)) {
     perRoundState.playerOrder.push(activePlayerIndex);
   }
+  sendPuzzelDisplayUpdate('scene-round-puzzel-active', { activePlayerPassed: true });
 
   const allPlayersIndices = perRoundState.puzzelStarterOrder || players.map((p,i) => i);
   const remainingCandidates = allPlayersIndices
@@ -603,7 +611,8 @@ function showPuzzelSolution(puzzel) {
       found: true,
       timeGain: 30
     })),
-    statusText: "Alle kandidaten hebben gepast. Volledige puzzel wordt getoond."
+    statusText: "Alle kandidaten hebben gepast. Volledige puzzel wordt getoond.",
+    showScoreboard: true
   });
   if (typeof window.applyAutomaticScenePerspective === 'function') {
     window.applyAutomaticScenePerspective('miniLobby');

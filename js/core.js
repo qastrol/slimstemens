@@ -301,7 +301,7 @@ const currentRoundEl = document.getElementById('currentRound');
 const currentQuestionEl = document.getElementById('currentQuestion');
 
 
-function renderPlayers(){
+function renderPlayers(updateDisplay = true){
   playersArea.innerHTML = '';
   players.forEach((p,i)=>{
     const el = document.createElement('div');
@@ -325,12 +325,14 @@ function renderPlayers(){
     }
   }
 
-  sendDisplayUpdate({
-    type: 'players',
-    players,
-    active: safeActiveIndex,
-    round: perRoundState?.round || '-'
-  });
+  if (updateDisplay) {
+    sendDisplayUpdate({
+      type: 'players',
+      players,
+      active: safeActiveIndex,
+      round: perRoundState?.round || '-'
+    });
+  }
 }
 
 function flash(text){

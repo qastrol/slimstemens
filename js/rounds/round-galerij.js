@@ -37,6 +37,9 @@ function sendGalerijDisplayUpdate() {
     activeIndex: resolvedActiveIndex,
     playersData: players
   };
+  const galleryPreloadData = window.slimstemensDesktopBridge
+    ? { galleryImageSources: galleryImages.map(img => img.src) }
+    : {};
 
   if (galleryPhase === 'pre') {
     if (typeof sendRoundDisplayUpdate === 'function') {
@@ -65,7 +68,10 @@ function sendGalerijDisplayUpdate() {
       imageSrc: img?.src,
       activePlayer: players[galleryPlayerIndex],
       imageIndex: galleryIndex,
-      totalImages: galleryImages.length
+      totalImages: galleryImages.length,
+      automaticSceneChangesEnabled: window.automaticSceneChangesEnabled === true,
+      timerRunning: galleryTimerRunning,
+      ...galleryPreloadData
     };
     if (typeof sendRoundDisplayUpdate === 'function') {
       sendRoundDisplayUpdate({
@@ -94,7 +100,9 @@ function sendGalerijDisplayUpdate() {
         found: img.found || false,
         points: 15
       })),
-      activePlayer: currentAanvulPlayer
+      activePlayer: currentAanvulPlayer,
+      automaticSceneChangesEnabled: window.automaticSceneChangesEnabled === true,
+      timerRunning: galleryTimerRunning
     };
     if (typeof sendRoundDisplayUpdate === 'function') {
       sendRoundDisplayUpdate({
@@ -120,7 +128,11 @@ function sendGalerijDisplayUpdate() {
     const extraData = {
       galleryTheme: currentGallery.theme,
       imageSrc: img?.src,
-      activePlayer: players[galleryPlayerIndex]
+      imageAnswer: img?.answer,
+      activePlayer: players[galleryPlayerIndex],
+      automaticSceneChangesEnabled: window.automaticSceneChangesEnabled === true,
+      timerRunning: galleryTimerRunning,
+      ...galleryPreloadData
     };
     if (typeof sendRoundDisplayUpdate === 'function') {
       sendRoundDisplayUpdate({
@@ -311,7 +323,7 @@ function startGalerijTimer() {
     onStartMessage: `Tijd gestart voor ${activePlayer.name}`,
     onTick: () => {
       syncGalerijActivePlayerIndex();
-      renderPlayers();
+      renderPlayers(false);
       sendGalerijDisplayUpdate();
     },
     onTimeout: (player) => {
@@ -328,6 +340,7 @@ function startGalerijTimer() {
   });
 
   galleryTimerRunning = true;
+  sendGalerijDisplayUpdate();
 }
 
 function stopGalerijTimerSound() {
@@ -470,7 +483,10 @@ function forceSlideshowPhaseOnDisplay() {
         activePlayer: players[galleryPlayerIndex],
         activeIndex: galleryPlayerIndex,
         imageIndex: galleryIndex, 
-        totalImages: galleryImages.length 
+        totalImages: galleryImages.length,
+        ...(window.slimstemensDesktopBridge
+          ? { galleryImageSources: galleryImages.map(image => image.src) }
+          : {})
     });
 
     flash('Display handmatig naar bespreekfase gestuurd.');
@@ -536,18 +552,7 @@ function startGalerijForPlayer(playerIndex) {
   console.log(`✅ Galerij gestart: ${currentGallery.theme} met ${galleryImages.length} afbeeldingen`);
   flash(`Start galerij: ${currentGallery.theme}`);
 
-  sendDisplayUpdate({
-    type: 'update',
-    key: 'galerij',
-    scene: 'scene-round-galerij-main',
-    galleryTheme: currentGallery.theme,
-    imageSrc: galleryImages[0]?.src,
-    players: players,
-    activePlayer: players[playerIndex],
-    activeIndex: galleryPlayerIndex,
-    imageIndex: 0,
-    totalImages: galleryImages.length
-  });
+  sendGalerijDisplayUpdate();
   if (typeof window.applyAutomaticScenePerspective === 'function') {
     window.applyAutomaticScenePerspective('player', galleryPlayerIndex, 0);
   }
@@ -579,18 +584,7 @@ function nextGalerijQuestion() {
         }
     } else {
         renderGalerijHostUI();
-        sendDisplayUpdate({
-            type: 'update',
-            key: 'galerij',
-            scene: 'scene-round-galerij-main',
-            galleryTheme: currentGallery.theme,
-            imageSrc: galleryImages[galleryIndex]?.src,
-            players: players,
-            activePlayer: players[galleryPlayerIndex],
-            activeIndex: galleryPlayerIndex,
-            imageIndex: galleryIndex, 
-            totalImages: galleryImages.length 
-        });
+        sendGalerijDisplayUpdate();
     }
 }
 
@@ -613,7 +607,7 @@ function markGalerijAnswer(isRight, answer) {
   }
 
   syncGalerijActivePlayerIndex();
-  renderPlayers();
+  renderPlayers(false);
   
   
   sendGalerijDisplayUpdate();
@@ -648,20 +642,7 @@ function nextAanvulTurn() {
     }
 
     
-    sendDisplayUpdate({
-        type: 'update',
-        key: 'galerij',
-        scene: 'scene-round-galerij-aanvul',
-        galleryTheme: currentGallery.theme,
-        answers: galleryImages.map(img => ({
-            text: img.answer,
-            found: img.found || false,
-            points: 15
-        })),
-        players: players,
-        activePlayer: currentAanvulPlayer,
-        activeIndex: aanvulPlayerIndex 
-    });
+    sendGalerijDisplayUpdate();
     if (typeof window.applyAutomaticScenePerspective === 'function') {
       window.applyAutomaticScenePerspective('player', aanvulPlayerIndex);
     }
@@ -681,7 +662,7 @@ function markAanvulAnswer(img) {
     passedImages = passedImages.filter(p => p !== img);
 
     syncGalerijActivePlayerIndex();
-    renderPlayers();
+    renderPlayers(false);
 
     
     if (galleryImages.every(p => p.found)) {

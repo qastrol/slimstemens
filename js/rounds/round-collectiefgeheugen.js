@@ -795,6 +795,7 @@ function sendCollectiefDisplayUpdate(action, scene) {
         maxQuestions: perRoundState.collectief.questions.length,
         activePlayer: players[activePlayerIndex]?.name || '-',
         answers: answersData,
+        timerRunning: collectiefTimerRunning,
         allAnswersFound: hasCurrentQuestion ? currentQuestion.foundAnswers.length === currentQuestion.answers.length : false,
         allPlayersAnswered: hasCurrentQuestion ? currentQuestion.playersWhoAnswered.length === players.length : false
     };

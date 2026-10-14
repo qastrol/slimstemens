@@ -1087,6 +1087,7 @@
       let questionQuarterPerspective = null;
       let automaticSceneChangesEnabled =
         window.pendingUiConfig?.settings?.automaticSceneChanges?.enabled === true;
+      window.automaticSceneChangesEnabled = automaticSceneChangesEnabled;
       let finaleCandidatePerspectivePlayerIndex = null;
       let finaleFaceoffPerspectiveActive = false;
       let activePerspectiveHotkeyGroup = null;
@@ -1201,7 +1202,8 @@
           : null;
         sendDisplayUpdate({
           type: 'question_quarter_perspective',
-          perspective: displayPerspective
+          perspective: displayPerspective,
+          automaticSceneChangesEnabled
         });
       }
 
@@ -1255,7 +1257,8 @@
         updatePerspectiveMenu();
         sendDisplayUpdate({
           type: 'question_quarter_perspective',
-          perspective: null
+          perspective: null,
+          automaticSceneChangesEnabled
         });
         sendDisplayUpdate({
           type: 'universal_perspective',
@@ -1887,6 +1890,7 @@
 
       document.getElementById('automaticSceneChangesCheckbox').addEventListener('change', event => {
         automaticSceneChangesEnabled = event.target.checked;
+        window.automaticSceneChangesEnabled = automaticSceneChangesEnabled;
         if (typeof window.cancelAutomaticScenePerspectiveChange === 'function') {
           window.cancelAutomaticScenePerspectiveChange();
         }
@@ -1897,7 +1901,8 @@
         if (!automaticSceneChangesEnabled) {
           sendDisplayUpdate({
             type: 'question_quarter_perspective',
-            perspective: null
+            perspective: null,
+            automaticSceneChangesEnabled
           });
           sendDisplayUpdate({
             type: 'universal_perspective',

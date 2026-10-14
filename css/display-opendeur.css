@@ -611,6 +611,10 @@
     padding-top: 20px;
 }
 
+#od-vraag-scores.automatic-perspectives-enabled {
+    display: none;
+}
+
         
         #opendeur-vraag-grid .left-half {
             grid-column: 1;
@@ -697,6 +701,20 @@
             position: relative;
             overflow: hidden;
             background: #bd321d;
+        }
+
+        #odActiveScoreCircle {
+          position: absolute;
+          z-index: 5;
+          bottom: 24px;
+          left: 24px;
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 180ms ease-out;
+        }
+
+        #odActiveScoreCircle.is-visible {
+          opacity: 1;
         }
 
         #opendeur-vraag-grid .part4-status {
@@ -1100,9 +1118,39 @@
 }
 
 #scene-round-puzzel-active .grid-part.part3 {
+    position: relative;
     padding: 20px 25px;      
     gap: 12px;               
 }
+
+#puzzelActivePlayersBar.automatic-perspectives-enabled {
+    display: none;
+}
+
+#puzzelActiveScoreCircle {
+  position: absolute;
+  z-index: 6;
+  bottom: 24px;
+  left: 24px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease-out;
+}
+
+#puzzelActiveScoreCircle.is-visible {
+  opacity: 1;
+}
+
+#scene-round-puzzel-active .grid-part.part2 .mini-lobby > #puzzelActiveScoreCircle {
+  top: auto;
+  right: auto;
+  bottom: 24px;
+  left: 24px;
+  width: 4.3ch;
+  height: 4.3ch;
+  flex: 0 0 4.3ch;
+}
+
 .puzzel-round-info {
     font-size: 1.6em;        
     margin-bottom: 12px;

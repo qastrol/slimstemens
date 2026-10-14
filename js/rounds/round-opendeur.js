@@ -249,6 +249,7 @@ function startOpenDeurTimer(){
     onStartMessage: `Tijd gestart voor ${players[activePlayerIndex].name}`,
     onTick: () => {
       renderPlayers();
+      sendOpenDeurDisplayUpdate('update', 'scene-round-opendeur-vraag');
     },
     onTimeout: (player) => {
       flash(`${player.name} is door zijn tijd heen!`);
@@ -256,6 +257,8 @@ function startOpenDeurTimer(){
       if (typeof passOpenDeur === 'function') passOpenDeur();
     }
   });
+
+  sendOpenDeurDisplayUpdate('update', 'scene-round-opendeur-vraag');
 }
 
 function markOpenDeurAnswer(ansIndex){
@@ -380,7 +383,6 @@ function passOpenDeur(){
   if (typeof stopThinkingCountdownTimer === 'function') {
     stopThinkingCountdownTimer(true);
   }
-  sendOpenDeurDisplayUpdate('update', 'scene-round-opendeur-vraag');
   const q = perRoundState.currentQuestion;
   if(!q) return;
 
@@ -390,6 +392,7 @@ function passOpenDeur(){
   if(!q.passedPlayers.includes(activePlayerIndex)){
     q.passedPlayers.push(activePlayerIndex);
   }
+  sendOpenDeurDisplayUpdate('update', 'scene-round-opendeur-vraag');
 
   
   perRoundState.currentAnswerPlayers = perRoundState.currentAnswerPlayers
@@ -489,6 +492,8 @@ if (scene === 'scene-round-opendeur-vragensteller') {
         data.guessedAnswers = q.answered.filter(a => a).length;
         data.isTimerRunning = !!thinkingTimerInterval;
         data.isAllAnswersVisible = perRoundState.allPlayersHavePassed || false;
+        data.automaticSceneChangesEnabled = window.automaticSceneChangesEnabled === true;
+        data.isActiveAnsweringPlayerPassed = q.passedPlayers.includes(currentAnswerPlayerIndex);
     }
 
     

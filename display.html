@@ -236,7 +236,10 @@
                     <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
                     <div id="odVraagMiniLobby"></div>
                 </div>
-            </div>
+                    <div id="odActiveScoreCircle" class="finale-candidate-score player-seconds active-player" aria-hidden="true">
+                        <span class="score-oval-face"></span>
+                    </div>
+                </div>
             <div class="grid-part part4-status">
   <div id="od-beurt-info" class="od-status"></div>
   <div id="od-vragensteller-vraag" class="od-question"></div>
@@ -255,7 +258,7 @@
             <div class="round-status" style="font-size: 2em; text-align: center; margin-top: 30px; color: #ffd17a;">Klaar om te starten</div>
         </div>
         
-        <!-- Rechterboven: Mini-lobby -->
+        <!-- Rechterboven: Vraaginfo -->
         <div class="grid-part part2">
             <div class="mini-lobby">
                 <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
@@ -293,6 +296,9 @@
       <div class="mini-lobby">
         <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
         <div id="puzzelActiveMiniLobby"></div>
+        <div id="puzzelActiveScoreCircle" class="finale-candidate-score player-seconds active-player" aria-hidden="true">
+          <span class="score-oval-face"></span>
+        </div>
       </div>
     </div>
 
@@ -361,6 +367,9 @@
             <div class="mini-lobby">
                 <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
                 <div id="galerijMainMiniLobby"></div>
+                <div id="galerijMainScoreCircle" class="finale-candidate-score player-seconds active-player" aria-hidden="true">
+                    <span class="score-oval-face"></span>
+                </div>
             </div>
         </div>
         
@@ -403,6 +412,9 @@
       <div class="mini-lobby">
         <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
         <div id="galerijAanvulMiniLobby"></div>
+        <div id="galerijAanvulScoreCircle" class="finale-candidate-score player-seconds active-player" aria-hidden="true">
+          <span class="score-oval-face"></span>
+        </div>
       </div>
     </div>
 
@@ -485,15 +497,28 @@
         <div id="collectiefMainAnswers" class="collectief-answers-list"></div>
       </div>
         
-      <!-- Rechterboven: Mini-lobby -->
+      <!-- Rechtsonder: Mini-lobby -->
       <div class="grid-part part2">
         <div class="mini-lobby">
-          <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
-          <div id="collectiefMainMiniLobby"></div>
+          <div id="collectiefMainLobbyZoom">
+            <img src="assets/kandidatenstoelen.jpg" class="mini-bg" alt="Stoelen">
+            <div id="collectiefMainMiniLobby"></div>
+          </div>
+          <div id="collectiefMainScoreCircles" aria-hidden="true">
+            <div id="collectiefMainScoreLeft" class="finale-candidate-score player-seconds">
+              <span class="score-oval-face"></span>
+            </div>
+            <div id="collectiefMainScoreCenter" class="finale-candidate-score player-seconds">
+              <span class="score-oval-face"></span>
+            </div>
+            <div id="collectiefMainScoreRight" class="finale-candidate-score player-seconds">
+              <span class="score-oval-face"></span>
+            </div>
+          </div>
         </div>
       </div>
         
-      <!-- Rechtsonder: Info en spelersbalk -->
+      <!-- Rechterboven: Vraaginfo -->
       <div class="grid-part part4-status" id="collectiefMainInfoContainer">
         <div id="collectiefMainInfo" class="round-status"></div>
         <div id="collectiefMainPlayersBar" class="players-bar-compact"></div>

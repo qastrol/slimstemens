@@ -82,6 +82,43 @@
   background: #2874b8;
 }
 
+#galerijMainScoreCircle,
+#galerijAanvulScoreCircle {
+  position: absolute;
+  z-index: 6;
+  bottom: 24px;
+  left: 24px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease-out;
+}
+
+#galerijMainScoreCircle.is-visible,
+#galerijAanvulScoreCircle.is-visible {
+  opacity: 1;
+}
+
+#galerij-main-grid .part2 .mini-lobby > #galerijMainScoreCircle,
+#galerij-aanvul-grid .part2 .mini-lobby > #galerijAanvulScoreCircle {
+  top: auto;
+  right: auto;
+  bottom: 24px;
+  left: 24px;
+  width: 4.3ch;
+  height: 4.3ch;
+  flex: 0 0 4.3ch;
+}
+
+#galerijMainPlayersBar.automatic-perspectives-enabled,
+#galerijAanvulPlayersBar.automatic-perspectives-enabled {
+  display: none;
+}
+
+#scene-round-galerij-main.automatic-perspectives-enabled #galerijMainPlayersBar,
+#scene-round-galerij-aanvul.automatic-perspectives-enabled #galerijAanvulPlayersBar {
+  display: none;
+}
+
 .finale-candidate-score::before {
   position: absolute;
   inset: 0;
@@ -1300,6 +1337,65 @@ body #collectief-main-grid,
 body #collectief-pre-grid .grid-part,
 body #collectief-main-grid .grid-part {
   background: transparent !important;
+}
+
+#collectief-main-grid .part2 {
+  grid-row: 2;
+}
+
+#collectief-main-grid .part4-status {
+  grid-row: 1;
+}
+
+#collectief-pre-grid .part2 {
+  grid-row: 2;
+}
+
+#collectief-pre-grid .part4-status {
+  grid-row: 1;
+}
+
+#collectiefMainPlayersBar {
+  display: none;
+}
+
+#collectiefMainLobbyZoom {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  transform: scale(1.12);
+  transform-origin: center;
+}
+
+#collectiefMainScoreCircles {
+  position: absolute;
+  z-index: 5;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+#collectiefMainScoreCircles .finale-candidate-score {
+  top: 24px;
+  bottom: auto;
+  width: 4.3ch;
+  height: 4.3ch;
+  flex: 0 0 4.3ch;
+  transform: translateX(-50%);
+}
+
+#collectiefMainScoreLeft {
+  left: calc(21.17% + 112px);
+}
+
+#collectiefMainScoreCenter {
+  left: calc(42.79% + 73px);
+}
+
+#collectiefMainScoreRight {
+  left: calc(63.94% + 36px);
 }
 
 body :is(
