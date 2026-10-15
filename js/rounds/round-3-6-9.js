@@ -193,6 +193,7 @@ function nextThreeSixNineQuestion() {
     if (controlsEl) {
       controlsEl.innerHTML = '';
     }
+    window.updatePerspectiveMenu?.();
     if (typeof markCurrentRoundComplete === 'function') {
       markCurrentRoundComplete();
     }
@@ -274,6 +275,10 @@ function nextThreeSixNineQuestion() {
   
   // Reset media-visibility bij elke nieuwe vraag.
   resetThreeSixNineMediaState();
+  window.resetThreeSixNineImagePerspective?.();
+  if (qType !== 'multiple-choice') {
+    window.resetThreeSixNineOptionsPerspective?.();
+  }
   
   highlightActive();
   
@@ -469,6 +474,7 @@ function renderThreeSixNineControls() {
     }
     
     controlsEl.innerHTML = controlsHTML;
+    window.updatePerspectiveMenu?.();
 }
 
 // Foto tonen/verbergen

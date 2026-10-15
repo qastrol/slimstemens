@@ -207,12 +207,12 @@
               <div id="presenterControlArea" class="perspective-actions" style="display:none;">
                 <button id="togglePresenterView" class="secondary"
                   data-perspective-hotkey-group="general" data-perspective-hotkey-index="3"
-                  aria-pressed="false">Toon kleine presentator boven lobby</button>
+                  aria-pressed="false">Presentator boven lobby</button>
               </div>
               <div id="juryControlArea" class="perspective-actions" style="display:none;">
                 <button id="toggleJuryView" class="secondary"
                   data-perspective-hotkey-group="general" data-perspective-hotkey-index="4"
-                  aria-pressed="false">Toon kleine jury boven lobby</button>
+                  aria-pressed="false">Jury boven lobby</button>
               </div>
             </div>
           </div>
@@ -225,10 +225,38 @@
             <button id="threeSixNineLobbyPerspectiveBtn" class="secondary" type="button" style="display:none;"
               data-perspective-hotkey-group="candidate" data-perspective-hotkey-index="2"
               aria-pressed="false">Breedbeeld-lobby tonen</button>
+            <div id="threeSixNineImagePerspectives" style="display:none;">
+              <p class="small perspective-menu-message">3-6-9-afbeelding</p>
+              <div class="perspective-actions perspective-actions-compact">
+                <button class="secondary three-six-nine-image-perspective" type="button"
+                  data-image-perspective="mini-lobby" data-perspective-hotkey-group="threeSixNine"
+                  data-perspective-hotkey-index="1" aria-pressed="true">Boven mini-lobby</button>
+                <button class="secondary three-six-nine-image-perspective" type="button"
+                  data-image-perspective="question-quarter" data-perspective-hotkey-group="threeSixNine"
+                  data-perspective-hotkey-index="2" aria-pressed="false">Boven vraagkwartier</button>
+                <button class="secondary three-six-nine-image-perspective" type="button"
+                  data-image-perspective="near-fullscreen" data-perspective-hotkey-group="threeSixNine"
+                  data-perspective-hotkey-index="3" aria-pressed="false">Bijna fullscreen</button>
+              </div>
+            </div>
+            <div id="threeSixNineOptionsPerspectives" style="display:none;">
+              <p class="small perspective-menu-message">3-6-9-meerkeuzeantwoorden</p>
+              <div class="perspective-actions perspective-actions-compact">
+                <button class="secondary three-six-nine-options-perspective" type="button"
+                  data-options-perspective="together" data-perspective-hotkey-group="threeSixNine"
+                  data-perspective-hotkey-index="4" aria-pressed="true">Vraag + antwoorden</button>
+                <button class="secondary three-six-nine-options-perspective" type="button"
+                  data-options-perspective="question-quarter" data-perspective-hotkey-group="threeSixNine"
+                  data-perspective-hotkey-index="5" aria-pressed="false">Antwoorden in vraagkwartier</button>
+                <button class="secondary three-six-nine-options-perspective" type="button"
+                  data-options-perspective="mini-lobby" data-perspective-hotkey-group="threeSixNine"
+                  data-perspective-hotkey-index="6" aria-pressed="false">Antwoorden boven mini-lobby</button>
+              </div>
+            </div>
             <button id="fullScenePerspectiveBtn" class="secondary" type="button" style="display:none;"
               data-perspective-hotkey-group="candidate" data-perspective-hotkey-index="3"
               aria-pressed="false">Volledig beeld</button>
-            <div id="candidatePerspectiveButtons" class="perspective-actions"></div>
+            <div id="candidatePerspectiveButtons" class="perspective-actions perspective-actions-compact"></div>
             <p id="fullscreenCandidatePerspectiveTitle" class="small perspective-menu-message"
               style="display:none;">Fullscreen inzoom</p>
             <div id="fullscreenCandidatePerspectiveButtons" class="perspective-actions perspective-actions-compact"></div>
@@ -242,7 +270,7 @@
           </div>
           <div id="questionQuarterPerspectives" style="display:none;">
             <p class="small perspective-menu-message">Vraagkwartier</p>
-            <div class="perspective-actions">
+            <div class="perspective-actions perspective-actions-compact">
               <button id="questionQuarterLobbyBtn" class="secondary" type="button"
                 data-perspective-hotkey-group="question" data-perspective-hotkey-index="1"
                 aria-pressed="false">Mini-lobby</button>
@@ -253,7 +281,7 @@
                 data-perspective-hotkey-group="question" data-perspective-hotkey-index="3"
                 aria-pressed="false">Presentator</button>
             </div>
-            <div id="questionQuarterCandidateButtons" class="perspective-actions"></div>
+            <div id="questionQuarterCandidateButtons" class="perspective-actions perspective-actions-compact"></div>
           </div>
           <div id="finalePerspectives" style="display:none;">
             <p class="small perspective-menu-message">Finale</p>
@@ -550,7 +578,7 @@
         if (button) {
           button.textContent = showingPresenter && !showingPresenterFullscreen
             ? 'Terug naar lobby'
-            : 'Toon kleine presentator boven lobby';
+            : 'Presentator boven lobby';
         }
       }
 
@@ -559,7 +587,7 @@
         if (button) {
           button.textContent = showingJury && !showingJuryFullscreen
             ? 'Terug naar lobby'
-            : 'Toon kleine jury boven lobby';
+            : 'Jury boven lobby';
         }
       }
 
@@ -1079,6 +1107,9 @@
       let previousPerspectiveContext = null;
       let fullscreenLobbyPerspectiveActive = false;
       let threeSixNineLobbyPerspectiveActive = false;
+      let threeSixNineImagePerspectiveMode = 'mini-lobby';
+      let threeSixNineImagePerspectiveVisible = false;
+      let threeSixNineOptionsPerspectiveMode = 'together';
       let questionQuarterPerspective = null;
       let automaticSceneChangesEnabled =
         window.pendingUiConfig?.settings?.automaticSceneChanges?.enabled !== false;
@@ -1087,11 +1118,12 @@
       let finaleFaceoffPerspectiveActive = false;
       let activePerspectiveHotkeyGroup = null;
       const perspectiveHotkeyGroups = {
-        general: { prefix: 'NumpadDivide', name: 'algemeen', label: 'Numpad /' },
-        candidate: { prefix: 'NumpadMultiply', name: 'kandidaat/lobby', label: 'Numpad *' },
-        question: { prefix: 'NumpadSubtract', name: 'vraagkwartier', label: 'Numpad -' },
-        finale: { prefix: 'NumpadAdd', name: 'finale', label: 'Numpad +' },
-        intro: { prefix: 'NumpadEnter', name: 'intro', label: 'Numpad Enter' }
+        general: { prefix: 'NumpadDivide', name: 'algemeen', label: 'NP /' },
+        candidate: { prefix: 'NumpadMultiply', name: 'kandidaat/lobby', label: 'NP *' },
+        question: { prefix: 'NumpadSubtract', name: 'vraagkwartier', label: 'NP -' },
+        finale: { prefix: 'NumpadAdd', name: 'finale', label: 'NP +' },
+        threeSixNine: { prefix: 'NumpadDecimal', name: '3-6-9', label: 'NP .' },
+        intro: { prefix: 'NumpadEnter', name: 'intro', label: 'NP Enter' }
       };
 
       function isPerspectiveHotkeyAvailable(button) {
@@ -1111,14 +1143,26 @@
           .forEach(button => {
             const group = perspectiveHotkeyGroups[button.dataset.perspectiveHotkeyGroup];
             if (!group) return;
-            const baseLabel = button.textContent.trim().replace(/\s+\([^)]*\)$/, '');
+            const currentLabel = button.querySelector('.perspective-hotkey-label')?.textContent ||
+              button.textContent;
+            const baseLabel = currentLabel.trim().replace(/\s+\([^)]*\)$/, '');
             if (button.dataset.perspectiveBaseLabel !== baseLabel) {
               button.dataset.perspectiveBaseLabel = baseLabel;
             }
-            const label =
-              `${button.dataset.perspectiveBaseLabel} (${group.label} + ${button.dataset.perspectiveHotkeyIndex})`;
-            if (button.textContent !== label) {
-              button.textContent = label;
+            const shortcut = `${group.label} + ${button.dataset.perspectiveHotkeyIndex}`;
+            const existingShortcut = button.querySelector('.perspective-hotkey-shortcut');
+            if (
+              existingShortcut?.textContent !== shortcut ||
+              button.querySelector('.perspective-hotkey-label')?.textContent !==
+                button.dataset.perspectiveBaseLabel
+            ) {
+              const shortcutLabel = document.createElement('span');
+              shortcutLabel.className = 'perspective-hotkey-shortcut';
+              shortcutLabel.textContent = shortcut;
+              const textLabel = document.createElement('span');
+              textLabel.className = 'perspective-hotkey-label';
+              textLabel.textContent = button.dataset.perspectiveBaseLabel;
+              button.replaceChildren(shortcutLabel, textLabel);
             }
           });
         document.querySelectorAll('[data-perspective-hotkey-group="intro"]').forEach(button => {
@@ -1357,6 +1401,14 @@
         fullscreenPerspectivePlayerIndex = null;
         fullscreenLobbyPerspectiveActive = false;
         threeSixNineLobbyPerspectiveActive = false;
+        if (previousPerspectiveContext === '3-6-9') {
+          setThreeSixNineImagePerspective('mini-lobby', false);
+          threeSixNineOptionsPerspectiveMode = 'together';
+          sendDisplayUpdate({
+            type: 'three_six_nine_options_perspective',
+            mode: threeSixNineOptionsPerspectiveMode
+          });
+        }
         questionQuarterPerspective = null;
         finaleCandidatePerspectivePlayerIndex = null;
         finaleFaceoffPerspectiveActive = false;
@@ -1407,6 +1459,37 @@
         });
       }
 
+      function setThreeSixNineImagePerspective(mode, showImage = null) {
+        const allowedModes = ['mini-lobby', 'question-quarter', 'near-fullscreen'];
+        if (!allowedModes.includes(mode)) return;
+        threeSixNineImagePerspectiveVisible = showImage === null
+          ? !(threeSixNineImagePerspectiveVisible && threeSixNineImagePerspectiveMode === mode)
+          : showImage;
+        threeSixNineImagePerspectiveMode = mode;
+        updatePerspectiveMenu();
+        sendDisplayUpdate({
+          type: 'three_six_nine_image_perspective',
+          mode: threeSixNineImagePerspectiveMode,
+          showing: threeSixNineImagePerspectiveVisible
+        });
+      }
+      window.resetThreeSixNineImagePerspective = () => {
+        setThreeSixNineImagePerspective('mini-lobby', false);
+      };
+      function setThreeSixNineOptionsPerspective(mode) {
+        const allowedModes = ['together', 'question-quarter', 'mini-lobby'];
+        if (!allowedModes.includes(mode)) return;
+        threeSixNineOptionsPerspectiveMode = mode;
+        updatePerspectiveMenu();
+        sendDisplayUpdate({
+          type: 'three_six_nine_options_perspective',
+          mode: threeSixNineOptionsPerspectiveMode
+        });
+      }
+      window.resetThreeSixNineOptionsPerspective = () => {
+        setThreeSixNineOptionsPerspective('together');
+      };
+
       function updatePerspectiveMenu() {
         const candidatePerspectives = document.getElementById('candidatePerspectives');
         const presenterJuryPerspectives = document.getElementById('presenterJuryPerspectives');
@@ -1424,6 +1507,18 @@
           'Puzzel',
           'Galerij'
         ].includes(currentRoundName);
+        const currentThreeSixNineQuestion =
+          currentRoundName === '3-6-9' && typeof perRoundState !== 'undefined'
+            ? perRoundState.currentQuestion
+            : null;
+        const hasThreeSixNineQuestionPhoto = Boolean(
+          currentThreeSixNineQuestion?.questionPhotoUrl ||
+          currentThreeSixNineQuestion?.photoUrl ||
+          currentThreeSixNineQuestion?.afterPhotoUrl ||
+          currentThreeSixNineQuestion?.revealPhotoUrl
+        );
+        const isThreeSixNineMultipleChoice =
+          currentThreeSixNineQuestion?.type === 'multiple-choice';
         const perspectiveContext = finaleComplete ? 'finale' : currentRoundName;
         if (previousPerspectiveContext !== null && previousPerspectiveContext !== perspectiveContext) {
           if (previousPerspectiveContext === 'Open Deur' && perspectiveContext !== 'Open Deur') {
@@ -1444,6 +1539,14 @@
           fullscreenPerspectivePlayerIndex = null;
           fullscreenLobbyPerspectiveActive = false;
           threeSixNineLobbyPerspectiveActive = false;
+          if (previousPerspectiveContext === '3-6-9') {
+            setThreeSixNineImagePerspective('mini-lobby', false);
+            threeSixNineOptionsPerspectiveMode = 'together';
+            sendDisplayUpdate({
+              type: 'three_six_nine_options_perspective',
+              mode: threeSixNineOptionsPerspectiveMode
+            });
+          }
           finaleFaceoffPerspectiveActive = false;
           sendDisplayUpdate({ type: 'finale_faceoff_perspective', showing: false });
           if (questionQuarterPerspective) {
@@ -1564,7 +1667,7 @@
         document.getElementById('fullscreenCandidatePerspectiveTitle').style.display =
           showFullscreenCandidateButtons ? 'block' : 'none';
         fullscreenCandidatePerspectiveButtons.style.display =
-          showFullscreenCandidateButtons ? 'flex' : 'none';
+          showFullscreenCandidateButtons ? 'grid' : 'none';
         if (!showFullscreenCandidateButtons && fullscreenPerspectivePlayerIndex !== null) {
           fullscreenPerspectivePlayerIndex = null;
           sendDisplayUpdate({
@@ -1694,6 +1797,33 @@
           ? 'Terug naar 3-6-9'
           : 'Breedbeeld-lobby tonen';
         threeSixNineLobbyButton.setAttribute('aria-pressed', String(threeSixNineLobbyPerspectiveActive));
+        const threeSixNineImagePerspectives =
+          document.getElementById('threeSixNineImagePerspectives');
+        threeSixNineImagePerspectives.style.display =
+          gameCreated && isThreeSixNine && hasThreeSixNineQuestionPhoto ? 'block' : 'none';
+        threeSixNineImagePerspectives
+          .querySelectorAll('.three-six-nine-image-perspective')
+          .forEach(button => {
+            button.setAttribute(
+              'aria-pressed',
+              String(
+                threeSixNineImagePerspectiveVisible &&
+                button.dataset.imagePerspective === threeSixNineImagePerspectiveMode
+              )
+            );
+          });
+        const threeSixNineOptionsPerspectives =
+          document.getElementById('threeSixNineOptionsPerspectives');
+        threeSixNineOptionsPerspectives.style.display =
+          gameCreated && isThreeSixNine && isThreeSixNineMultipleChoice ? 'block' : 'none';
+        threeSixNineOptionsPerspectives
+          .querySelectorAll('.three-six-nine-options-perspective')
+          .forEach(button => {
+            button.setAttribute(
+              'aria-pressed',
+              String(button.dataset.optionsPerspective === threeSixNineOptionsPerspectiveMode)
+            );
+          });
 
         const fullPresenterButton = document.getElementById('fullPresenterPerspectiveBtn');
         const fullJuryButton = document.getElementById('fullJuryPerspectiveBtn');
@@ -1790,6 +1920,16 @@
 
       document.getElementById('threeSixNineLobbyPerspectiveBtn').addEventListener('click', () => {
         setThreeSixNineLobbyPerspective(!threeSixNineLobbyPerspectiveActive);
+      });
+      document.querySelectorAll('.three-six-nine-image-perspective').forEach(button => {
+        button.addEventListener('click', () => {
+          setThreeSixNineImagePerspective(button.dataset.imagePerspective);
+        });
+        document.querySelectorAll('.three-six-nine-options-perspective').forEach(button => {
+          button.addEventListener('click', () => {
+            setThreeSixNineOptionsPerspective(button.dataset.optionsPerspective);
+          });
+        });
       });
 
       document.getElementById('fullPresenterPerspectiveBtn').addEventListener('click', () => {

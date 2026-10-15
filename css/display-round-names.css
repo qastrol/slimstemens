@@ -239,6 +239,11 @@
   animation: score-oval-appear 600ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
 }
 
+#scene-round-finale-main .finale-candidate-score .score-oval-face,
+#scene-round-finale-end .finale-candidate-score .score-oval-face {
+  animation: none;
+}
+
 @keyframes answer-text-reveal {
   from {
     filter: blur(12px);

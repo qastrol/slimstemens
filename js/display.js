@@ -10,6 +10,9 @@ const UNIVERSAL_PERSPECTIVE_VERTICAL_OFFSET = -55; // Pas dit getal aan om de ka
 let showingStandings = false;
 let showingLobbyStandings = false;
 let showingThreeSixNineLobbyPerspective = false;
+let threeSixNineImagePerspectiveMode = 'mini-lobby';
+let threeSixNinePerspectivePhotoVisible = null;
+let threeSixNineOptionsPerspectiveMode = 'together';
 let questionQuarterPerspective = null;
 let questionQuarterPerspectiveViewport = null;
 let questionQuarterPerspectiveTarget = null;
@@ -595,6 +598,23 @@ function connectWebSocket() {
         updatePresenterOverlayTheme();
         
         if (data.key === 'threeSixNine') {
+          lastThreeSixNineData = null;
+          threeSixNineImagePerspectiveMode = 'mini-lobby';
+          threeSixNinePerspectivePhotoVisible = null;
+          threeSixNineOptionsPerspectiveMode = 'together';
+          const photoContainer = document.getElementById('threeSixNinePhotoContainer');
+          const answersContainer = document.getElementById('threeSixNineAnswersContainer');
+          const scene = document.getElementById('scene-round-369');
+          if (scene) scene.dataset.photoPerspective = threeSixNineImagePerspectiveMode;
+          if (scene) scene.dataset.optionsPerspective = threeSixNineOptionsPerspectiveMode;
+          if (photoContainer) {
+            photoContainer.style.display = 'none';
+            photoContainer.replaceChildren();
+          }
+          if (answersContainer) {
+            answersContainer.style.display = 'none';
+            answersContainer.replaceChildren();
+          }
           if (data.players) players = data.players;
           updateScene('round-369');
           if (Number.isFinite(data.maxQuestions)) perRoundState.max = data.maxQuestions;
@@ -921,6 +941,39 @@ function handleAudioMessage(data) {
         break;
       }
 
+      case 'three_six_nine_image_perspective': {
+        const allowedModes = new Set(['mini-lobby', 'question-quarter', 'near-fullscreen']);
+        if (allowedModes.has(data.mode)) {
+          threeSixNineImagePerspectiveMode = data.mode;
+          if (typeof data.showing === 'boolean') {
+            threeSixNinePerspectivePhotoVisible = data.showing;
+          }
+          const scene = document.getElementById('scene-round-369');
+          if (scene) scene.dataset.photoPerspective = threeSixNineImagePerspectiveMode;
+          if (lastThreeSixNineData && typeof data.showing === 'boolean') {
+            renderThreeSixNine({
+              ...lastThreeSixNineData,
+              action: null,
+              photoVisible: data.showing
+            });
+          }
+        }
+        break;
+      }
+
+      case 'three_six_nine_options_perspective': {
+        const allowedModes = new Set(['together', 'question-quarter', 'mini-lobby']);
+        if (allowedModes.has(data.mode)) {
+          threeSixNineOptionsPerspectiveMode = data.mode;
+          const scene = document.getElementById('scene-round-369');
+          if (scene) scene.dataset.optionsPerspective = threeSixNineOptionsPerspectiveMode;
+          if (lastThreeSixNineData) {
+            renderThreeSixNine({ ...lastThreeSixNineData, action: null });
+          }
+        }
+        break;
+      }
+
       case 'lobby_standings_reveal': {
         const scorePanel = document.getElementById('lobbyStandingsScorePanel');
         if (showingLobbyStandings && scorePanel) {
@@ -1174,6 +1227,12 @@ function adjustQuestionFontSize(questionElement, text) {
   }
 
 function renderThreeSixNine(data){
+    const previousQuestionIndex = lastThreeSixNineData?.currentQuestionIndex;
+    const isNewQuestion = Number.isFinite(data.currentQuestionIndex) &&
+      data.currentQuestionIndex !== previousQuestionIndex;
+    if (isNewQuestion && data.questionType !== 'multiple-choice') {
+      threeSixNineOptionsPerspectiveMode = 'together';
+    }
     lastThreeSixNineData = { ...(lastThreeSixNineData || {}), ...data };
 
     console.log('🎵 renderThreeSixNine aangeroepen met data.action:', data.action, 'audioUrl:', data.audioUrl);
@@ -1193,6 +1252,24 @@ function renderThreeSixNine(data){
         videoUrl: payload.questionVideoUrl || payload.videoUrl || null
       };
     };
+    const photoContainer = document.getElementById('threeSixNinePhotoContainer');
+    const answersContainer = document.getElementById('threeSixNineAnswersContainer');
+    const scene = document.getElementById('scene-round-369');
+    if (scene) scene.dataset.optionsPerspective = threeSixNineOptionsPerspectiveMode;
+    if (photoContainer) {
+      if (scene) scene.dataset.photoPerspective = threeSixNineImagePerspectiveMode;
+      if (isNewQuestion) {
+        threeSixNineImagePerspectiveMode = 'mini-lobby';
+        threeSixNinePerspectivePhotoVisible = null;
+        if (scene) scene.dataset.photoPerspective = threeSixNineImagePerspectiveMode;
+        photoContainer.style.display = 'none';
+        photoContainer.replaceChildren();
+      }
+    }
+    if (isNewQuestion && answersContainer) {
+      answersContainer.style.display = 'none';
+      answersContainer.replaceChildren();
+    }
 
     const playThreeSixNineFullscreenVideo = (videoUrl) => {
       if (!videoUrl) return;
@@ -1312,7 +1389,7 @@ function renderThreeSixNine(data){
       }
     
     if (data.action === 'togglePhoto' && data.photoUrl) {
-      const photoContainer = document.getElementById('threeSixNinePhotoContainer');
+      threeSixNinePerspectivePhotoVisible = null;
       if (photoContainer) {
         if (data.photoVisible) {
           photoContainer.innerHTML = `<img src="${data.photoUrl}" alt="Vraagfoto" />`;
@@ -1340,10 +1417,13 @@ function renderThreeSixNine(data){
           questionNumbersContainer.innerHTML = "";
           delete questionNumbersContainer.dataset.currentQuestionIndex;
         }
-        const photoContainer = document.getElementById('threeSixNinePhotoContainer');
         if (photoContainer) {
           photoContainer.style.display = 'none';
           photoContainer.innerHTML = '';
+        }
+        if (answersContainer) {
+          answersContainer.style.display = 'none';
+          answersContainer.replaceChildren();
         }
     } else {
         
@@ -1369,13 +1449,29 @@ function renderThreeSixNine(data){
             }
             questionHTML += '</div>';
         }
+        if (answersContainer) {
+          answersContainer.replaceChildren();
+          if (qType === 'multiple-choice' && data.options) {
+            const optionsList = document.createElement('div');
+            optionsList.className = 'multiple-choice-options';
+            for (const key of ['A', 'B', 'C', 'D']) {
+              const option = document.createElement('div');
+              option.textContent = `${key}) ${data.options[key] || '-'}`;
+              optionsList.appendChild(option);
+            }
+            answersContainer.appendChild(optionsList);
+            answersContainer.style.display =
+              threeSixNineOptionsPerspectiveMode === 'together' ? 'none' : 'flex';
+          } else {
+            answersContainer.style.display = 'none';
+          }
+        }
         
         // Foto weergave in linkervlak (zonder extra status-tekst in de vraag).
         if (phaseMedia.photoUrl) {
-            if (data.photoVisible) {
+            if (threeSixNinePerspectivePhotoVisible ?? data.photoVisible) {
                 // Toon foto in linkervlak
                 setTimeout(() => {
-                    const photoContainer = document.getElementById('threeSixNinePhotoContainer');
               if (photoContainer && phaseMedia.photoUrl) {
                 photoContainer.innerHTML = `<img src="${phaseMedia.photoUrl}" alt="Vraagfoto" />`;
                         photoContainer.style.display = 'block';
@@ -1384,7 +1480,6 @@ function renderThreeSixNine(data){
             } else {
                 // Verberg foto
                 setTimeout(() => {
-                    const photoContainer = document.getElementById('threeSixNinePhotoContainer');
                     if (photoContainer) {
                         photoContainer.style.display = 'none';
                     }
@@ -1393,7 +1488,6 @@ function renderThreeSixNine(data){
         }
         else {
           setTimeout(() => {
-            const photoContainer = document.getElementById('threeSixNinePhotoContainer');
             if (photoContainer) {
               photoContainer.style.display = 'none';
               photoContainer.innerHTML = '';
