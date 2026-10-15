@@ -1402,7 +1402,7 @@
         fullscreenLobbyPerspectiveActive = false;
         threeSixNineLobbyPerspectiveActive = false;
         if (previousPerspectiveContext === '3-6-9') {
-          setThreeSixNineImagePerspective('mini-lobby', false);
+          setThreeSixNineImagePerspective('mini-lobby', false, false);
           threeSixNineOptionsPerspectiveMode = 'together';
           sendDisplayUpdate({
             type: 'three_six_nine_options_perspective',
@@ -1459,14 +1459,14 @@
         });
       }
 
-      function setThreeSixNineImagePerspective(mode, showImage = null) {
+      function setThreeSixNineImagePerspective(mode, showImage = null, refreshMenu = true) {
         const allowedModes = ['mini-lobby', 'question-quarter', 'near-fullscreen'];
         if (!allowedModes.includes(mode)) return;
         threeSixNineImagePerspectiveVisible = showImage === null
           ? !(threeSixNineImagePerspectiveVisible && threeSixNineImagePerspectiveMode === mode)
           : showImage;
         threeSixNineImagePerspectiveMode = mode;
-        updatePerspectiveMenu();
+        if (refreshMenu) updatePerspectiveMenu();
         sendDisplayUpdate({
           type: 'three_six_nine_image_perspective',
           mode: threeSixNineImagePerspectiveMode,
@@ -1540,7 +1540,7 @@
           fullscreenLobbyPerspectiveActive = false;
           threeSixNineLobbyPerspectiveActive = false;
           if (previousPerspectiveContext === '3-6-9') {
-            setThreeSixNineImagePerspective('mini-lobby', false);
+            setThreeSixNineImagePerspective('mini-lobby', false, false);
             threeSixNineOptionsPerspectiveMode = 'together';
             sendDisplayUpdate({
               type: 'three_six_nine_options_perspective',

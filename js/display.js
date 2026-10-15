@@ -51,10 +51,6 @@ let allGalleryAnswers = [];
 const answerRevealStates = new WeakMap();
 let openDeurIntroVideoActive = false;
 let openDeurPendingVraagData = null;
-const openDeurPreparedThumbUrls = new Set();
-const openDeurPreloadedIntroUrls = new Set();
-let electronOpenDeurPreloader = null;
-let electronOpenDeurPreloadedUrl = '';
 let collectiefPreloadedVideoUrl = '';
 let threeSixNineVideoActive = false;
 let lastThreeSixNineData = null;
@@ -241,25 +237,6 @@ function updateScene(sceneName) {
   refreshVisibleOverlaysPosition();
 }
 
-function decodeEncodedOpenDeurVideoUrl(videoUrl) {
-  const value = String(videoUrl || '').trim();
-  const match = value.match(/^media\/opendeur\/((?:https?|http)___.+)\.mp4$/i);
-  if (!match) {
-    return '';
-  }
-
-  let decoded = match[1]
-    .replace(/^https?___/i, (m) => m.toLowerCase().startsWith('https') ? 'https://' : 'http://')
-    .replace(/__+/g, '/')
-    .replace(/_/g, '/');
-
-  if (!/^https?:\/\//i.test(decoded)) {
-    return '';
-  }
-
-  return `${decoded}.mp4`;
-}
-
 function getOpenDeurIntroThumbnailUrl(questioner) {
   if (!questioner) {
     return '';
@@ -268,116 +245,6 @@ function getOpenDeurIntroThumbnailUrl(questioner) {
   return String(
     questioner.introThumbnailUrl || questioner.thumbnailUrl || questioner.introImageUrl || questioner.posterUrl || ''
   ).trim();
-}
-
-function preloadOpenDeurIntroVideo(videoUrl) {
-  const candidate = String(videoUrl || '').trim();
-  if (desktopBridge) {
-    if (!candidate || electronOpenDeurPreloadedUrl === candidate) {
-      return;
-    }
-
-    if (electronOpenDeurPreloader) {
-      electronOpenDeurPreloader.pause();
-      electronOpenDeurPreloader.removeAttribute('src');
-      electronOpenDeurPreloader.load();
-    }
-
-    electronOpenDeurPreloader = document.createElement('video');
-    electronOpenDeurPreloader.preload = 'auto';
-    electronOpenDeurPreloader.muted = true;
-    electronOpenDeurPreloader.playsInline = true;
-    electronOpenDeurPreloader.src = candidate;
-    electronOpenDeurPreloader.load();
-    electronOpenDeurPreloadedUrl = candidate;
-    return;
-  }
-
-  if (!candidate || openDeurPreloadedIntroUrls.has(candidate)) {
-    return;
-  }
-
-  openDeurPreloadedIntroUrls.add(candidate);
-  const preloader = document.createElement('video');
-  preloader.preload = 'auto';
-  preloader.muted = true;
-  preloader.playsInline = true;
-  preloader.src = candidate;
-  preloader.load();
-}
-
-function prepareOpenDeurQuestionerVideo(videoEl, videoUrl, preload = 'metadata') {
-  if (!videoEl || !videoUrl) {
-    return;
-  }
-
-  const container = videoEl.closest('.vragensteller-box');
-  const candidates = [String(videoUrl).trim()];
-  const fallbackUrl = decodeEncodedOpenDeurVideoUrl(videoUrl);
-  if (fallbackUrl && fallbackUrl !== candidates[0]) {
-    candidates.push(fallbackUrl);
-  }
-
-  if (videoEl.dataset.preparedFor === candidates[0]) {
-    if (container) {
-      container.classList.remove('loading-video-thumb');
-    }
-    return;
-  }
-
-  videoEl.preload = preload;
-  videoEl.muted = true;
-  videoEl.playsInline = true;
-  videoEl.setAttribute('playsinline', '');
-  videoEl.setAttribute('muted', '');
-  videoEl.setAttribute('preload', preload);
-
-  const showFallbackState = () => {
-    if (container) {
-      container.classList.remove('has-video-thumb', 'loading-video-thumb');
-    }
-    videoEl.removeAttribute('src');
-    try {
-      videoEl.pause();
-    } catch (error) {
-      // Niets te doen.
-    }
-  };
-
-  let candidateIndex = 0;
-
-  const loadCandidate = () => {
-    const candidate = candidates[candidateIndex];
-    if (!candidate) {
-      showFallbackState();
-      return;
-    }
-
-    videoEl.onloadeddata = null;
-    videoEl.onloadedmetadata = null;
-    videoEl.onerror = () => {
-      candidateIndex += 1;
-      loadCandidate();
-    };
-
-    videoEl.onloadedmetadata = () => {
-      if (container) {
-        container.classList.remove('loading-video-thumb');
-      }
-    };
-
-    videoEl.onloadeddata = () => {
-      if (container) {
-        container.classList.remove('loading-video-thumb');
-      }
-    };
-
-    videoEl.dataset.preparedFor = candidate;
-    videoEl.src = candidate;
-    videoEl.load();
-  };
-
-  loadCandidate();
 }
 
 function getAbsoluteLayoutBox(el) {
@@ -565,7 +432,7 @@ function connectWebSocket() {
         break;
 
       case 'players':
-        players = data.players;
+        if (Array.isArray(data.players)) players = data.players;
         if (data.round && data.round !== 'lobby') {
           updatePlayersBarsFromGeneric(players, data.active ?? data.activeIndex ?? -1);
           if (currentScene === 'round-collectief-main' && collectiefMainScoreData) {
@@ -590,6 +457,26 @@ function connectWebSocket() {
       case 'round_start':
         currentRoundDisplayName = getCanonicalRoundDisplayName(data.name || data.key);
         currentRoundDisplayKey = data.key || '';
+        if (data.key !== 'threeSixNine') {
+          if (threeSixNineVideoActive) {
+            threeSixNineVideoActive = false;
+            const videoPlayer = document.getElementById('threeSixNineVideoPlayer');
+            const videoSource = document.getElementById('threeSixNineVideoSource');
+            if (videoPlayer) {
+              videoPlayer.onended = null;
+              videoPlayer.onerror = null;
+              videoPlayer.pause();
+              if (videoPlayer.readyState > 0) {
+                videoPlayer.currentTime = 0;
+              }
+            }
+            if (videoSource && videoPlayer) {
+              videoSource.src = '';
+              videoPlayer.load();
+            }
+          }
+          lastThreeSixNineData = null;
+        }
         finaleGameComplete = false;
         document.querySelectorAll(
           '#finale-main-grid, #finale-pre-grid, #scene-finale-standings .finale-standings-grid'
@@ -726,10 +613,13 @@ function handleAudioMessage(data) {
         break;
 
       case 'update':
-        if (data.players) players = data.players;
+        if (Array.isArray(data.players)) players = data.players;
 
         
-        if (data.currentRoundName === 'threeSixNine' || data.scene === 'round-369') {
+        if (
+          currentRoundDisplayKey === 'threeSixNine' &&
+          (data.currentRoundName === 'threeSixNine' || data.scene === 'round-369')
+        ) {
           if (data.action !== 'playVideo' && currentScene !== 'round-369') updateScene('round-369');
           if (data.maxQuestions) perRoundState.max = data.maxQuestions;
           renderThreeSixNine(data);
@@ -1077,7 +967,8 @@ function handleAudioMessage(data) {
 function renderMiniLobby(players, containerId){
     const el = document.getElementById(containerId);
     if(!el) return;
-    el.innerHTML = players.map(p => `<div class="player" data-player-index="${p.index}"><img src="${p.photoUrl || 'assets/avatar.png'}"></div>`).join('');
+    const playersToRender = Array.isArray(players) ? players : [];
+    el.innerHTML = playersToRender.map(p => `<div class="player" data-player-index="${p.index}"><img src="${p.photoUrl || 'assets/avatar.png'}"></div>`).join('');
     renderQuestionQuarterPerspective();
 }
 
@@ -1227,13 +1118,17 @@ function adjustQuestionFontSize(questionElement, text) {
   }
 
 function renderThreeSixNine(data){
+    const playersForRender = Array.isArray(data.players) ? data.players : players;
+    if (Array.isArray(data.players)) {
+      players = data.players;
+    }
     const previousQuestionIndex = lastThreeSixNineData?.currentQuestionIndex;
     const isNewQuestion = Number.isFinite(data.currentQuestionIndex) &&
       data.currentQuestionIndex !== previousQuestionIndex;
     if (isNewQuestion && data.questionType !== 'multiple-choice') {
       threeSixNineOptionsPerspectiveMode = 'together';
     }
-    lastThreeSixNineData = { ...(lastThreeSixNineData || {}), ...data };
+    lastThreeSixNineData = { ...(lastThreeSixNineData || {}), ...data, players: playersForRender };
 
     console.log('🎵 renderThreeSixNine aangeroepen met data.action:', data.action, 'audioUrl:', data.audioUrl);
 
@@ -1504,7 +1399,7 @@ function renderThreeSixNine(data){
           adjustQuestionFontSize(roundQuestionEl, qText);
         }
 
-        const normalizedActiveIndex = normalizeActiveIndex(players, data.activeIndex);
+        const normalizedActiveIndex = normalizeActiveIndex(playersForRender, data.activeIndex);
         perRoundState.currentQuestionIndex = Number.isFinite(data.currentQuestionIndex)
           ? Math.max(0, data.currentQuestionIndex - 1)
           : null;
@@ -1516,7 +1411,7 @@ function renderThreeSixNine(data){
     }
 
     
-    renderMiniLobby(data.players, 'miniLobbyPlayers');
+    renderMiniLobby(playersForRender, 'miniLobbyPlayers');
     
 }
 
@@ -1571,67 +1466,21 @@ function renderOpenDeurVragensteller(data) {
     
     container.innerHTML = data.questioners.map(q => {
       const introThumbnailUrl = getOpenDeurIntroThumbnailUrl(q);
-      const hasVideoThumb = !!q.introVideoUrl && !introThumbnailUrl;
       const mediaMarkup = introThumbnailUrl
         ? `<img class="vragensteller-thumb" src="${introThumbnailUrl}" alt="Thumbnail voor ${q.name}" loading="eager" decoding="async" aria-hidden="true">`
-        : (hasVideoThumb
-          ? `<video class="vragensteller-thumb" muted playsinline preload="metadata" aria-hidden="true"></video>`
-          : '');
-      const videoOverlayMarkup = (introThumbnailUrl || hasVideoThumb)
+        : '';
+      const videoOverlayMarkup = introThumbnailUrl
         ? `<div class="vragensteller-thumb-overlay" aria-hidden="true"></div>`
         : '';
 
       return `
-        <div class="vragensteller-box${q.isChosen ? ' gespeeld' : ' beschikbaar'}${(introThumbnailUrl || hasVideoThumb) ? ' has-video-thumb' : ''}" data-questioner-index="${q.index}" data-video-url="${q.introVideoUrl || ''}" data-thumb-url="${introThumbnailUrl}">
+        <div class="vragensteller-box${q.isChosen ? ' gespeeld' : ' beschikbaar'}${introThumbnailUrl ? ' has-video-thumb' : ''}" data-questioner-index="${q.index}" data-thumb-url="${introThumbnailUrl}">
           ${mediaMarkup}
           ${videoOverlayMarkup}
           <div class="vragensteller-name">${q.name}</div>
         </div>
       `;
     }).join('');
-
-    const nextQuestioner = data.questioners.find((questioner) => (
-      !!questioner.introVideoUrl && !questioner.isChosen
-    ));
-    if (desktopBridge) {
-      if (nextQuestioner) {
-        const introThumbnailUrl = getOpenDeurIntroThumbnailUrl(nextQuestioner);
-        if (introThumbnailUrl) {
-          preloadOpenDeurIntroVideo(nextQuestioner.introVideoUrl);
-        } else {
-          const videoEl = container.querySelector(
-            `.vragensteller-box[data-questioner-index="${nextQuestioner.index}"] .vragensteller-thumb`
-          );
-          const box = videoEl?.closest('.vragensteller-box');
-          if (box && !openDeurPreparedThumbUrls.has(nextQuestioner.introVideoUrl)) {
-            box.classList.add('loading-video-thumb');
-          }
-          prepareOpenDeurQuestionerVideo(videoEl, nextQuestioner.introVideoUrl, 'auto');
-          openDeurPreparedThumbUrls.add(nextQuestioner.introVideoUrl);
-        }
-      }
-    } else {
-      const maxPreloadedQuestioners = 1;
-      data.questioners
-        .filter((questioner) => !!questioner.introVideoUrl)
-        .slice(0, maxPreloadedQuestioners)
-        .forEach((questioner) => {
-          preloadOpenDeurIntroVideo(questioner.introVideoUrl);
-
-          const introThumbnailUrl = getOpenDeurIntroThumbnailUrl(questioner);
-          if (introThumbnailUrl) {
-            return;
-          }
-
-          const videoEl = container.querySelector(`.vragensteller-box[data-questioner-index="${questioner.index}"] .vragensteller-thumb`);
-          const box = videoEl?.closest('.vragensteller-box');
-          if (box && !openDeurPreparedThumbUrls.has(questioner.introVideoUrl)) {
-            box.classList.add('loading-video-thumb');
-          }
-          prepareOpenDeurQuestionerVideo(videoEl, questioner.introVideoUrl);
-          openDeurPreparedThumbUrls.add(questioner.introVideoUrl);
-        });
-    }
 
     renderPlayersBarCompact(data.players, data.activeChoosingPlayerIndex, 'od-vragensteller-scores');
     renderQuestionQuarterPerspective();
@@ -1678,8 +1527,6 @@ function renderOpenDeurVragensteller(data) {
     if (!videoPlayer || !videoSource) {
       return false;
     }
-
-    preloadOpenDeurIntroVideo(introVideoUrl);
 
     openDeurIntroVideoActive = true;
     openDeurPendingVraagData = { ...data, showIntroVideo: false };

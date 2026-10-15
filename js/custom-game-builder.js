@@ -841,16 +841,30 @@
       }
     );
     const thumbnailField = createMediaInput(
-      'Thumbnail afbeelding (optioneel)',
+      'Thumbnail afbeelding (verplicht bij video)',
       data.introThumbnailUrl || data.thumbnailUrl || data.introImageUrl || data.posterUrl || '',
       'media/opendeur',
       {
         placeholder: 'Pad naar thumbnail afbeelding',
-        helperText: 'Optioneel: handmatige thumbnail voor de vragensteller. Dit kan de laadtijd van het vragenstelleroverzicht verbeteren.',
+        helperText: 'Verplicht zodra je een introvideo gebruikt. Upload eerst de thumbnail en daarna de video.',
         uploadAccept: 'image/*',
         uploadTitle: 'Kies een afbeelding'
       }
     );
+    mediaField.fileInput.addEventListener('change', () => {
+      if (!mediaField.fileInput.files?.length) {
+        return;
+      }
+
+      if (!thumbnailField.pathInput.value.trim()) {
+        mediaField.fileInput.value = '';
+        mediaField.pathInput.value = '';
+        setStatus('Upload eerst een thumbnail voor deze Open Deur-video.', true);
+        return;
+      }
+
+      setStatus('Open Deur-video toegevoegd.');
+    });
     fromField.input.classList.add('field-open-from');
     questionField.input.classList.add('field-open-question');
     remarksField.textarea.classList.add('field-open-remarks');
@@ -1172,7 +1186,7 @@
 
   function buildOpenDeur() {
     const items = [];
-    openDeurList.querySelectorAll('.item').forEach((item) => {
+    openDeurList.querySelectorAll('.item').forEach((item, index) => {
       const from = item.querySelector('.field-open-from')?.value?.trim() || '';
       const question = item.querySelector('.field-open-question')?.value?.trim() || '';
       const answerValues = getFixedAnswerValues(item, 'field-open-answer', 4);
@@ -1182,6 +1196,10 @@
 
       if (!from && !question && !introVideo && !introThumbnail && !hasAnyValue(answerValues)) {
         return;
+      }
+
+      if (introVideo && !introThumbnail) {
+        throw new Error(`Open Deur vraag ${index + 1}: voeg een thumbnail toe voor de introvideo.`);
       }
 
       if (!question) {

@@ -518,6 +518,14 @@ function niceRoundName(key){
 }
 
 function startRound(roundKey) {
+  if (
+    roundKey === 'opendeur' &&
+    typeof validateOpenDeurVideoThumbnails === 'function' &&
+    !validateOpenDeurVideoThumbnails()
+  ) {
+    return;
+  }
+
   if (typeof window.resetPerspectiveMenuSelection === 'function') {
     window.resetPerspectiveMenuSelection();
   }

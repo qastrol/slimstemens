@@ -1,17 +1,30 @@
 function getOpenDeurIntroVideoUrl(question) {
   if (!question) return '';
-  return question.introVideoUrl || question.videoUrl || question.introVideo || question.video || '';
+  return String(question.introVideoUrl || question.videoUrl || question.introVideo || question.video || '').trim();
 }
 
 function getOpenDeurIntroThumbnailUrl(question) {
   if (!question) return '';
-  return (
+  return String(
     question.introThumbnailUrl ||
     question.thumbnailUrl ||
     question.introImageUrl ||
-    question.posterUrl ||
-    ''
-  );
+    question.posterUrl || ''
+  ).trim();
+}
+
+function validateOpenDeurVideoThumbnails() {
+  const questions = getQuestionsForRound('opendeur', openDeurQuestions);
+  const questionIndex = questions.findIndex((question) => (
+    getOpenDeurIntroVideoUrl(question) && !getOpenDeurIntroThumbnailUrl(question)
+  ));
+
+  if (questionIndex !== -1) {
+    flash(`Open Deur vraag ${questionIndex + 1}: voeg een thumbnail toe voor de introvideo.`);
+    return false;
+  }
+
+  return true;
 }
 
 let openDeurForcedPerspectiveTimer = null;
@@ -52,6 +65,10 @@ function scheduleOpenDeurForcedPerspective(mode, playerIndex = null, delay = 0) 
 }
 
 function setupOpenDeurRound() {
+  if (!validateOpenDeurVideoThumbnails()) {
+    return;
+  }
+
   // Stop klok als deze loopt (exclusief voor 3-6-9)
   cancelOpenDeurForcedPerspectiveChange();
   if (typeof klok369_stopLoop === 'function') {
@@ -446,9 +463,8 @@ if (scene === 'scene-round-opendeur-vragensteller') {
     data.questioners = perRoundState.questions.map((q, idx) => ({
         index: idx,
         name: q.from,
-    isChosen: q.played,
-  introVideoUrl: getOpenDeurIntroVideoUrl(q) || null,
-  introThumbnailUrl: getOpenDeurIntroThumbnailUrl(q) || null
+        isChosen: q.played,
+        introThumbnailUrl: getOpenDeurIntroThumbnailUrl(q) || null
     }));
 
     data.activeChoosingPlayerIndex = activePlayerIndex;
