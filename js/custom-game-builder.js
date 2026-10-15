@@ -1416,7 +1416,7 @@
     setCheckboxValue('settingSafeRoundNavigation', !!config?.settings?.safeRoundNavigation?.enabled);
     setCheckboxValue(
       'settingAutomaticSceneChanges',
-      config?.settings?.automaticSceneChanges?.enabled === true
+      config?.settings?.automaticSceneChanges?.enabled !== false
     );
     const startSecondsInput = document.getElementById('settingStartSeconds');
     if (startSecondsInput) {

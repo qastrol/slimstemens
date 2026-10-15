@@ -2807,9 +2807,7 @@ function renderQuestionQuarterPerspective() {
     'round-galerij-main',
     'round-galerij-aanvul',
     'round-galerij-slideshow',
-    'round-galerij-done',
-    'round-collectief-pre',
-    'round-collectief-main'
+    'round-galerij-done'
   ]);
   const usesNativeMiniLobby = !isFullscreenLobby &&
     nativeMiniLobbyScenes.has(perspectiveSceneName);
@@ -2931,6 +2929,10 @@ function renderQuestionQuarterPerspective() {
       return;
     }
     const miniLobby = sourceMiniLobby.cloneNode(true);
+    if (perspectiveSceneName.startsWith('round-collectief-')) {
+      miniLobby.querySelector('#collectiefMainScoreCircles')?.remove();
+    }
+    removeIds(miniLobby);
     miniLobby.classList.add('question-quarter-mini-lobby');
     viewport.appendChild(miniLobby);
     Array.from(miniLobby.children)
@@ -2962,6 +2964,7 @@ function renderQuestionQuarterPerspective() {
 
     miniLobby.style.overflow = 'hidden';
     Array.from(miniLobby.children).forEach(element => {
+      if (element.id === 'collectiefMainScoreCircles') return;
       if (applyUniversalPerspectiveZoom(
         element,
         player,

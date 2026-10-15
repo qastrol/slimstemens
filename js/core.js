@@ -518,6 +518,10 @@ function niceRoundName(key){
 }
 
 function startRound(roundKey) {
+  if (typeof window.resetPerspectiveMenuSelection === 'function') {
+    window.resetPerspectiveMenuSelection();
+  }
+
   const roundControls = document.getElementById('roundControls');
   if (roundControls) {
     roundControls.innerHTML = '';
@@ -801,6 +805,10 @@ document.getElementById('nextRound').addEventListener('click', ()=>{
   if (playerModeSettings.playerCount === 1 && 
       currentRoundIndex < roundsSequence.length && 
       roundsSequence[currentRoundIndex] === 'collectief') {
+    if (typeof window.resetPerspectiveMenuSelection === 'function') {
+      window.resetPerspectiveMenuSelection();
+    }
+
     // Toon solo eindscherm op display
     const player = players[0];
     

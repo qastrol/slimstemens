@@ -185,7 +185,7 @@
         <hr class="divider" />
         <div>
           <label>
-            <input id="automaticSceneChangesCheckbox" type="checkbox" />
+            <input id="automaticSceneChangesCheckbox" type="checkbox" checked />
             Automatische scènewissels
           </label>
         </div>
@@ -232,11 +232,6 @@
             <p id="fullscreenCandidatePerspectiveTitle" class="small perspective-menu-message"
               style="display:none;">Fullscreen inzoom</p>
             <div id="fullscreenCandidatePerspectiveButtons" class="perspective-actions perspective-actions-compact"></div>
-            <div id="automaticSceneChangesControls" style="display:none;">
-              <p id="automaticSceneChangesStatus" class="small perspective-menu-message">
-                Automatische scènewissels uit.
-              </p>
-            </div>
           </div>
           <div id="finaleCandidatePerspectives" style="display:none;">
             <p class="small perspective-menu-message">Finalisten &amp; face-off</p>
@@ -885,7 +880,7 @@
           document.getElementById('automaticSceneChangesCheckbox');
         if (automaticSceneChangesCheckbox) {
           automaticSceneChangesCheckbox.checked =
-            config.settings.automaticSceneChanges?.enabled === true;
+            config.settings.automaticSceneChanges?.enabled !== false;
           automaticSceneChangesCheckbox.dispatchEvent(new Event('change'));
         }
 
@@ -1086,7 +1081,7 @@
       let threeSixNineLobbyPerspectiveActive = false;
       let questionQuarterPerspective = null;
       let automaticSceneChangesEnabled =
-        window.pendingUiConfig?.settings?.automaticSceneChanges?.enabled === true;
+        window.pendingUiConfig?.settings?.automaticSceneChanges?.enabled !== false;
       window.automaticSceneChangesEnabled = automaticSceneChangesEnabled;
       let finaleCandidatePerspectivePlayerIndex = null;
       let finaleFaceoffPerspectiveActive = false;
@@ -1225,8 +1220,7 @@
           ![
             'Open Deur',
             'Puzzel',
-            'Galerij',
-            'Collectief Geheugen'
+            'Galerij'
           ].includes(document.getElementById('currentRound')?.textContent.trim())
         ) {
           return false;
@@ -1239,6 +1233,11 @@
           return false;
         }
 
+        const hadUniversalPerspective =
+          fullscreenLobbyPerspectiveActive ||
+          fullscreenPerspectivePlayerIndex !== null ||
+          selectedPerspectivePlayerIndex !== null;
+
         if (threeSixNineLobbyPerspectiveActive) setThreeSixNineLobbyPerspective(false);
 
         showingPresenter = false;
@@ -1250,25 +1249,20 @@
         sendDisplayUpdate({ type: 'presenter_toggle', showing: false, photoData: null });
         sendJuryToggle(false);
 
-        questionQuarterPerspective = null;
         fullscreenLobbyPerspectiveActive = false;
         fullscreenPerspectivePlayerIndex = null;
         selectedPerspectivePlayerIndex = null;
-        updatePerspectiveMenu();
-        sendDisplayUpdate({
-          type: 'question_quarter_perspective',
-          perspective: null,
-          automaticSceneChangesEnabled
-        });
-        sendDisplayUpdate({
-          type: 'universal_perspective',
-          fullscreenLobby: false,
-          fullscreenPlayer: false,
-          playerIndex: null
-        });
+        if (hadUniversalPerspective) {
+          sendDisplayUpdate({
+            type: 'universal_perspective',
+            fullscreenLobby: false,
+            fullscreenPlayer: false,
+            playerIndex: null
+          });
+        }
 
         if (mode === 'normal') {
-          return true;
+          setQuestionQuarterPerspective(null);
         } else if (mode === 'miniLobby') {
           setQuestionQuarterPerspective({ type: 'lobby' });
         } else if (mode === 'player') {
@@ -1288,8 +1282,7 @@
           ![
             'Open Deur',
             'Puzzel',
-            'Galerij',
-            'Collectief Geheugen'
+            'Galerij'
           ].includes(document.getElementById('currentRound')?.textContent.trim())
         ) {
           return false;
@@ -1354,6 +1347,12 @@
 
       const resetPerspectiveMenuSelection = () => {
         clearPerspectiveHotkeyGroup();
+        if (typeof window.cancelAutomaticScenePerspectiveChange === 'function') {
+          window.cancelAutomaticScenePerspectiveChange();
+        }
+        if (typeof window.cancelOpenDeurForcedPerspectiveChange === 'function') {
+          window.cancelOpenDeurForcedPerspectiveChange();
+        }
         selectedPerspectivePlayerIndex = null;
         fullscreenPerspectivePlayerIndex = null;
         fullscreenLobbyPerspectiveActive = false;
@@ -1361,9 +1360,24 @@
         questionQuarterPerspective = null;
         finaleCandidatePerspectivePlayerIndex = null;
         finaleFaceoffPerspectiveActive = false;
+        showingPresenter = false;
+        showingPresenterFullscreen = false;
+        showingJury = false;
+        showingJuryFullscreen = false;
+        updatePresenterToggleLabel();
+        updateJuryToggleLabel();
         sendDisplayUpdate({ type: 'question_quarter_perspective', perspective: null });
         sendDisplayUpdate({ type: 'finale_candidate_perspective', showing: false });
         sendDisplayUpdate({ type: 'finale_faceoff_perspective', showing: false });
+        sendDisplayUpdate({ type: 'presenter_toggle', showing: false, photoData: null });
+        sendJuryToggle(false);
+        sendDisplayUpdate({
+          type: 'universal_perspective',
+          fullscreenLobby: false,
+          fullscreenPlayer: false,
+          playerIndex: null
+        });
+        sendDisplayUpdate({ type: 'three_six_nine_lobby_perspective', showing: false });
         updatePerspectiveMenu();
       };
 
@@ -1408,8 +1422,7 @@
           '3-6-9',
           'Open Deur',
           'Puzzel',
-          'Galerij',
-          'Collectief Geheugen'
+          'Galerij'
         ].includes(currentRoundName);
         const perspectiveContext = finaleComplete ? 'finale' : currentRoundName;
         if (previousPerspectiveContext !== null && previousPerspectiveContext !== perspectiveContext) {
@@ -1681,46 +1694,6 @@
           ? 'Terug naar 3-6-9'
           : 'Breedbeeld-lobby tonen';
         threeSixNineLobbyButton.setAttribute('aria-pressed', String(threeSixNineLobbyPerspectiveActive));
-
-        const automaticSceneChangesControls =
-          document.getElementById('automaticSceneChangesControls');
-        const automaticSceneChangesStatus =
-          document.getElementById('automaticSceneChangesStatus');
-        const supportsAutomaticSceneChanges = [
-          'Open Deur',
-          'Puzzel',
-          'Galerij',
-          'Collectief Geheugen'
-        ].includes(currentRoundName);
-        automaticSceneChangesControls.style.display =
-          supportsAutomaticSceneChanges && gameCreated && !finaleComplete ? 'block' : 'none';
-        if (!automaticSceneChangesEnabled) {
-          automaticSceneChangesStatus.textContent =
-            'Automatische scènewissels uit.';
-        } else if (fullscreenLobbyPerspectiveActive) {
-          automaticSceneChangesStatus.textContent =
-            'Automatische scènewissels aan: volledige lobby.';
-        } else if (questionQuarterPerspective?.type === 'lobby') {
-          automaticSceneChangesStatus.textContent =
-            'Automatische scènewissels aan: mini-lobby.';
-        } else if (selectedPerspectivePlayerIndex !== null) {
-          const activePlayer = currentPlayers.find(
-            player => player.index === selectedPerspectivePlayerIndex
-          );
-          automaticSceneChangesStatus.textContent = activePlayer
-            ? `Automatische scènewissels aan: zoom op ${activePlayer.name}.`
-            : 'Automatische scènewissels aan.';
-        } else if (questionQuarterPerspective?.type === 'player') {
-          const activePlayer = currentPlayers.find(
-            player => player.index === questionQuarterPerspective.playerIndex
-          );
-          automaticSceneChangesStatus.textContent = activePlayer
-            ? `Automatische scènewissels aan: zoom op ${activePlayer.name}.`
-            : 'Automatische scènewissels aan.';
-        } else {
-          automaticSceneChangesStatus.textContent =
-            `Automatische scènewissels aan: gewone ${currentRoundName}-weergave.`;
-        }
 
         const fullPresenterButton = document.getElementById('fullPresenterPerspectiveBtn');
         const fullJuryButton = document.getElementById('fullJuryPerspectiveBtn');
