@@ -321,8 +321,9 @@ function markThreeSixNineAnswer(isRight) {
     klok369_handleCorrectAnswer();
     
     if (currentQuestionIndex % 3 === 0) {
-      currentPlayer.seconds += 10;
-      flash(`GOED! +10s bonus voor ${currentPlayer.name}!`, 'good');
+      const gained = applyHostAnswerPoints(currentPlayer, 10, currentQuestion);
+      currentPlayer.seconds += gained;
+      flash(`GOED! +${gained}s bonus voor ${currentPlayer.name}!`, 'good');
     } else {
       flash(`GOED! Geen tijd, ${currentPlayer.name} blijft aan de beurt.`, 'good');
     }
@@ -646,9 +647,10 @@ function selectDoeWinner(playerIndex) {
     const q = perRoundState.currentQuestion;
     
     if (currentQuestionIndex % 3 === 0) {
-        winner.seconds += 10;
+        const gained = applyHostAnswerPoints(winner, 10, q);
+        winner.seconds += gained;
         playSFX('SFX/goed.mp3');
-        flash(`${winner.name} wint! +10s bonus!`, 'good');
+        flash(`${winner.name} wint! +${gained}s bonus!`, 'good');
     } else {
         flash(`${winner.name} wint en blijft aan de beurt!`, 'good');
     }
@@ -677,9 +679,10 @@ function selectEstimationWinner(playerIndex) {
     const q = perRoundState.currentQuestion;
     
     if (currentQuestionIndex % 3 === 0) {
-        winner.seconds += 10;
+        const gained = applyHostAnswerPoints(winner, 10, q);
+        winner.seconds += gained;
         playSFX('SFX/goed.mp3');
-        flash(`${winner.name} zat het dichtst bij! +10s bonus!`, 'good');
+        flash(`${winner.name} zat het dichtst bij! +${gained}s bonus!`, 'good');
     } else {
         flash(`${winner.name} zat het dichtst bij en blijft aan de beurt!`, 'good');
     }

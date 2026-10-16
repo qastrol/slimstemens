@@ -19,7 +19,8 @@ body {
 }
 
 .container {
-  max-width: 1350px;
+  width: 100%;
+  max-width: 2200px;
   margin: 0 auto
 }
 
@@ -30,8 +31,9 @@ h1 {
 
 .grid {
   display: grid;
-  grid-template-columns: 320px minmax(0, 1fr) 260px;
-  gap: 16px
+  grid-template-columns: minmax(280px, 0.85fr) minmax(560px, 1.8fr) minmax(300px, 0.95fr);
+  gap: 16px;
+  align-items: start;
 }
 
 .sidebar-menus {
@@ -231,6 +233,7 @@ button {
 }
 
 .player-card {
+  flex: 1 1 180px;
   background: #051224;
   padding: 8px;
   border-radius: 10px;
@@ -275,7 +278,106 @@ button {
 .player-row {
   display: flex;
   gap: 8px;
-  align-items: center
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+
+.host-cheat-panel {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid rgba(192, 132, 252, .55);
+  border-radius: 10px;
+  background: rgba(192, 132, 252, .08);
+}
+
+.host-cheat-panel[hidden] {
+  display: none;
+}
+
+.host-cheat-panel h3 {
+  margin: 0 0 10px;
+  font-size: 15px;
+}
+
+.host-cheat-controls {
+  display: grid;
+  gap: 6px;
+}
+
+.host-cheat-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 8px;
+}
+
+.host-cheat-fields label,
+.host-cheat-quiz-row label,
+.host-cheat-swap-row label {
+  margin-bottom: 4px;
+}
+
+.host-cheat-controls .button-row {
+  margin-top: 4px;
+}
+
+.host-cheat-action-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.host-cheat-action-row button {
+  min-height: 40px;
+}
+
+.streamerbot-option {
+  margin-top: 10px;
+  padding-left: 8px;
+  border-left: 2px solid rgba(192, 132, 252, .55);
+}
+
+.streamerbot-option[hidden] {
+  display: none;
+}
+
+.streamerbot-option label {
+  margin-bottom: 0;
+}
+
+.streamerbot-status {
+  margin-top: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: rgba(7, 17, 38, .55);
+}
+
+.streamerbot-status[hidden] {
+  display: none;
+}
+
+@media (min-width: 901px) {
+  .host-cheat-quiz-row,
+  .host-cheat-swap-row {
+    display: grid;
+    align-items: end;
+  }
+
+  .host-cheat-quiz-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  }
+
+  .host-cheat-swap-row {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto;
+  }
+
+  .host-cheat-swap-join {
+    padding-bottom: 10px;
+    color: var(--muted);
+  }
+
+  .host-cheat-quiz-row button,
+  .host-cheat-swap-row button {
+    white-space: nowrap;
+  }
 }
 
 .player-token {
@@ -353,11 +455,31 @@ button {
   .grid {
     grid-template-columns: 300px minmax(0, 1fr);
   }
+
+  .grid > .card:last-child {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .grid > .card:last-child > .divider {
+    display: none;
+  }
 }
 
 @media (max-width: 900px) {
   .grid {
     grid-template-columns: 1fr;
+  }
+
+  .grid > .card:last-child {
+    grid-column: auto;
+    display: block;
+  }
+
+  .grid > .card:last-child > .divider {
+    display: block;
   }
 }
 

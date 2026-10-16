@@ -995,6 +995,9 @@
       automaticSceneChanges: {
         enabled: !!document.getElementById('settingAutomaticSceneChanges')?.checked
       },
+      hostCheats: {
+        enabled: !!document.getElementById('settingHostCheatsEnabled')?.checked
+      },
       game: {
         startSeconds: Math.max(10, parseInt(document.getElementById('settingStartSeconds')?.value, 10) || 60)
       },
@@ -1436,6 +1439,7 @@
       'settingAutomaticSceneChanges',
       config?.settings?.automaticSceneChanges?.enabled !== false
     );
+    setCheckboxValue('settingHostCheatsEnabled', !!config?.settings?.hostCheats?.enabled);
     const startSecondsInput = document.getElementById('settingStartSeconds');
     if (startSecondsInput) {
       startSecondsInput.value = config?.settings?.game?.startSeconds || 60;

@@ -332,10 +332,12 @@ function markCollectiefAnswer(answerIndex) {
 
     
     const pointsIndex = currentQuestion.foundAnswers.length; 
-    const points = COLLECTIEF_POINTS[pointsIndex];
+    const basePoints = COLLECTIEF_POINTS[pointsIndex];
     
     
 
+const currentPlayer = players[activePlayerIndex];
+const points = applyHostAnswerPoints(currentPlayer, basePoints, currentQuestion);
 const newAnswer = {
     answer: answerText,
     points: points,
@@ -349,7 +351,6 @@ updateAnswerButton(answerIndex);
 
 
     
-    const currentPlayer = players[activePlayerIndex];
     currentPlayer.seconds += points;
     currentPlayer.seconds = Math.max(0, currentPlayer.seconds); 
     renderPlayers();

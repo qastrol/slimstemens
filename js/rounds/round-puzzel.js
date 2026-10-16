@@ -432,7 +432,7 @@ function markPuzzelLink(linkName) {
     return;
   }
 
-  const gained = 30;
+  const gained = applyHostAnswerPoints(players[activePlayerIndex], 30, puzzel);
   players[activePlayerIndex].seconds += gained;
   flash(`${players[activePlayerIndex].name} juist! Verband gevonden: "${linkName}" (+${gained}s)`);
   if (typeof playSFX === 'function') playSFX('SFX/goed.mp3');

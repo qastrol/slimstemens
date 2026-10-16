@@ -381,7 +381,8 @@ function markFinaleAnswer(answerIndex) {
     
 
     
-    opponent.seconds = Math.max(0, opponent.seconds - FINALE_POINTS_DEDUCTION);
+    const deduction = applyHostAnswerPoints(activePlayer, FINALE_POINTS_DEDUCTION, currentQuestion);
+    opponent.seconds = Math.max(0, opponent.seconds - deduction);
     
     
     currentQuestion.foundAnswers.push({
@@ -389,7 +390,7 @@ function markFinaleAnswer(answerIndex) {
         finderIndex: activePlayerIndex
     });
 
-    flash(`GOED! ${activePlayer.name} heeft ${timeGained}s gebruikt. ${opponent.name}: -${FINALE_POINTS_DEDUCTION}s.`, 'right');
+    flash(`GOED! ${activePlayer.name} heeft ${timeGained}s gebruikt. ${opponent.name}: -${deduction}s.`, 'right');
 
     
     resetFinaleTimer(); 

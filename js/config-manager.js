@@ -796,6 +796,9 @@ function getDefaultConfig() {
       },
       scoreboard: {
         enabled: true
+      },
+      hostCheats: {
+        enabled: false
       }
     },
     threeSixNine: [],

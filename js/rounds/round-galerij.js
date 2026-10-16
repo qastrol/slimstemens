@@ -595,8 +595,9 @@ function markGalerijAnswer(isRight, answer) {
   const currentImage = galleryImages[galleryIndex];
 
   if (isRight) {
-    currentPlayer.seconds += 15;
-    flash(`Goed! ${answer} levert +15s op voor ${currentPlayer.name}`);
+    const gained = applyHostAnswerPoints(currentPlayer, 15, currentImage);
+    currentPlayer.seconds += gained;
+    flash(`Goed! ${answer} levert +${gained}s op voor ${currentPlayer.name}`);
     playSFX('SFX/goed.mp3');
     currentImage.found = true; 
   } else {
@@ -651,8 +652,9 @@ function nextAanvulTurn() {
 function markAanvulAnswer(img) {
     if (!currentAanvulPlayer) return;
 
-    currentAanvulPlayer.seconds += 15;
-    flash(`${currentAanvulPlayer.name} correct: ${img.answer} (+15s)`);
+    const gained = applyHostAnswerPoints(currentAanvulPlayer, 15, img);
+    currentAanvulPlayer.seconds += gained;
+    flash(`${currentAanvulPlayer.name} correct: ${img.answer} (+${gained}s)`);
     playSFX('SFX/goed.mp3');
 
     

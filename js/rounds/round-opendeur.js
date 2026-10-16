@@ -286,7 +286,7 @@ function markOpenDeurAnswer(ansIndex){
   if(ansIndex >= q.answersDisplay.length) return;
 
   q.answered[ansIndex] = true;
-  const gained = 20;
+  const gained = applyHostAnswerPoints(players[activePlayerIndex], 20, q);
   players[activePlayerIndex].seconds += gained;
   flash(`${players[activePlayerIndex].name} correct antwoord (+${gained}s)`);
   playSFX('SFX/goed.mp3');

@@ -16,6 +16,14 @@ let perRoundState = {};
 let globalTimerInterval = null;
 let thinkingTimerInterval = null;
 let activePlayerIndex = 0;
+let hostCheatsEnabled = false;
+let hostTimerSpeed = 1;
+let thinkingTimerTickProgress = 0;
+let thinkingTimerPlayer = null;
+const pendingHostTimerSpeeds = new Map();
+const pendingHostAnswerMultipliers = new Map();
+const activeHostAnswerMultipliers = new Map();
+const hostCheatActions = new Map();
 let loopTimerAudio = null;
 let loopTimerSeconds = 0;       
 let presenterScriptsEnabled = false;
@@ -267,8 +275,12 @@ function playSFX(file) {
   try { sendDisplayUpdate({ type: 'audio', action: 'play', src: file }); } catch(e) {}
 }
 
-function playLoopSFX(file, channel = 'default') {
-  try { sendDisplayUpdate({ type: 'audio', action: 'loopStart', src: file, channel }); } catch(e) {}
+function playLoopSFX(file, channel = 'default', playbackRate = 1) {
+  try { sendDisplayUpdate({ type: 'audio', action: 'loopStart', src: file, channel, playbackRate }); } catch(e) {}
+}
+
+function setLoopSFXPlaybackRate(channel = 'default', playbackRate = 1) {
+  try { sendDisplayUpdate({ type: 'audio', action: 'loopRate', channel, playbackRate }); } catch(e) {}
 }
 
 function stopLoopSFX(channel = 'default') {
@@ -289,8 +301,9 @@ const Q_FINALE = [];
 
 
 function fmtS(s) {
-  
-  return Math.max(0, Math.floor(s));
+  const value = Math.max(0, Number(s) || 0);
+  const rounded = Math.round(value * 2) / 2;
+  return Number.isInteger(rounded) ? rounded : String(rounded).replace('.', ',');
 }
 
 
@@ -312,6 +325,7 @@ function renderPlayers(updateDisplay = true){
     </div>`;
     playersArea.appendChild(el);
   });
+  renderHostCheatControls();
 
   // Zoek de speler eerst op ID/index, anders val terug op de actieve index als geldige array-index
   let safeActiveIndex = players.findIndex(p => p.index === activePlayerIndex);
@@ -325,15 +339,687 @@ function renderPlayers(updateDisplay = true){
     }
   }
 
-  if (updateDisplay) {
+  const scoreboardIsVisible = typeof window.shouldSyncPlayersToScoreboard === 'function' &&
+    window.shouldSyncPlayersToScoreboard();
+  if (updateDisplay || scoreboardIsVisible) {
     sendDisplayUpdate({
       type: 'players',
       players,
       active: safeActiveIndex,
-      round: perRoundState?.round || '-'
+      round: perRoundState?.round || 'lobby'
     });
   }
 }
+
+function getHostCheatSelectedPlayer() {
+  const playerSelect = document.getElementById('hostCheatPlayer');
+  if (!playerSelect) return null;
+  return players.find(player => String(player.index) === playerSelect.value) || null;
+}
+
+function getHostTimerActivePlayer() {
+  return players.find(player => player.index === activePlayerIndex) || players[activePlayerIndex] || null;
+}
+
+function getHostQuestionReference() {
+  switch (perRoundState?.round) {
+    case 'threeSixNine':
+    case 'opendeur':
+      return perRoundState.currentQuestion || null;
+    case 'puzzel':
+      return perRoundState.currentPuzzel || null;
+    case 'galerij':
+      return galleryImages?.[galleryIndex] || null;
+    case 'collectief':
+      return perRoundState.collectief?.questions?.[perRoundState.collectief.currentQuestionIndex] || null;
+    case 'finale':
+      return perRoundState.finale?.currentQuestion || null;
+    default:
+      return null;
+  }
+}
+
+function getSelectedHostAnswerMultiplier(player) {
+  const active = activeHostAnswerMultipliers.get(player);
+  if (active && active.question === getHostQuestionReference()) {
+    return active.multiplier;
+  }
+  const pending = pendingHostAnswerMultipliers.get(player);
+  return pending?.multiplier || pending || 1;
+}
+
+function setHostAnswerMultiplier(player, multiplier) {
+  if (!hostCheatsEnabled || !players.includes(player)) {
+    flash('Deze hostfunctie is niet beschikbaar.');
+    return false;
+  }
+  if (![0.5, 2].includes(multiplier)) {
+    throw new RangeError('Antwoordvermenigvuldiger moet 0,5× of 2× zijn.');
+  }
+
+  const question = getHostQuestionReference();
+  const isCurrentPlayer = getHostTimerActivePlayer() === player;
+  const isThreeSixNineDouble = multiplier === 2 && perRoundState?.round === 'threeSixNine';
+  if (!isThreeSixNineDouble && isCurrentPlayer && question) {
+    activeHostAnswerMultipliers.set(player, {
+      multiplier,
+      question,
+      mode: null
+    });
+    pendingHostAnswerMultipliers.delete(player);
+  } else {
+    activeHostAnswerMultipliers.delete(player);
+    pendingHostAnswerMultipliers.set(player, {
+      multiplier,
+      mode: isThreeSixNineDouble ? 'threeSixNineBonus' : null
+    });
+  }
+
+  renderHostCheatControls();
+  flash(isThreeSixNineDouble
+    ? `Dubbele punten ingesteld voor de eerstvolgende derde vraag van ${player.name}; anders diens eerstvolgende beurt in Open Deur.`
+    : isCurrentPlayer && question
+    ? `Goede antwoorden van ${player.name} leveren op deze vraag ${multiplier === 2 ? 'dubbel' : 'de helft'} van de punten op.`
+    : `Puntenmodifier ingesteld voor de eerstvolgende beurt van ${player.name}.`);
+  return true;
+}
+
+function activateHostAnswerMultiplier(player, question = getHostQuestionReference(), forAnswer = false) {
+  if (!question) return;
+  const active = activeHostAnswerMultipliers.get(player);
+  if (active && active.question !== question) {
+    activeHostAnswerMultipliers.delete(player);
+  }
+
+  const pendingMultiplier = pendingHostAnswerMultipliers.get(player);
+  if (!pendingMultiplier) return;
+
+  const isThreeSixNineBonus = perRoundState?.round === 'threeSixNine' &&
+    perRoundState.currentIsBonus === true &&
+    question === getHostQuestionReference();
+  const isOpenDeurAnswer = perRoundState?.round === 'opendeur' &&
+    question === getHostQuestionReference();
+  const canActivate = pendingMultiplier.mode !== 'threeSixNineBonus' ||
+    (forAnswer && (isThreeSixNineBonus || isOpenDeurAnswer));
+  if (canActivate) {
+    const multiplier = pendingMultiplier.multiplier ?? pendingMultiplier;
+    activeHostAnswerMultipliers.set(player, {
+      multiplier,
+      question,
+      mode: pendingMultiplier.mode || null
+    });
+    pendingHostAnswerMultipliers.delete(player);
+  }
+}
+
+function applyHostAnswerPoints(player, points, question = getHostQuestionReference()) {
+  if (!question || !player) return points;
+  activateHostAnswerMultiplier(player, question, true);
+  const active = activeHostAnswerMultipliers.get(player);
+  if (active?.question !== question) return points;
+
+  const adjustedPoints = Math.round(points * active.multiplier * 2) / 2;
+  if (active.mode === 'threeSixNineBonus') {
+    activeHostAnswerMultipliers.delete(player);
+  }
+  return adjustedPoints;
+}
+
+function getHostRevealChoices() {
+  switch (perRoundState?.round) {
+    case 'opendeur': {
+      const question = perRoundState.currentQuestion;
+      if (!question) return [];
+      question.hostRevealedAnswerIndexes ||= [];
+      return (question.answersDisplay || question.answers || [])
+        .map((answer, index) => ({ answer, index }))
+        .filter(({ index }) => !question.answered?.[index] && !question.hostRevealedAnswerIndexes.includes(index))
+        .map(({ answer, index }) => ({
+          answer,
+          reveal: () => question.hostRevealedAnswerIndexes.push(index)
+        }));
+    }
+    case 'puzzel': {
+      const question = perRoundState.currentPuzzel;
+      if (!question) return [];
+      question.hostRevealedLinks ||= [];
+      return (question.links || [])
+        .filter(link => !question.foundLinks?.includes(link) && !question.hostRevealedLinks.includes(link.link))
+        .map(link => ({
+          answer: `${link.link}: ${link.answers.join(', ')}`,
+          reveal: () => question.hostRevealedLinks.push(link.link)
+        }));
+    }
+    case 'collectief': {
+      const question = getHostQuestionReference();
+      if (!question) return [];
+      question.hostRevealedAnswers ||= [];
+      return (question.answers || [])
+        .filter(answer =>
+          !question.foundAnswers?.some(found => found.answer === answer) &&
+          !question.hostRevealedAnswers.includes(answer))
+        .map(answer => ({
+          answer,
+          reveal: () => question.hostRevealedAnswers.push(answer)
+        }));
+    }
+    case 'finale': {
+      const question = getHostQuestionReference();
+      if (!question) return [];
+      question.hostRevealedAnswers ||= [];
+      return (question.answers || [])
+        .filter(answer =>
+          !question.foundAnswers?.some(found => found.answer === answer) &&
+          !question.hostRevealedAnswers.includes(answer))
+        .map(answer => ({
+          answer,
+          reveal: () => question.hostRevealedAnswers.push(answer)
+        }));
+    }
+    default:
+      return [];
+  }
+}
+
+function revealRandomHostAnswer() {
+  if (!hostCheatsEnabled) return false;
+  if (perRoundState?.round === 'threeSixNine' || perRoundState?.round === 'galerij') {
+    flash('Willekeurig antwoord onthullen is niet beschikbaar in deze ronde.');
+    return false;
+  }
+  const choices = getHostRevealChoices();
+  if (choices.length === 0) {
+    flash('Er zijn geen antwoorden meer om te onthullen.');
+    return false;
+  }
+  const choice = choices[Math.floor(Math.random() * choices.length)];
+  choice.reveal();
+  sendDisplayUpdate({ type: 'host_answer_reveal', answer: choice.answer });
+  renderHostCheatControls();
+  flash(`Onthuld antwoord: ${choice.answer}`);
+  return true;
+}
+
+function renderHostCheatControls() {
+  const panel = document.getElementById('hostCheatPanel');
+  const playerSelect = document.getElementById('hostCheatPlayer');
+  const doubleTimerButton = document.getElementById('hostCheatDoubleTimer');
+  const halfTimerButton = document.getElementById('hostCheatHalfTimer');
+  const normalTimerButton = document.getElementById('hostCheatNormalTimer');
+  const timerStatus = document.getElementById('hostCheatTimerStatus');
+  const doubleAnswerButton = document.getElementById('hostCheatDoubleAnswerPoints');
+  const halfAnswerButton = document.getElementById('hostCheatHalfAnswerPoints');
+  const revealAnswerButton = document.getElementById('hostCheatRevealAnswer');
+  const answerStatus = document.getElementById('hostCheatAnswerStatus');
+  const swapPlayerA = document.getElementById('hostCheatSwapPlayerA');
+  const swapPlayerB = document.getElementById('hostCheatSwapPlayerB');
+  const extensionActions = document.getElementById('hostCheatExtensionActions');
+  if (!panel || !playerSelect) return;
+
+  panel.hidden = !hostCheatsEnabled || players.length === 0;
+  const selectedPlayerIndex = playerSelect.value;
+  playerSelect.replaceChildren();
+  players.forEach(player => {
+    const option = document.createElement('option');
+    option.value = String(player.index);
+    option.textContent = player.name;
+    playerSelect.appendChild(option);
+  });
+  if (players.some(player => String(player.index) === selectedPlayerIndex)) {
+    playerSelect.value = selectedPlayerIndex;
+  }
+  [swapPlayerA, swapPlayerB].forEach((select, selectIndex) => {
+    if (!select) return;
+    const selectedIndex = select.value;
+    select.replaceChildren();
+    players.forEach((player, playerIndex) => {
+      const option = document.createElement('option');
+      option.value = String(player.index);
+      option.textContent = player.name;
+      select.appendChild(option);
+      if (!selectedIndex && playerIndex === selectIndex) option.selected = true;
+    });
+    if (players.some(player => String(player.index) === selectedIndex)) {
+      select.value = selectedIndex;
+    }
+  });
+
+  const selectedPlayer = getHostCheatSelectedPlayer();
+  const selectedPlayerIsOnClock = !!selectedPlayer &&
+    !!thinkingTimerInterval &&
+    thinkingTimerPlayer === selectedPlayer &&
+    getHostTimerActivePlayer() === selectedPlayer;
+  const selectedSpeed = selectedPlayerIsOnClock
+    ? hostTimerSpeed
+    : (selectedPlayer && pendingHostTimerSpeeds.has(selectedPlayer)
+      ? pendingHostTimerSpeeds.get(selectedPlayer)
+      : 1);
+
+  if (doubleTimerButton) {
+    doubleTimerButton.disabled = !hostCheatsEnabled || !selectedPlayer;
+    doubleTimerButton.setAttribute('aria-pressed', String(selectedSpeed === 2));
+  }
+
+  if (halfTimerButton) {
+    halfTimerButton.disabled = !hostCheatsEnabled || !selectedPlayer;
+    halfTimerButton.setAttribute('aria-pressed', String(selectedSpeed === 0.5));
+  }
+
+  if (normalTimerButton) {
+    normalTimerButton.hidden = !hostCheatsEnabled || !selectedPlayerIsOnClock || selectedSpeed === 1;
+    normalTimerButton.disabled = !hostCheatsEnabled;
+  }
+
+  if (timerStatus) {
+    const status = selectedPlayerIsOnClock
+      ? 'Actief voor deze beurt'
+      : selectedPlayer && pendingHostTimerSpeeds.has(selectedPlayer)
+          ? getHostTimerActivePlayer() === selectedPlayer
+            ? 'Ingesteld voor de huidige beurt'
+            : 'Ingesteld voor de volgende beurt'
+          : 'Normale snelheid';
+    const speedDescription = selectedSpeed === 2
+      ? '2× zo snel'
+      : selectedSpeed === 0.5
+        ? '2× zo langzaam'
+        : 'normaal';
+    timerStatus.textContent = selectedPlayer
+      ? `Timer voor ${selectedPlayer.name}: ${speedDescription} (${status.toLowerCase()}).`
+      : 'Selecteer een kandidaat om een timersnelheid in te stellen.';
+  }
+
+  const answerMultiplier = selectedPlayer ? getSelectedHostAnswerMultiplier(selectedPlayer) : 1;
+  if (doubleAnswerButton) {
+    doubleAnswerButton.disabled = !hostCheatsEnabled || !selectedPlayer;
+    doubleAnswerButton.setAttribute('aria-pressed', String(answerMultiplier === 2));
+  }
+  if (halfAnswerButton) {
+    halfAnswerButton.disabled = !hostCheatsEnabled || !selectedPlayer;
+    halfAnswerButton.setAttribute('aria-pressed', String(answerMultiplier === 0.5));
+  }
+  if (answerStatus) {
+    const activeMultiplier = selectedPlayer && activeHostAnswerMultipliers.get(selectedPlayer);
+    const pendingMultiplier = selectedPlayer && pendingHostAnswerMultipliers.get(selectedPlayer);
+    const hasActiveMultiplier = activeMultiplier?.question === getHostQuestionReference();
+    answerStatus.textContent = !selectedPlayer
+      ? 'Selecteer een kandidaat om een puntenmodifier in te stellen.'
+      : pendingMultiplier?.mode === 'threeSixNineBonus'
+        ? `Dubbele punten: eerstvolgende derde vraag van ${selectedPlayer.name}; als die niet meer komt, diens eerste goede antwoord in Open Deur.`
+        : answerMultiplier !== 1
+          ? `Goede antwoorden: ${answerMultiplier === 2 ? 'dubbele' : 'halve'} punten (${hasActiveMultiplier ? 'deze vraag' : 'bij de eerstvolgende beurt'}).`
+          : 'Goede antwoorden leveren de normale punten op.';
+  }
+  if (revealAnswerButton) {
+    revealAnswerButton.disabled = !hostCheatsEnabled || getHostRevealChoices().length === 0;
+  }
+
+  if (extensionActions) {
+    extensionActions.replaceChildren();
+    hostCheatActions.forEach(action => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'secondary';
+      button.textContent = action.label;
+      button.addEventListener('click', () => {
+        const player = getHostCheatSelectedPlayer();
+        if (!player) {
+          flash('Selecteer eerst een kandidaat.');
+          return;
+        }
+        try {
+          action.handler({
+            player,
+            playerIndex: player.index,
+            amount: document.getElementById('hostCheatAmount')?.valueAsNumber,
+            adjustScore: (operation, amount) => applyHostScoreChange(player, operation, amount),
+            setActivePlayer: () => setHostActivePlayer(player),
+            setTimerSpeed: speed => setHostTimerSpeed(player, speed),
+            setAnswerMultiplier: multiplier => setHostAnswerMultiplier(player, multiplier),
+            flash
+          });
+        } catch (error) {
+          console.error(`Hostactie "${action.id}" mislukt:`, error);
+          flash(`Hostactie mislukt: ${error.message || error}`);
+        }
+      });
+      extensionActions.appendChild(button);
+    });
+  }
+}
+
+function applyHostScoreChange(player, operation, amount) {
+  if (!hostCheatsEnabled || !players.includes(player)) {
+    flash('Deze hostfunctie is niet beschikbaar.');
+    return false;
+  }
+  if (!Number.isSafeInteger(amount) || amount < 0) {
+    flash('Voer een geldig, niet-negatief geheel aantal punten/seconden in.');
+    return false;
+  }
+
+  if (operation === 'add') {
+    player.seconds += amount;
+    playSFX('SFX/goed.mp3');
+  } else if (operation === 'subtract') {
+    player.seconds = Math.max(0, player.seconds - amount);
+    playSFX('SFX/fout.mp3');
+  }
+  else if (operation === 'set') player.seconds = amount;
+  else throw new Error(`Onbekende scorebewerking: ${operation}`);
+
+  renderPlayers();
+  flash(`${player.name}: score aangepast naar ${fmtS(player.seconds)} seconden.`);
+  return true;
+}
+
+function setHostActivePlayer(player) {
+  if (!hostCheatsEnabled || !players.includes(player)) {
+    flash('Deze hostfunctie is niet beschikbaar.');
+    return false;
+  }
+
+  const playerIndex = players.indexOf(player);
+  if (perRoundState?.round === 'galerij') {
+    if (galleryPhase === 'aanvul') {
+      if (currentAanvulPlayer && currentAanvulPlayer !== player && !aanvulQueue.includes(currentAanvulPlayer)) {
+        aanvulQueue.unshift(currentAanvulPlayer);
+      }
+      aanvulQueue = aanvulQueue.filter(candidate => candidate !== player);
+      currentAanvulPlayer = player;
+    } else {
+      galleryPlayerIndex = playerIndex;
+    }
+    syncGalerijActivePlayerIndex();
+    renderGalerijHostUI();
+    sendGalerijDisplayUpdate();
+  } else {
+    activePlayerIndex = player.index;
+  }
+
+  renderPlayers();
+  highlightActive();
+  return true;
+}
+
+function setHostTimerSpeed(player, speed) {
+  if (!hostCheatsEnabled || !players.includes(player)) {
+    flash('Deze hostfunctie is niet beschikbaar.');
+    return false;
+  }
+  if (![0.5, 1, 2].includes(speed)) {
+    throw new RangeError('Timersnelheid moet 0,5×, 1× of 2× zijn.');
+  }
+
+  const isCurrentTurn = getHostTimerActivePlayer() === player;
+  if (thinkingTimerInterval && thinkingTimerPlayer === player && isCurrentTurn) {
+    hostTimerSpeed = speed;
+    thinkingTimerTickProgress = 0;
+    setLoopSFXPlaybackRate('timer', speed);
+    pendingHostTimerSpeeds.delete(player);
+  } else if (speed === 1) {
+    pendingHostTimerSpeeds.delete(player);
+  } else {
+    pendingHostTimerSpeeds.set(player, speed);
+  }
+
+  renderHostCheatControls();
+  const speedDescription = speed === 2
+    ? 'twee keer zo snel'
+    : speed === 0.5
+      ? 'twee keer zo langzaam'
+      : 'normale snelheid';
+  flash(isCurrentTurn && thinkingTimerInterval && thinkingTimerPlayer === player
+    ? `Timer en klok lopen nu ${speedDescription} voor ${player.name}.`
+    : `${speedDescription[0].toUpperCase()}${speedDescription.slice(1)} ingesteld voor de ${
+      isCurrentTurn ? 'huidige' : 'volgende'
+    } beurt van ${player.name}.`);
+  return true;
+}
+
+window.executeStreamerBotHostRequest = function executeStreamerBotHostRequest(request) {
+  if (!desktopBridge || !hostCheatsEnabled) {
+    throw new Error('Streamer.bot-opdrachten zijn alleen beschikbaar met Electron en uitgebreide hostmodus.');
+  }
+  if (!request || typeof request !== 'object' || typeof request.name !== 'string') {
+    throw new TypeError('Ongeldige Streamer.bot-opdracht.');
+  }
+
+  const args = request.arguments && typeof request.arguments === 'object'
+    ? request.arguments
+    : {};
+  const getPlayer = (index) => players.find(player => player.index === Number(index));
+  const getRequiredPlayer = () => {
+    const player = getPlayer(args.playerIndex);
+    if (!player) throw new Error('Kandidaat niet gevonden; geef een geldige playerIndex mee.');
+    return player;
+  };
+  const amount = Number(args.amount);
+
+  switch (request.name) {
+    case 'HostCheat':
+      switch (args.operation) {
+        case 'addScore':
+          return applyHostScoreChange(getRequiredPlayer(), 'add', amount);
+        case 'subtractScore':
+          return applyHostScoreChange(getRequiredPlayer(), 'subtract', amount);
+        case 'setScore':
+          return applyHostScoreChange(getRequiredPlayer(), 'set', amount);
+        case 'giveTurn':
+          return setHostActivePlayer(getRequiredPlayer());
+        case 'setTimerSpeed':
+          return setHostTimerSpeed(getRequiredPlayer(), Number(args.speed));
+        case 'setAnswerMultiplier':
+          return setHostAnswerMultiplier(getRequiredPlayer(), Number(args.multiplier));
+        case 'revealAnswer':
+          return revealRandomHostAnswer();
+        case 'setQuizName': {
+          const titlePrefix = typeof args.titlePrefix === 'string' ? args.titlePrefix.trim() : '';
+          const titleSuffix = typeof args.titleSuffix === 'string' ? args.titleSuffix.trim() : '';
+          if (!titlePrefix) throw new Error('titlePrefix mag niet leeg zijn.');
+          const branding = {
+            ...(typeof getBrandingSettings === 'function' ? getBrandingSettings() : {}),
+            titlePrefix: titlePrefix.slice(0, 80),
+            titleSuffix: titleSuffix.slice(0, 80)
+          };
+          if (typeof gameConfig !== 'undefined') {
+            gameConfig ||= {};
+            gameConfig.settings ||= {};
+            gameConfig.settings.branding = branding;
+          }
+          sendDisplayUpdate({ type: 'branding_update', branding });
+          flash('Quiztekst vóór en ná het logo gewijzigd via Streamer.bot.');
+          return true;
+        }
+        case 'swapPlayers': {
+          const playerA = getRequiredPlayer();
+          const playerB = getPlayer(args.otherPlayerIndex);
+          if (!playerB) throw new Error('Tweede kandidaat niet gevonden; geef een geldige otherPlayerIndex mee.');
+          if (playerA === playerB) throw new Error('Kies twee verschillende kandidaten om te wisselen.');
+          [playerA.name, playerB.name] = [playerB.name, playerA.name];
+          [playerA.photoUrl, playerB.photoUrl] = [playerB.photoUrl, playerA.photoUrl];
+          renderPlayers();
+          flash(`${playerA.name} en ${playerB.name} wisselen van stoel en score.`);
+          return true;
+        }
+        case 'extension': {
+          const action = hostCheatActions.get(String(args.actionId || ''));
+          if (!action) throw new Error(`Niet-geregistreerde hostuitbreiding: ${String(args.actionId)}`);
+          const player = args.playerIndex === undefined
+            ? getHostCheatSelectedPlayer()
+            : getRequiredPlayer();
+          if (!player) throw new Error('Selecteer een kandidaat voor deze hostuitbreiding.');
+          action.handler({
+            player,
+            playerIndex: player.index,
+            amount: args.amount === undefined ? undefined : Number(args.amount),
+            adjustScore: (operation, value) => applyHostScoreChange(player, operation, value),
+            setActivePlayer: () => setHostActivePlayer(player),
+            setTimerSpeed: speed => setHostTimerSpeed(player, speed),
+            setAnswerMultiplier: multiplier => setHostAnswerMultiplier(player, multiplier),
+            flash
+          });
+          return true;
+        }
+        default:
+          throw new Error(`Onbekende Streamer.bot-hostactie: ${String(args.operation)}`);
+      }
+    default:
+      throw new Error(`Onbekende Streamer.bot-opdracht: ${request.name}`);
+  }
+};
+
+window.registerHostCheatAction = function registerHostCheatAction(action) {
+  if (!action || typeof action.id !== 'string' || !action.id.trim() ||
+      typeof action.label !== 'string' || !action.label.trim() ||
+      typeof action.handler !== 'function') {
+    throw new TypeError('Een hostactie vereist een id, label en handlerfunctie.');
+  }
+  const id = action.id.trim();
+  if (hostCheatActions.has(id)) {
+    throw new Error(`Hostactie "${id}" is al geregistreerd.`);
+  }
+  hostCheatActions.set(id, {
+    id,
+    label: action.label.trim(),
+    handler: action.handler
+  });
+  renderHostCheatControls();
+};
+
+document.getElementById('hostCheatsEnabledCheckbox')?.addEventListener('change', event => {
+  hostCheatsEnabled = event.currentTarget.checked;
+  if (!hostCheatsEnabled) {
+    pendingHostTimerSpeeds.clear();
+    pendingHostAnswerMultipliers.clear();
+    activeHostAnswerMultipliers.clear();
+    resetHostTimerSpeed();
+  } else {
+    const branding = typeof getBrandingSettings === 'function' ? getBrandingSettings() : null;
+    const titlePrefixInput = document.getElementById('hostCheatQuizTitlePrefix');
+    const titleSuffixInput = document.getElementById('hostCheatQuizTitleSuffix');
+    if (branding && titlePrefixInput && titleSuffixInput) {
+      titlePrefixInput.value = branding.titlePrefix;
+      titleSuffixInput.value = branding.titleSuffix;
+    }
+    renderHostCheatControls();
+  }
+  flash(hostCheatsEnabled
+    ? 'Uitgebreide hostmodus ingeschakeld.'
+    : 'Uitgebreide hostmodus uitgeschakeld.');
+});
+
+document.getElementById('hostCheatAddScore')?.addEventListener('click', () => {
+  const player = getHostCheatSelectedPlayer();
+  if (!player) return flash('Selecteer eerst een kandidaat.');
+  applyHostScoreChange(player, 'add', document.getElementById('hostCheatAmount').valueAsNumber);
+});
+
+document.getElementById('hostCheatSubtractScore')?.addEventListener('click', () => {
+  const player = getHostCheatSelectedPlayer();
+  if (!player) return flash('Selecteer eerst een kandidaat.');
+  applyHostScoreChange(player, 'subtract', document.getElementById('hostCheatAmount').valueAsNumber);
+});
+
+document.getElementById('hostCheatSetScore')?.addEventListener('click', () => {
+  const player = getHostCheatSelectedPlayer();
+  if (!player) return flash('Selecteer eerst een kandidaat.');
+  applyHostScoreChange(player, 'set', document.getElementById('hostCheatAmount').valueAsNumber);
+});
+
+document.getElementById('hostCheatGiveTurn')?.addEventListener('click', () => {
+  const player = getHostCheatSelectedPlayer();
+  if (!player) return flash('Selecteer eerst een kandidaat.');
+  setHostActivePlayer(player);
+});
+
+document.getElementById('hostCheatDoubleTimer')?.addEventListener('click', () => {
+  const player = getHostCheatSelectedPlayer();
+  if (!player) return flash('Selecteer eerst een kandidaat.');
+  const isCurrentTurn = thinkingTimerInterval &&
+    thinkingTimerPlayer === player &&
+    getHostTimerActivePlayer() === player;
+  const currentSpeed = isCurrentTurn
+    ? hostTimerSpeed
+    : (pendingHostTimerSpeeds.get(player) || 1);
+  setHostTimerSpeed(player, currentSpeed === 2 ? 1 : 2);
+});
+
+document.getElementById('hostCheatHalfTimer')?.addEventListener('click', () => {
+  const player = getHostCheatSelectedPlayer();
+  if (!player) return flash('Selecteer eerst een kandidaat.');
+  const isCurrentTurn = thinkingTimerInterval &&
+    thinkingTimerPlayer === player &&
+    getHostTimerActivePlayer() === player;
+  const currentSpeed = isCurrentTurn
+    ? hostTimerSpeed
+    : (pendingHostTimerSpeeds.get(player) || 1);
+  setHostTimerSpeed(player, currentSpeed === 0.5 ? 1 : 0.5);
+});
+
+document.getElementById('hostCheatNormalTimer')?.addEventListener('click', () => {
+  const player = getHostCheatSelectedPlayer();
+  if (!player) return flash('Selecteer eerst een kandidaat.');
+  const isCurrentTurn = thinkingTimerInterval &&
+    thinkingTimerPlayer === player &&
+    getHostTimerActivePlayer() === player;
+  const currentSpeed = isCurrentTurn
+    ? hostTimerSpeed
+    : (pendingHostTimerSpeeds.get(player) ?? 1);
+  if (currentSpeed === 1) return;
+  setHostTimerSpeed(player, 1);
+});
+
+document.getElementById('hostCheatPlayer')?.addEventListener('change', renderHostCheatControls);
+
+document.getElementById('hostCheatDoubleAnswerPoints')?.addEventListener('click', () => {
+  const player = getHostCheatSelectedPlayer();
+  if (player) setHostAnswerMultiplier(player, 2);
+});
+
+document.getElementById('hostCheatHalfAnswerPoints')?.addEventListener('click', () => {
+  const player = getHostCheatSelectedPlayer();
+  if (player) setHostAnswerMultiplier(player, 0.5);
+});
+
+document.getElementById('hostCheatRevealAnswer')?.addEventListener('click', revealRandomHostAnswer);
+
+document.getElementById('hostCheatSetQuizName')?.addEventListener('click', () => {
+  if (!hostCheatsEnabled) return;
+  const titlePrefix = document.getElementById('hostCheatQuizTitlePrefix')?.value.trim();
+  const titleSuffix = document.getElementById('hostCheatQuizTitleSuffix')?.value.trim();
+  if (!titlePrefix) {
+    flash('Voer tekst in voor het logo.');
+    return;
+  }
+
+  const branding = {
+    ...(typeof getBrandingSettings === 'function' ? getBrandingSettings() : {}),
+    titlePrefix,
+    titleSuffix
+  };
+  if (typeof gameConfig !== 'undefined') {
+    gameConfig ||= {};
+    gameConfig.settings ||= {};
+    gameConfig.settings.branding = branding;
+  }
+  sendDisplayUpdate({ type: 'branding_update', branding });
+  flash('Quiztekst vóór en ná het logo gewijzigd.');
+});
+
+document.getElementById('hostCheatSwapPlayers')?.addEventListener('click', () => {
+  if (!hostCheatsEnabled) return;
+  const playerA = players.find(player =>
+    String(player.index) === document.getElementById('hostCheatSwapPlayerA')?.value);
+  const playerB = players.find(player =>
+    String(player.index) === document.getElementById('hostCheatSwapPlayerB')?.value);
+  if (!playerA || !playerB) return flash('Selecteer twee kandidaten om te wisselen.');
+  if (playerA === playerB) return flash('Kies twee verschillende kandidaten.');
+  [playerA.name, playerB.name] = [playerB.name, playerA.name];
+  [playerA.photoUrl, playerB.photoUrl] = [playerB.photoUrl, playerA.photoUrl];
+
+  renderPlayers();
+  flash(`${playerA.name} en ${playerB.name} wisselen van stoel en score.`);
+});
 
 function flash(text){
   const f = document.createElement('div');
@@ -362,7 +1048,7 @@ function grantPreFinaleBonus(seconds = 30) {
   });
 
   renderPlayers();
-  if (typeof playSFX === 'function') playSFX('SFX/goed.mp3');
+  if (typeof playSFX === 'function') playSFX('SFX/30.mp3');
   flash(`Quizmaster bonus: iedereen +${seconds} seconden.`);
   clearPreFinaleBonusControls();
 }
@@ -380,6 +1066,7 @@ function showPreFinaleBonusControls(seconds = 30) {
   btn.textContent = `Geef iedereen ${seconds} seconden`;
   btn.addEventListener('click', () => grantPreFinaleBonus(seconds));
   area.appendChild(btn);
+  renderPlayers();
 }
 
 function highlightActive(){
@@ -395,12 +1082,30 @@ function stopLoopTimerSFX() {
   stopLoopSFX('timer');
 }
 
+function resetHostTimerSpeed(nextPlayer = null) {
+  hostTimerSpeed = 1;
+  thinkingTimerTickProgress = 0;
+  thinkingTimerPlayer = nextPlayer;
+  setLoopSFXPlaybackRate('timer', 1);
+  renderHostCheatControls();
+}
+
+function activateHostTimerSpeed(player) {
+  hostTimerSpeed = pendingHostTimerSpeeds.get(player) ?? 1;
+  pendingHostTimerSpeeds.delete(player);
+  thinkingTimerTickProgress = 0;
+  thinkingTimerPlayer = player;
+  setLoopSFXPlaybackRate('timer', hostTimerSpeed);
+  renderHostCheatControls();
+}
+
 function stopThinkingCountdownTimer(playEndSound = false) {
   if (thinkingTimerInterval) {
     clearInterval(thinkingTimerInterval);
     thinkingTimerInterval = null;
   }
 
+  resetHostTimerSpeed();
   stopLoopTimerSFX();
 
   if (playEndSound && typeof playSFX === 'function') {
@@ -429,8 +1134,10 @@ function startThinkingCountdownTimer(options = {}) {
     return false;
   }
 
+  activateHostTimerSpeed(initialPlayer);
+  activateHostAnswerMultiplier(initialPlayer, getHostQuestionReference());
   if (startAudio) {
-    playLoopSFX('SFX/klok2.mp3', 'timer');
+    playLoopSFX('SFX/klok2.mp3', 'timer', hostTimerSpeed);
   }
 
   if (onStartMessage) {
@@ -443,6 +1150,14 @@ function startThinkingCountdownTimer(options = {}) {
       stopThinkingCountdownTimer(false);
       return;
     }
+
+    if (activePlayer !== thinkingTimerPlayer) {
+      activateHostTimerSpeed(activePlayer);
+      activateHostAnswerMultiplier(activePlayer, getHostQuestionReference());
+    }
+    thinkingTimerTickProgress += hostTimerSpeed;
+    if (thinkingTimerTickProgress < 2) return;
+    thinkingTimerTickProgress -= 2;
 
     activePlayer.seconds = Math.max(0, activePlayer.seconds - 1);
 
@@ -457,8 +1172,9 @@ function startThinkingCountdownTimer(options = {}) {
         onTimeout(activePlayer);
       }
     }
-  }, 1000);
+  }, 500);
 
+  renderHostCheatControls();
   return true;
 }
 
@@ -705,6 +1421,9 @@ document.getElementById('applyBtn').addEventListener('click', async ()=>{
   const photoInputs = Array.from(document.querySelectorAll('.playerPhoto')).filter((_, i) => i < playerCountSelect);
   
   startSeconds = parseInt(document.getElementById('startSeconds').value)||60;
+  pendingHostTimerSpeeds.clear();
+  pendingHostAnswerMultipliers.clear();
+  activeHostAnswerMultipliers.clear();
 
   
   players = await Promise.all(nameInputs.map(async (nameInput, i) => {
@@ -753,12 +1472,17 @@ document.getElementById('applyBtn').addEventListener('click', async ()=>{
     hidePresenterScript();
   }
   
+  window.dispatchEvent(new Event('slimstemens:game-started'));
   const modeText = playerCountSelect === 1 ? `${questionsPerRound} vraag/vragen per ronde` : '';
   flash(`Spel aangemaakt met ${playerCountSelect} speler(s) ${modeText} — klaar om te starten`);
 });
 
 
 document.getElementById('resetBtn').addEventListener('click', ()=>{
+  window.dispatchEvent(new Event('slimstemens:game-reset'));
+  pendingHostTimerSpeeds.clear();
+  pendingHostAnswerMultipliers.clear();
+  activeHostAnswerMultipliers.clear();
   players = [];
   renderPlayers();
   currentRoundIndex = 0;

@@ -17,7 +17,7 @@
     <div class="grid" id="dashboardGrid">
       <div class="sidebar-menus">
         <div class="controls">
-          <button id="applyBtn">Maak spel</button>
+          <button id="applyBtn">Start spel</button>
           <button id="resetBtn" class="secondary">Reset</button>
         </div>
         <aside class="card options-menu" aria-label="Optiemenu">
@@ -73,6 +73,24 @@
             <input type="checkbox" id="safeRoundNavigationCheckbox" />
             Veilige rondeknoppen (voorkom vroegtijdig afkappen)
           </label>
+        </div>
+
+        <div style="margin-top:10px;">
+          <label>
+            <input type="checkbox" id="hostCheatsEnabledCheckbox" />
+            Uitgebreide hostmodus (optioneel)
+          </label>
+        </div>
+
+        <div id="streamerBotOption" class="streamerbot-option" hidden>
+          <label>
+            <input type="checkbox" id="streamerBotEnabled" />
+            Streamer.bot-integratie (alleen Electron)
+          </label>
+          <div id="streamerBotAddressField" style="display:none;margin-top:8px;">
+            <label for="streamerBotUrl">Streamer.bot WebSocket-adres</label>
+            <input id="streamerBotUrl" type="text" value="ws://127.0.0.1:8080/" spellcheck="false" />
+          </div>
         </div>
 
         <hr class="divider" />
@@ -356,6 +374,67 @@
         <div style="margin-top:10px;" id="roundControls"></div>
         <div style="margin-top:10px;" id="preFinaleBonusControls" class="button-row"></div>
 
+        <section id="hostCheatPanel" class="host-cheat-panel" aria-label="Uitgebreide hostfuncties" hidden>
+          <h3>Uitgebreide hostfuncties</h3>
+          <div class="host-cheat-controls">
+            <div class="host-cheat-fields">
+              <div>
+                <label for="hostCheatPlayer">Kandidaat</label>
+                <select id="hostCheatPlayer"></select>
+              </div>
+              <div>
+                <label for="hostCheatAmount">Aantal punten/seconden</label>
+                <input id="hostCheatAmount" type="number" min="0" step="1" value="10" />
+              </div>
+            </div>
+            <div class="button-row host-cheat-action-row">
+              <button id="hostCheatAddScore" type="button">Punten toevoegen</button>
+              <button id="hostCheatSubtractScore" class="secondary" type="button">Punten aftrekken</button>
+              <button id="hostCheatSetScore" class="secondary" type="button">Punten instellen</button>
+            </div>
+            <div class="button-row host-cheat-action-row">
+              <button id="hostCheatGiveTurn" class="secondary" type="button">Geef deze kandidaat de beurt</button>
+              <button id="hostCheatHalfTimer" class="secondary" type="button" aria-pressed="false" disabled>Timer 2× zo traag</button>
+              <button id="hostCheatDoubleTimer" class="secondary" type="button" aria-pressed="false" disabled>Timer 2× zo snel</button>
+              <button id="hostCheatNormalTimer" class="secondary" type="button" hidden disabled>Timer normale snelheid</button>
+            </div>
+            <div id="hostCheatTimerStatus" class="small muted" aria-live="polite">Selecteer een kandidaat om een timersnelheid in te stellen.</div>
+            <div class="button-row host-cheat-action-row">
+              <button id="hostCheatDoubleAnswerPoints" class="secondary" type="button" disabled>Goede antwoorden 2× punten</button>
+              <button id="hostCheatHalfAnswerPoints" class="secondary" type="button" disabled>Goede antwoorden ½ punten</button>
+              <button id="hostCheatRevealAnswer" class="secondary" type="button" disabled>Onthul willekeurig antwoord</button>
+            </div>
+            <div id="hostCheatAnswerStatus" class="small muted" aria-live="polite"></div>
+            <div class="button-row host-cheat-quiz-row">
+              <div>
+                <label for="hostCheatQuizTitlePrefix">Quiztekst vóór logo</label>
+                <input id="hostCheatQuizTitlePrefix" type="text" maxlength="80" />
+              </div>
+              <div>
+                <label for="hostCheatQuizTitleSuffix">Quiztekst ná logo</label>
+                <input id="hostCheatQuizTitleSuffix" type="text" maxlength="80" />
+              </div>
+              <button id="hostCheatSetQuizName" class="secondary" type="button">Wijzig quiznaam</button>
+            </div>
+            <div class="button-row host-cheat-swap-row">
+              <div>
+                <label for="hostCheatSwapPlayerA">Kandidaat wisselen</label>
+                <select id="hostCheatSwapPlayerA"></select>
+              </div>
+              <span class="host-cheat-swap-join">met</span>
+              <div>
+                <label for="hostCheatSwapPlayerB">Tweede kandidaat</label>
+                <select id="hostCheatSwapPlayerB"></select>
+              </div>
+              <button id="hostCheatSwapPlayers" class="secondary" type="button">Wissel stoelen en scores</button>
+            </div>
+            <div id="streamerBotStatus" class="small muted streamerbot-status" role="status" aria-live="polite" hidden>
+              Streamer.bot: niet ingeschakeld.
+            </div>
+            <div id="hostCheatExtensionActions" class="button-row" aria-label="Extra hostfuncties"></div>
+          </div>
+        </section>
+
       </div>
 
       <!-- Rechts: custom game en audio -->
@@ -405,6 +484,7 @@
   <script src="js/questions/vragen-galerij.js"></script>
   <script src="js/rounds/round-galerij.js"></script>
   <script src="js/core.js"></script>
+  <script src="js/streamerbot-integration.js"></script>
   <script src="js/questions/vragen-collectiefgeheugen.js"></script>
   <script src="js/rounds/round-collectiefgeheugen.js"></script>
   <script src="js/questions/vragen-finale.js"></script>
@@ -711,13 +791,16 @@
       }
 
       window.dismissScoreboard = dismissScoreboard;
+      window.shouldSyncPlayersToScoreboard = () => showingScoreboard;
 
       document.addEventListener('click', function (event) {
         const clickedButton = event.target instanceof Element ? event.target.closest('button') : null;
         if (!showingScoreboard || !clickedButton ||
             clickedButton === toggleScoreboardBtn ||
             clickedButton === lobbyStartScoreRevealBtn ||
-            clickedButton.closest('#candidatePerspectives')) return;
+            clickedButton.closest('#candidatePerspectives') ||
+            clickedButton.closest('#hostCheatPanel') ||
+            clickedButton.closest('#preFinaleBonusControls')) return;
 
         dismissScoreboard(clickedButton.id !== 'nextRound');
       }, true);
@@ -729,7 +812,7 @@
           showingLobbyScoreboard = false;
           lobbyStartScoreRevealBtn.style.display = 'none';
           if (typeof sendDisplayUpdate !== 'undefined') {
-            sendDisplayUpdate({ type: 'lobby_standings_reveal' });
+            sendDisplayUpdate({ type: 'lobby_standings_reveal', players });
           }
           if (typeof playSFX === 'function') playSFX('SFX/goed.mp3');
         });
@@ -883,6 +966,12 @@
         if (scoreboardSettings && scoreboardCheckbox && scoreboardSettings.enabled !== undefined) {
           scoreboardCheckbox.checked = !!scoreboardSettings.enabled;
           scoreboardCheckbox.dispatchEvent(new Event('change'));
+        }
+
+        const hostCheatsCheckbox = document.getElementById('hostCheatsEnabledCheckbox');
+        if (hostCheatsCheckbox) {
+          hostCheatsCheckbox.checked = config.settings.hostCheats?.enabled === true;
+          hostCheatsCheckbox.dispatchEvent(new Event('change'));
         }
 
         // Bumpers instelling
