@@ -57,8 +57,7 @@
 #scene-round-369 .player-card.active-player .player-seconds,
 #scene-standings .player-card.active-player .player-seconds,
 .players-bar-compact .player-card.active-player .player-seconds,
-#puzzelActivePlayersBar .player-card.active-player .player-seconds,
-.finale-candidate-score.active-player {
+#puzzelActivePlayersBar .player-card.active-player .player-seconds {
   background: linear-gradient(135deg, #3283c2 0%, #2874b8 52%, #2166a3 100%);
 }
 
@@ -67,7 +66,6 @@
 .lobby-standings-players .player-seconds,
 .players-bar-compact .player-seconds,
 #puzzelActivePlayersBar .player-seconds,
-.finale-candidate-score,
 .finale-standings-score {
   background: linear-gradient(135deg, #bd321d 0%, #8b2416 52%, #bd321d 100%);
 }
@@ -75,11 +73,15 @@
 .finale-candidate-score {
   width: 4.3ch;
   height: 4.3ch;
+  aspect-ratio: 1;
   flex: 0 0 4.3ch;
+  border-color: #4e0000;
+  background: linear-gradient(135deg, #4e0000 0%, #970808 52%, #4e0000 100%);
 }
 
 .finale-candidate-score.active-player {
-  background: #2874b8;
+  border-color: #00254e;
+  background: linear-gradient(135deg, #00254e 0%, #085197 52%, #00254e 100%);
 }
 
 #galerijMainScoreCircle,
@@ -126,9 +128,9 @@
   border-radius: 50%;
   background: conic-gradient(
     from 0deg,
-    rgba(220, 68, 52, 0.12) 0deg,
-    rgba(255, 120, 95, 0.7) 330deg,
-    rgba(220, 68, 52, 0.12) 360deg
+    rgba(78, 0, 0, 0.12) 0deg,
+    rgba(151, 8, 8, 0.7) 330deg,
+    rgba(78, 0, 0, 0.12) 360deg
   );
   animation: finale-score-clockwise 10s linear infinite;
   animation-play-state: paused;
@@ -139,9 +141,9 @@
 .finale-candidate-score.active-player::before {
   background: conic-gradient(
     from 0deg,
-    rgba(72, 150, 224, 0.12) 0deg,
-    rgba(104, 181, 255, 0.7) 330deg,
-    rgba(72, 150, 224, 0.12) 360deg
+    rgba(0, 37, 78, 0.12) 0deg,
+    rgba(8, 81, 151, 0.7) 330deg,
+    rgba(0, 37, 78, 0.12) 360deg
   );
 }
 
@@ -1506,4 +1508,161 @@ body :is(
   width: 100%;
   height: 57.97%;
   z-index: 11;
+}
+
+#scene-round-369 .players-bar,
+#scene-standings .players-bar {
+  --player-name-available-width: 518px;
+  top: 34px;
+  left: 360px;
+  right: 360px;
+  justify-content: space-between;
+  gap: 0;
+}
+
+#scene-round-369 .players-bar .player-card,
+#scene-standings .players-bar .player-card {
+  width: 140px;
+  flex: 0 0 140px;
+}
+
+#scene-round-369 .player-name,
+#scene-standings .player-name {
+  margin-bottom: 26px;
+  font-size: 3.1em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+#scene-round-369 .player-seconds,
+#scene-standings .player-seconds {
+  width: 140px;
+  height: 84px;
+  aspect-ratio: auto;
+  font-size: 4em;
+}
+
+#finalePrePlayersBar .player-seconds {
+  height: auto;
+  aspect-ratio: 5 / 3;
+}
+
+.finale-standings-score {
+  flex-basis: 140px;
+  width: 140px;
+  height: 84px;
+  font-size: 4em;
+}
+
+.lobby-standings-players .player-seconds {
+  flex: 0 0 70px;
+  width: 70px;
+  height: 42px;
+  aspect-ratio: auto;
+  font-size: 2em;
+}
+
+.finale-standings-players,
+#finale-pre-grid .finale-display-players {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 140px 121px 140px minmax(0, 1fr);
+  align-items: center;
+  gap: 0;
+  padding: 40px 0;
+}
+
+.finale-standings-player {
+  display: contents;
+}
+
+.finale-standings-player:first-child .finale-standings-name {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: end;
+  margin-right: 28px;
+  text-align: right;
+}
+
+.finale-standings-player:first-child .finale-standings-score {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.finale-standings-player:last-child .finale-standings-score {
+  grid-column: 4;
+  grid-row: 1;
+}
+
+.finale-standings-player:last-child .finale-standings-name {
+  grid-column: 5;
+  grid-row: 1;
+  justify-self: start;
+  margin-left: 28px;
+  text-align: left;
+}
+
+.finale-standings-name {
+  min-width: 0;
+  max-width: 420px;
+  overflow-wrap: anywhere;
+}
+
+.finale-standings-score {
+  width: 140px;
+  height: 84px;
+  font-size: 4em;
+}
+
+.lobby-standings-players .player-seconds,
+.players-bar-compact .player-seconds,
+#finalePrePlayersBar .player-seconds {
+  aspect-ratio: 5 / 3;
+}
+
+.players-bar-compact .player-seconds {
+  height: auto;
+}
+
+#puzzelActivePlayersBar .player-seconds {
+  height: auto;
+  aspect-ratio: 5 / 3;
+}
+
+#finalePrePlayersBar .player-seconds {
+  height: auto;
+}
+
+#scene-round-puzzel-active .puzzel-table-grid {
+  box-sizing: border-box;
+  column-gap: 7px;
+  flex: 0 0 926px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  max-width: 926px;
+  min-width: 926px;
+  padding: 4px;
+  row-gap: 9px;
+  width: 926px;
+}
+
+#scene-round-puzzel-active .puzzel-word {
+  border-color: #000;
+  border-width: 2px 1px;
+  border-radius: 4px;
+}
+
+#scene-round-puzzel-active .puzzel-word:not(.found) {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+:is(.od-answer-points, .answer-points, .collectief-answer-points, .puzzel-link-points) {
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 126px !important;
+  width: 126px !important;
+  min-width: 126px !important;
+  height: 79px !important;
+  font-size: 53px !important;
 }

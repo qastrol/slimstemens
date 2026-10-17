@@ -1074,6 +1074,51 @@ function renderLobby(players, containerId = 'lobbyPlayerImages'){
 
 
 
+function fitThreeSixNinePlayerNames(container) {
+    if (!container.matches('#scene-round-369 .players-bar, #scene-standings .players-bar')) return;
+
+    const playerCards = Array.from(container.children);
+    const playerNames = playerCards.map(card => card.querySelector('.player-name')).filter(Boolean);
+    if (!playerNames.length) return;
+
+    playerNames.forEach(name => name.style.removeProperty('font-size'));
+
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    if (!context) return;
+
+    context.font = getComputedStyle(playerNames[0]).font;
+    const referenceWidth = context.measureText('Kandidaat A').width;
+    const nameWidths = playerNames.map(name => {
+        context.font = getComputedStyle(name).font;
+        return context.measureText(name.textContent).width;
+    });
+
+    const scoreCenters = playerCards.map(card => {
+        const score = card.querySelector('.player-seconds');
+        const bounds = score.getBoundingClientRect();
+        return bounds.left + bounds.width / 2;
+    });
+    const measuredGaps = scoreCenters.slice(1)
+        .map((center, index) => center - scoreCenters[index])
+        .filter(gap => gap > 0);
+    const fallbackWidth = parseFloat(getComputedStyle(container)
+        .getPropertyValue('--player-name-available-width'));
+    const availableWidth = measuredGaps.length
+        ? Math.min(...measuredGaps) - 12
+        : fallbackWidth;
+    const maxNameWidth = Math.max(availableWidth, referenceWidth);
+    const widestName = Math.max(...nameWidths);
+    const scale = Math.min(1, maxNameWidth / widestName);
+
+    if (scale < 1) {
+        const fontSize = parseFloat(getComputedStyle(playerNames[0]).fontSize);
+        playerNames.forEach(name => {
+            name.style.fontSize = `${fontSize * scale}px`;
+        });
+    }
+}
+
 function renderPlayersBarUniversal(currentQuestionIndex = null, activeIndex = null, containerId = 'playersBarContainer'){
     const container = document.getElementById(containerId);
     if(!container || !players) return;
@@ -1084,6 +1129,9 @@ function renderPlayersBarUniversal(currentQuestionIndex = null, activeIndex = nu
             <div class="player-seconds"><div class="big-timer score-oval-face">${p.seconds}</div></div>
         </div>
     `).join('');
+
+    fitThreeSixNinePlayerNames(container);
+    document.fonts.ready.then(() => fitThreeSixNinePlayerNames(container));
 
     
     if(containerId === 'playersBarContainer'){
@@ -1118,8 +1166,9 @@ function renderPlayersBarUniversal(currentQuestionIndex = null, activeIndex = nu
             if (!hasPreviousIndex || currentQuestionIndex !== previousIndex) {
               const shouldAnimate = hasPreviousIndex && currentQuestionIndex === previousIndex + 1;
               currentIndicator.classList.toggle('no-transition', !shouldAnimate);
-              currentIndicator.style.left = `${questionMarkers[currentQuestionIndex].offsetLeft}px`;
-              currentIndicator.style.top = `${questionMarkers[currentQuestionIndex].offsetTop}px`;
+              const currentMarker = questionMarkers[currentQuestionIndex];
+              currentIndicator.style.left = `${currentMarker.offsetLeft + (currentMarker.offsetWidth - currentIndicator.offsetWidth) / 2}px`;
+              currentIndicator.style.top = `${currentMarker.offsetTop + (currentMarker.offsetHeight - currentIndicator.offsetHeight) / 2}px`;
               currentIndicator.classList.add('is-visible');
               qContainer.dataset.currentQuestionIndex = `${currentQuestionIndex}`;
 
@@ -1742,6 +1791,19 @@ function renderPlayersBarCompact(players, activeIndex, containerId) {
     `).join('');
 }
 
+function renderFinaleStandingsPlayers(playersData, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const finalists = playersData.filter(player => !player.isOut).slice(0, 2);
+  container.innerHTML = finalists.map((player, index) => `
+    <div class="finale-standings-player${index === 1 ? ' right-score-first' : ''}">
+      <div class="finale-standings-name">${player.name}</div>
+      <div class="finale-standings-score">${player.seconds}</div>
+    </div>
+  `).join('');
+}
+
 function renderStandings(playersData) {
   if (!Array.isArray(playersData)) return;
 
@@ -1754,15 +1816,7 @@ function renderStandings(playersData) {
       ['finaleStandingsPhotoLeft', 'finaleStandingsPhotoRight'],
       []
     );
-    const container = document.getElementById('finaleStandingsPlayers');
-    if (container) {
-      container.innerHTML = finalists.map((player, index) => `
-        <div class="finale-standings-player${index === 1 ? ' right-score-first' : ''}">
-          <div class="finale-standings-name">${player.name}</div>
-          <div class="finale-standings-score">${player.seconds}</div>
-        </div>
-      `).join('');
-    }
+    renderFinaleStandingsPlayers(finalists, 'finaleStandingsPlayers');
     return;
   }
 
@@ -2508,7 +2562,7 @@ function renderGalerijActiveScore(data) {
           }
         }
         
-        renderPlayersBarCompact(displayPlayers, activeIndex, 'finalePrePlayersBar');
+        renderFinaleStandingsPlayers(displayPlayers, 'finalePrePlayersBar');
         break;
       }
 
