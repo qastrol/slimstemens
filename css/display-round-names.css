@@ -25,6 +25,7 @@
 
 #scene-round-369 .player-seconds,
 #scene-standings .player-seconds,
+#lobbyStandingsPlayersBar .player-seconds,
 .players-bar-compact .player-seconds,
 .galerij-aanvul-answers-list .answer-points,
 #collectiefMainAnswers .collectief-answer-points,
@@ -36,6 +37,7 @@
 
 #scene-round-369 .player-seconds,
 #scene-standings .player-seconds,
+#lobbyStandingsPlayersBar .player-seconds,
 .lobby-standings-players .player-seconds,
 .players-bar-compact .player-seconds,
 #puzzelActivePlayersBar .player-seconds,
@@ -63,6 +65,7 @@
 
 #scene-round-369 .player-seconds,
 #scene-standings .player-seconds,
+#lobbyStandingsPlayersBar .player-seconds,
 .lobby-standings-players .player-seconds,
 .players-bar-compact .player-seconds,
 #puzzelActivePlayersBar .player-seconds,
@@ -1520,26 +1523,44 @@ body :is(
   gap: 0;
 }
 
+#lobbyStandingsPlayersBar {
+  position: absolute;
+  top: 61px;
+  left: 360px;
+  right: 360px;
+  width: auto;
+  justify-content: space-between;
+  gap: 0;
+}
+
+#scene-lobby-standings .lobby-standings-score-panel {
+  position: relative;
+}
+
 #scene-round-369 .players-bar .player-card,
-#scene-standings .players-bar .player-card {
+#scene-standings .players-bar .player-card,
+#lobbyStandingsPlayersBar .player-card {
   width: 140px;
   flex: 0 0 140px;
 }
 
 #scene-round-369 .player-name,
-#scene-standings .player-name {
-  margin-bottom: 26px;
+#scene-standings .player-name,
+#lobbyStandingsPlayersBar .player-name {
+  margin-bottom: 53px;
   font-size: 3.1em;
   line-height: 1;
   white-space: nowrap;
 }
 
 #scene-round-369 .player-seconds,
-#scene-standings .player-seconds {
+#scene-standings .player-seconds,
+#lobbyStandingsPlayersBar .player-seconds {
   width: 140px;
   height: 84px;
   aspect-ratio: auto;
   font-size: 4em;
+  border-radius: 50%;
 }
 
 #finalePrePlayersBar .player-seconds {
@@ -1552,14 +1573,6 @@ body :is(
   width: 140px;
   height: 84px;
   font-size: 4em;
-}
-
-.lobby-standings-players .player-seconds {
-  flex: 0 0 70px;
-  width: 70px;
-  height: 42px;
-  aspect-ratio: auto;
-  font-size: 2em;
 }
 
 .finale-standings-players,
@@ -1614,7 +1627,6 @@ body :is(
   font-size: 4em;
 }
 
-.lobby-standings-players .player-seconds,
 .players-bar-compact .player-seconds,
 #finalePrePlayersBar .player-seconds {
   aspect-ratio: 5 / 3;
