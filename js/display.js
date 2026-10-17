@@ -23,8 +23,6 @@ let openDeurActiveScoreData = null;
 let puzzelActiveScoreData = null;
 let galerijActiveScoreData = null;
 let collectiefMainScoreData = null;
-let galerijScorePerspectivePlayerIndex = null;
-let galerijScorePerspectiveScene = null;
 let galerijAutomaticPerspectivesEnabled = false;
 const questionQuarterTransformedElements = new Set();
 const canonicalRoundDisplayNames = {
@@ -932,9 +930,7 @@ function handleAudioMessage(data) {
         break;
 
       case 'question_quarter_perspective':
-        questionQuarterPerspective = currentScene === 'round-opendeur-vragensteller'
-          ? null
-          : data.perspective || null;
+        questionQuarterPerspective = data.perspective || null;
         if (typeof data.automaticSceneChangesEnabled === 'boolean') {
           galerijAutomaticPerspectivesEnabled = data.automaticSceneChangesEnabled;
         }
@@ -1752,8 +1748,8 @@ function renderOpenDeurActiveScore(data) {
   const activePlayer = data?.players?.find(player => player.index === activeIndex);
   const isActivePerspective =
     automaticPerspectiveActive &&
-    questionQuarterPerspective?.type === 'player' &&
-    Number(questionQuarterPerspective.playerIndex) === activeIndex;
+    activeUniversalPerspectiveData?.automaticScenePerspective === true &&
+    Number(activeUniversalPerspectiveData.playerIndex) === activeIndex;
   const shouldShow = isActivePerspective &&
     !data.isActiveAnsweringPlayerPassed &&
     !data.isAllAnswersVisible &&
@@ -2000,8 +1996,8 @@ function renderPuzzelActiveScore(data) {
   const activeIndex = Number(data?.activeIndex);
   const activePlayer = data?.players?.find(player => player.index === activeIndex);
   const shouldShow = automaticPerspectiveActive &&
-    questionQuarterPerspective?.type === 'player' &&
-    Number(questionQuarterPerspective.playerIndex) === activeIndex &&
+    activeUniversalPerspectiveData?.automaticScenePerspective === true &&
+    Number(activeUniversalPerspectiveData.playerIndex) === activeIndex &&
     !data.activePlayerPassed &&
     !!activePlayer;
 
@@ -2321,32 +2317,12 @@ function renderGalerijActiveScore(data) {
   const activeIndex = Number(data?.activeIndex);
   const activePlayer = data?.players?.find(player => player.index === activeIndex);
   const isMatchingPlayerPerspective =
-    questionQuarterPerspective?.type === 'player' &&
-    Number(questionQuarterPerspective.playerIndex) === activeIndex;
-
-  if (!automaticPerspectiveActive) {
-    galerijScorePerspectivePlayerIndex = null;
-    galerijScorePerspectiveScene = null;
-  } else if (isMatchingPlayerPerspective && activePlayer) {
-    galerijScorePerspectivePlayerIndex = activeIndex;
-    galerijScorePerspectiveScene = currentScene;
-  } else if (
-    galerijScorePerspectiveScene !== currentScene ||
-    galerijScorePerspectivePlayerIndex !== activeIndex
-  ) {
-    galerijScorePerspectivePlayerIndex = null;
-    galerijScorePerspectiveScene = null;
-  }
+    activeUniversalPerspectiveData?.automaticScenePerspective === true &&
+    Number(activeUniversalPerspectiveData.playerIndex) === activeIndex;
 
   const shouldShow = automaticPerspectiveActive &&
     !!activePlayer &&
-    (
-      isMatchingPlayerPerspective ||
-      (
-        galerijScorePerspectiveScene === currentScene &&
-        galerijScorePerspectivePlayerIndex === activeIndex
-      )
-    );
+    isMatchingPlayerPerspective;
 
   [mainScore, aanvulScore].forEach((score, index) => {
     if (!score) return;
@@ -2831,17 +2807,13 @@ function clearQuestionQuarterPerspective() {
 
 function renderQuestionQuarterPerspective() {
   clearQuestionQuarterPerspective();
-  if (currentScene === 'round-opendeur-vragensteller') {
-    questionQuarterPerspective = null;
-    return;
-  }
   const perspective = questionQuarterPerspective;
   if (!perspective || !currentScene) return;
 
-  const targetSelectors = {
+  const questionQuarterTargetSelectors = {
     'round-369': '.round-grid > .grid-part.part2',
     'round-opendeur-vragensteller': '#opendeur-vragensteller-grid .grid-part.part2',
-    'round-opendeur-vraag': '#opendeur-vraag-grid .part2-mini-lobby',
+    'round-opendeur-vraag': '#opendeur-vraag-grid .part4-status',
     'round-puzzel-waiting': '#puzzel-pre-grid .part4-status',
     'round-puzzel-active': '.grid-part.part3',
     'round-galerij-pre': '#galerij-pre-grid .part4-status',
@@ -2850,100 +2822,54 @@ function renderQuestionQuarterPerspective() {
     'round-galerij-aanvul': '#galerij-aanvul-grid .part4-status',
     'round-galerij-done': '#galerij-done-grid .part4-status',
     'round-collectief-pre': '#collectief-pre-grid .part4-status',
-    'round-collectief-main': '.part4-status'
+    'round-collectief-main': '#collectief-main-grid .part4-status'
   };
   const isFullscreenLobby = currentScene === 'lobby' && !!universalPerspectivePreviousScene;
   const perspectiveSceneName = isFullscreenLobby ? universalPerspectivePreviousScene : currentScene;
   const perspectiveScene = document.getElementById(`scene-${perspectiveSceneName}`);
   const scene = document.getElementById(`scene-${currentScene}`);
-  const nativeMiniLobbyScenes = new Set([
-    'round-puzzel-waiting',
-    'round-puzzel-active',
-    'round-galerij-pre',
-    'round-galerij-main',
-    'round-galerij-aanvul',
-    'round-galerij-slideshow',
-    'round-galerij-done'
-  ]);
-  const usesNativeMiniLobby = !isFullscreenLobby &&
-    nativeMiniLobbyScenes.has(perspectiveSceneName);
-  const targetSelector = targetSelectors[perspectiveSceneName];
-  const target = isFullscreenLobby
-    ? scene
-    : usesNativeMiniLobby
-      ? perspectiveScene?.querySelector('.mini-lobby')
-      : targetSelector
-        ? perspectiveScene?.querySelector(targetSelector)
-        : null;
-  if (!target) return;
-
-  if (
-    usesNativeMiniLobby &&
-    target.matches('.mini-lobby') &&
-    (perspective.type === 'lobby' || perspective.type === 'player')
-  ) {
-    if (perspective.type === 'lobby') return;
-
-    const player = Array.from(target.querySelectorAll('.player[data-player-index]'))
-      .find(candidate => Number(candidate.dataset.playerIndex) === Number(perspective.playerIndex));
-    if (!player) {
-      console.warn('Automatisch perspectief niet toegepast: kandidaat niet gevonden.', perspective.playerIndex);
+  const targetSelector = questionQuarterTargetSelectors[perspectiveSceneName];
+  const perspectiveTarget = targetSelector
+    ? perspectiveScene?.querySelector(targetSelector)
+    : null;
+  const target = isFullscreenLobby ? scene : perspectiveTarget;
+  let fullscreenLobbyPerspectiveBounds = null;
+  if (isFullscreenLobby) {
+    if (perspectiveScene && perspectiveTarget) {
+      const previousDisplay = perspectiveScene.style.display;
+      const previousVisibility = perspectiveScene.style.visibility;
+      perspectiveScene.style.display = 'flex';
+      perspectiveScene.style.visibility = 'hidden';
+      try {
+        const sceneBounds = perspectiveScene.getBoundingClientRect();
+        const targetBounds = perspectiveTarget.getBoundingClientRect();
+        if (sceneBounds.width && sceneBounds.height && targetBounds.width && targetBounds.height) {
+          fullscreenLobbyPerspectiveBounds = {
+            left: (targetBounds.left - sceneBounds.left) *
+              (perspectiveScene.offsetWidth / sceneBounds.width),
+            top: (targetBounds.top - sceneBounds.top) *
+              (perspectiveScene.offsetHeight / sceneBounds.height),
+            width: targetBounds.width * (perspectiveScene.offsetWidth / sceneBounds.width),
+            height: targetBounds.height * (perspectiveScene.offsetHeight / sceneBounds.height)
+          };
+        }
+      } finally {
+        perspectiveScene.style.display = previousDisplay;
+        perspectiveScene.style.visibility = previousVisibility;
+      }
+    }
+    if (!fullscreenLobbyPerspectiveBounds) {
+      console.warn(
+        'Vraagkwartier niet geplaatst: doelvlak ontbreekt of heeft geen afmetingen.',
+        perspectiveSceneName
+      );
       return;
     }
-
-    universalPerspectiveStyles.set(target, {
-      transform: target.style.transform,
-      transformOrigin: target.style.transformOrigin,
-      transition: target.style.transition,
-      overflow: target.style.overflow
-    });
-    target.style.overflow = 'hidden';
-    questionQuarterTransformedElements.add(target);
-    Array.from(target.children).forEach(element => {
-      if (
-        element.id === 'puzzelActiveScoreCircle' ||
-        element.id === 'galerijMainScoreCircle' ||
-        element.id === 'galerijAanvulScoreCircle' ||
-        element.id === 'collectiefMainScoreCircles'
-      ) return;
-      if (applyUniversalPerspectiveZoom(
-        element,
-        player,
-        target,
-        UNIVERSAL_PERSPECTIVE_ZOOM_SCALE *
-          (perspectiveSceneName === 'round-collectief-main' ? 1.12 : 1)
-      )) {
-        questionQuarterTransformedElements.add(element);
-      }
-    });
-    return;
-  }
-
-  if (
-    perspectiveSceneName === 'round-opendeur-vraag' &&
-    target.matches('.part2-mini-lobby') &&
-    (perspective.type === 'lobby' || perspective.type === 'player')
-  ) {
-    if (perspective.type === 'lobby') return;
-
-    const player = Array.from(target.querySelectorAll('.player[data-player-index]'))
-      .find(candidate => Number(candidate.dataset.playerIndex) === Number(perspective.playerIndex));
-    if (!player) {
-      console.warn('Open Deur-perspectief niet toegepast: kandidaat niet gevonden.', perspective.playerIndex);
-      return;
-    }
-
-    Array.from(target.children).forEach(element => {
-      if (element.id === 'odActiveScoreCircle') return;
-      if (applyUniversalPerspectiveZoom(
-        element,
-        player,
-        target,
-        UNIVERSAL_PERSPECTIVE_ZOOM_SCALE
-      )) {
-        questionQuarterTransformedElements.add(element);
-      }
-    });
+  } else if (!target) {
+    console.warn(
+      'Vraagkwartier niet geplaatst: doelvlak ontbreekt.',
+      perspectiveSceneName
+    );
     return;
   }
 
@@ -2958,16 +2884,12 @@ function renderQuestionQuarterPerspective() {
   viewport.style.position = 'absolute';
   viewport.style.display = 'block';
   viewport.style.padding = '0';
-  if (isFullscreenLobby) {
-    const upperRightScenes = new Set([
-      'round-369',
-      'round-opendeur-vragensteller'
-    ]);
+  if (fullscreenLobbyPerspectiveBounds) {
     viewport.style.inset = 'auto';
-    viewport.style.left = '960px';
-    viewport.style.top = upperRightScenes.has(perspectiveSceneName) ? '0px' : '540px';
-    viewport.style.width = '960px';
-    viewport.style.height = '540px';
+    viewport.style.left = `${fullscreenLobbyPerspectiveBounds.left}px`;
+    viewport.style.top = `${fullscreenLobbyPerspectiveBounds.top}px`;
+    viewport.style.width = `${fullscreenLobbyPerspectiveBounds.width}px`;
+    viewport.style.height = `${fullscreenLobbyPerspectiveBounds.height}px`;
   }
   questionQuarterPerspectiveViewport = viewport;
   target.appendChild(viewport);
@@ -2985,9 +2907,13 @@ function renderQuestionQuarterPerspective() {
       return;
     }
     const miniLobby = sourceMiniLobby.cloneNode(true);
-    if (perspectiveSceneName.startsWith('round-collectief-')) {
-      miniLobby.querySelector('#collectiefMainScoreCircles')?.remove();
-    }
+    [
+      '#odActiveScoreCircle',
+      '#puzzelActiveScoreCircle',
+      '#galerijMainScoreCircle',
+      '#galerijAanvulScoreCircle',
+      '#collectiefMainScoreCircles'
+    ].forEach(selector => miniLobby.querySelector(selector)?.remove());
     removeIds(miniLobby);
     miniLobby.classList.add('question-quarter-mini-lobby');
     viewport.appendChild(miniLobby);
@@ -3002,11 +2928,31 @@ function renderQuestionQuarterPerspective() {
       });
 
     if (perspective.type === 'lobby') {
-      questionQuarterHiddenMiniLobby = {
-        element: sourceMiniLobby,
-        display: sourceMiniLobby.style.display
-      };
-      sourceMiniLobby.style.display = 'none';
+      const sourceBounds = isFullscreenLobby
+        ? null
+        : sourceMiniLobby.getBoundingClientRect();
+      const targetBounds = isFullscreenLobby
+        ? null
+        : perspectiveTarget?.getBoundingClientRect();
+      const overlapWidth = targetBounds
+        ? Math.max(0, Math.min(sourceBounds.right, targetBounds.right) -
+          Math.max(sourceBounds.left, targetBounds.left))
+        : 0;
+      const overlapHeight = targetBounds
+        ? Math.max(0, Math.min(sourceBounds.bottom, targetBounds.bottom) -
+          Math.max(sourceBounds.top, targetBounds.top))
+        : 0;
+      const overlapArea = overlapWidth * overlapHeight;
+      const sourceArea = sourceBounds
+        ? sourceBounds.width * sourceBounds.height
+        : 0;
+      if (sourceArea > 0 && overlapArea / sourceArea > 0.9) {
+        questionQuarterHiddenMiniLobby = {
+          element: sourceMiniLobby,
+          display: sourceMiniLobby.style.display
+        };
+        sourceMiniLobby.style.display = 'none';
+      }
       return;
     }
 
@@ -3127,7 +3073,12 @@ function handleUniversalPerspectiveChange(data) {
   }
 
   clearUniversalPerspective();
-  if (data.playerIndex === null || data.playerIndex === undefined) return;
+  renderOpenDeurActiveScore(openDeurActiveScoreData);
+  renderPuzzelActiveScore(puzzelActiveScoreData);
+  renderGalerijActiveScore(galerijActiveScoreData);
+  if (data.playerIndex === null || data.playerIndex === undefined) {
+    return;
+  }
 
   const player = players.find(candidate => candidate.index === data.playerIndex);
   const playerName = data.playerName || player?.name;

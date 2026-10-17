@@ -199,7 +199,11 @@ function chooseOpenDeurQuestion(index){
   
   perRoundState.currentAnswerPlayers = [...perRoundState.remainingPlayers]
     .filter(idx => !q.passedPlayers.includes(idx))
-    .sort((a,b)=>players[a].seconds - players[b].seconds || a - b);
+    .sort((a, b) => {
+      if (a === activePlayerIndex) return -1;
+      if (b === activePlayerIndex) return 1;
+      return players[a].seconds - players[b].seconds || a - b;
+    });
   
   
   currentQuestionEl.innerHTML = `

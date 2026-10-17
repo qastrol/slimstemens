@@ -1366,11 +1366,6 @@
           return false;
         }
 
-        const hadUniversalPerspective =
-          fullscreenLobbyPerspectiveActive ||
-          fullscreenPerspectivePlayerIndex !== null ||
-          selectedPerspectivePlayerIndex !== null;
-
         if (threeSixNineLobbyPerspectiveActive) setThreeSixNineLobbyPerspective(false);
 
         showingPresenter = false;
@@ -1385,21 +1380,33 @@
         fullscreenLobbyPerspectiveActive = false;
         fullscreenPerspectivePlayerIndex = null;
         selectedPerspectivePlayerIndex = null;
-        if (hadUniversalPerspective) {
+        sendDisplayUpdate({
+          type: 'universal_perspective',
+          fullscreenLobby: false,
+          fullscreenPlayer: false,
+          playerIndex: null
+        });
+
+        if (mode === 'normal' || mode === 'miniLobby') {
+          setQuestionQuarterPerspective(null);
+        } else if (mode === 'player') {
+          const player = players.find(candidate => candidate.index === playerIndex);
+          questionQuarterPerspective = null;
+          selectedPerspectivePlayerIndex = playerIndex;
+          updatePerspectiveMenu();
+          sendDisplayUpdate({
+            type: 'question_quarter_perspective',
+            perspective: null,
+            automaticSceneChangesEnabled
+          });
           sendDisplayUpdate({
             type: 'universal_perspective',
             fullscreenLobby: false,
             fullscreenPlayer: false,
-            playerIndex: null
+            playerIndex,
+            playerName: player?.name,
+            automaticScenePerspective: true
           });
-        }
-
-        if (mode === 'normal') {
-          setQuestionQuarterPerspective(null);
-        } else if (mode === 'miniLobby') {
-          setQuestionQuarterPerspective({ type: 'lobby' });
-        } else if (mode === 'player') {
-          setQuestionQuarterPerspective({ type: 'player', playerIndex });
         }
 
         return true;
@@ -1594,7 +1601,8 @@
           '3-6-9',
           'Open Deur',
           'Puzzel',
-          'Galerij'
+          'Galerij',
+          'Collectief Geheugen'
         ].includes(currentRoundName);
         const currentThreeSixNineQuestion =
           currentRoundName === '3-6-9' && typeof perRoundState !== 'undefined'
