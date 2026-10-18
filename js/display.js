@@ -1,4 +1,5 @@
 let currentScene = null;
+let roundBumperState = null;
 let players = [];
 const universalPerspectiveStyles = new Map();
 let universalPerspectivePreviousScene = null;
@@ -7,6 +8,10 @@ let activeUniversalPerspectiveData = null;
 const UNIVERSAL_PERSPECTIVE_ZOOM_SCALE = 2.6;
 const UNIVERSAL_PERSPECTIVE_FULLSCREEN_ZOOM_SCALE = 4.2;
 const UNIVERSAL_PERSPECTIVE_VERTICAL_OFFSET = -55; // Pas dit getal aan om de kandidaat hoger of lager te plaatsen.
+const CANDIDATE_SCORE_ROTATION_DURATION_MS = 10000;
+const candidateScoreRotationStates = new Map();
+let scoreCirclePlayerAssignments = new WeakMap();
+const detachedScoreCircleParents = new Map();
 let showingStandings = false;
 let showingLobbyStandings = false;
 let lobbyStandingsRevealed = false;
@@ -250,8 +255,67 @@ function updateScene(sceneName) {
       wideLobby.style.display = sceneName === 'round-369' && showingThreeSixNineLobbyPerspective ? 'block' : 'none';
     }
     currentScene = sceneName;
+  if (roundBumperState?.phase === 'covered') {
+    startRoundBumperExit();
+  }
   renderQuestionQuarterPerspective();
   refreshVisibleOverlaysPosition();
+}
+
+function sendRoundBumperCovered(bumperId) {
+  if (!bumperId) return;
+
+  const message = JSON.stringify({ type: 'bumper_covered', bumperId });
+  if (desktopBridge && typeof desktopBridge.send === 'function') {
+    desktopBridge.send(message);
+    return;
+  }
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(message);
+    return;
+  }
+
+  console.warn('De rondebumper is niet aan de host bevestigd; de host valt terug op de time-out.');
+}
+
+function startRoundBumperExit() {
+  if (!roundBumperState || roundBumperState.phase === 'exiting') return;
+
+  const overlay = document.getElementById('roundBumperOverlay');
+  const oval = document.getElementById('roundBumperOval');
+  if (!overlay || !oval) {
+    console.error('De rondebumper kan niet worden afgesloten: de overlay ontbreekt.');
+    roundBumperState = null;
+    return;
+  }
+
+  roundBumperState.phase = 'exiting';
+  overlay.classList.remove('is-entering');
+  overlay.classList.add('is-exiting');
+}
+
+function handleRoundBumperAnimationEnd(event) {
+  if (event.target.id !== 'roundBumperOval' || !roundBumperState) return;
+
+  const overlay = document.getElementById('roundBumperOverlay');
+  if (!overlay) {
+    console.error('De rondebumper kan niet worden afgerond: de overlay ontbreekt.');
+    roundBumperState = null;
+    return;
+  }
+
+  if (event.animationName === 'roundBumperEnter' && roundBumperState.phase === 'entering') {
+    roundBumperState.phase = 'covered';
+    overlay.classList.remove('is-entering');
+    sendRoundBumperCovered(roundBumperState.id);
+    return;
+  }
+
+  if (event.animationName === 'roundBumperExit' && roundBumperState.phase === 'exiting') {
+    overlay.classList.remove('is-active', 'is-exiting');
+    overlay.setAttribute('aria-hidden', 'true');
+    roundBumperState = null;
+  }
 }
 
 function getOpenDeurIntroThumbnailUrl(questioner) {
@@ -443,6 +507,7 @@ function connectWebSocket() {
 
       case 'scene_change':
         if (data.scene === 'lobby') {
+          resetCandidateScoreRotations();
           universalPerspectivePreviousScene = null;
           clearUniversalPerspective();
           if (data.players) players = data.players;
@@ -742,12 +807,25 @@ function handleAudioMessage(data) {
         break;
 
       case 'show_bumper':
-        // Toon bumper met rondetitel
-        updateScene('round-bumper');
+        const bumperOverlay = document.getElementById('roundBumperOverlay');
+        const bumperOval = document.getElementById('roundBumperOval');
         const bumperTitle = document.getElementById('bumperRoundTitle');
-        if (bumperTitle) {
-          bumperTitle.textContent = data.roundTitle || 'RONDE';
+        if (!bumperOverlay || !bumperOval || !bumperTitle) {
+          console.error('De rondebumper kan niet worden getoond: de overlay ontbreekt.');
+          break;
         }
+
+        roundBumperState = {
+          id: typeof data.bumperId === 'string' ? data.bumperId : null,
+          phase: 'entering'
+        };
+        bumperTitle.textContent = data.roundTitle || 'RONDE';
+        bumperOval.onanimationend = handleRoundBumperAnimationEnd;
+        bumperOverlay.classList.remove('is-entering', 'is-exiting');
+        bumperOverlay.classList.add('is-active');
+        bumperOverlay.setAttribute('aria-hidden', 'false');
+        void bumperOval.offsetWidth;
+        bumperOverlay.classList.add('is-entering');
         
         // Speel bumper geluid af
         try {
@@ -1045,6 +1123,7 @@ function renderFinaleCandidatePhotos(
       photo.alt = finalist.name || 'Kandidaat';
     }
     if (score && finalist) {
+      const isActive = !!finalist.isActive || index === normalizedActiveIndex;
       let scoreFace = score.querySelector('.score-oval-face');
       if (!scoreFace) {
         scoreFace = document.createElement('span');
@@ -1053,12 +1132,92 @@ function renderFinaleCandidatePhotos(
         score.classList.add('score-oval-reveal');
       }
       scoreFace.textContent = finalist.seconds ?? '';
-      score.classList.toggle(
-        'active-player',
-        !!finalist.isActive || index === normalizedActiveIndex
+      updateCandidateScoreRotation(
+        score,
+        finalist.index ?? index,
+        timerRunning && isActive
       );
-      score.classList.toggle('timer-running', timerRunning);
+      score.classList.toggle('active-player', isActive);
+      score.classList.toggle('timer-running', timerRunning && isActive);
+    } else if (score) {
+      updateCandidateScoreRotation(score, null, false);
+      score.classList.remove('active-player', 'timer-running');
     }
+  });
+
+  for (let index = finalists.length; index < scoreIds.length; index += 1) {
+    const score = document.getElementById(scoreIds[index]);
+    if (!score) continue;
+    updateCandidateScoreRotation(score, null, false);
+    score.classList.remove('active-player', 'timer-running');
+  }
+}
+
+function normalizeScoreRotation(phase) {
+  return ((phase % CANDIDATE_SCORE_ROTATION_DURATION_MS) +
+    CANDIDATE_SCORE_ROTATION_DURATION_MS) %
+    CANDIDATE_SCORE_ROTATION_DURATION_MS;
+}
+
+function getCandidateScoreRotationAnimation(score) {
+  const animationName = getComputedStyle(score, '::before').animationName;
+  if (animationName !== 'finale-score-clockwise') return null;
+  return document.getAnimations().find(animation =>
+    animation.effect?.target === score &&
+    animation.effect?.pseudoElement === '::before' &&
+    animation.animationName === animationName
+  ) || null;
+}
+
+function readCandidateScoreRotation(state, now) {
+  if (!state.running) return state.phase;
+  return normalizeScoreRotation(state.phase + now - state.updatedAt);
+}
+
+function updateCandidateScoreRotation(score, playerIndex, timerRunning) {
+  const nextPlayerKey = playerIndex === null || playerIndex === undefined
+    ? null
+    : String(playerIndex);
+  const previousPlayerKey = scoreCirclePlayerAssignments.get(score) ?? null;
+  const animation = getCandidateScoreRotationAnimation(score);
+  const now = performance.now();
+
+  if (previousPlayerKey !== nextPlayerKey && previousPlayerKey !== null) {
+    const previousState = candidateScoreRotationStates.get(previousPlayerKey);
+    if (previousState) {
+      previousState.phase = readCandidateScoreRotation(previousState, now);
+      previousState.updatedAt = now;
+      previousState.running = false;
+      if (animation) animation.currentTime = previousState.phase;
+    }
+  }
+
+  if (nextPlayerKey === null) {
+    scoreCirclePlayerAssignments.delete(score);
+    return;
+  }
+
+  scoreCirclePlayerAssignments.set(score, nextPlayerKey);
+  const state = candidateScoreRotationStates.get(nextPlayerKey) || {
+    phase: 0,
+    updatedAt: now,
+    running: false
+  };
+  state.phase = readCandidateScoreRotation(state, now);
+  state.updatedAt = now;
+  state.running = !!timerRunning;
+  candidateScoreRotationStates.set(nextPlayerKey, state);
+
+  if (animation) animation.currentTime = state.phase;
+}
+
+function resetCandidateScoreRotations() {
+  candidateScoreRotationStates.clear();
+  scoreCirclePlayerAssignments = new WeakMap();
+  document.querySelectorAll('.finale-candidate-score').forEach(score => {
+    score.classList.remove('timer-running');
+    const animation = getCandidateScoreRotationAnimation(score);
+    if (animation) animation.currentTime = 0;
   });
 }
 
@@ -1746,6 +1905,11 @@ function renderOpenDeurActiveScore(data) {
 
   const activeIndex = Number(data?.activeAnsweringPlayerIndex);
   const activePlayer = data?.players?.find(player => player.index === activeIndex);
+  updateCandidateScoreRotation(
+    score,
+    activePlayer?.index ?? null,
+    !!data?.isTimerRunning && !!activePlayer
+  );
   const isActivePerspective =
     automaticPerspectiveActive &&
     activeUniversalPerspectiveData?.automaticScenePerspective === true &&
@@ -1995,6 +2159,11 @@ function renderPuzzelActiveScore(data) {
 
   const activeIndex = Number(data?.activeIndex);
   const activePlayer = data?.players?.find(player => player.index === activeIndex);
+  updateCandidateScoreRotation(
+    score,
+    activePlayer?.index ?? null,
+    !!data?.timerRunning && !!activePlayer
+  );
   const shouldShow = automaticPerspectiveActive &&
     activeUniversalPerspectiveData?.automaticScenePerspective === true &&
     Number(activeUniversalPerspectiveData.playerIndex) === activeIndex &&
@@ -2327,6 +2496,12 @@ function renderGalerijActiveScore(data) {
   [mainScore, aanvulScore].forEach((score, index) => {
     if (!score) return;
     const isThisScene = index === 0 ? isMainTurn : isAanvulTurn;
+    const scorePlayer = isThisScene ? activePlayer : null;
+    updateCandidateScoreRotation(
+      score,
+      scorePlayer?.index ?? null,
+      !!scorePlayer && !!data?.timerRunning
+    );
     score.querySelector('.score-oval-face').textContent =
       shouldShow && isThisScene ? String(activePlayer.seconds ?? '') : '';
     score.classList.toggle(
@@ -2474,6 +2649,11 @@ function renderGalerijActiveScore(data) {
       const isActive = index === activeIndex;
       const face = score.querySelector('.score-oval-face');
       if (face) face.textContent = player ? String(player.seconds ?? '') : '';
+      updateCandidateScoreRotation(
+        score,
+        player ? (player.index ?? index) : null,
+        isActive && !!data?.timerRunning && !!player
+      );
       score.classList.toggle('active-player', isActive);
       score.classList.toggle('timer-running', isActive && !!data?.timerRunning);
     });
@@ -2776,6 +2956,34 @@ function clearUniversalPerspective() {
     if (styles.overflow !== undefined) element.style.overflow = styles.overflow;
   });
   universalPerspectiveStyles.clear();
+
+  detachedScoreCircleParents.forEach(({ parent, nextSibling }, score) => {
+    if (nextSibling?.parentElement === parent) {
+      parent.insertBefore(score, nextSibling);
+    } else {
+      parent.appendChild(score);
+    }
+  });
+  detachedScoreCircleParents.clear();
+}
+
+function detachScoreCirclesFromMiniLobby(miniLobby) {
+  [
+    '#puzzelActiveScoreCircle',
+    '#galerijMainScoreCircle',
+    '#galerijAanvulScoreCircle'
+  ].forEach(selector => {
+    const score = miniLobby.querySelector(selector);
+    const parent = score?.parentElement;
+    const overlayParent = parent?.parentElement;
+    if (!score || parent !== miniLobby || !overlayParent) return;
+
+    detachedScoreCircleParents.set(score, {
+      parent,
+      nextSibling: score.nextSibling
+    });
+    overlayParent.appendChild(score);
+  });
 }
 
 function clearQuestionQuarterPerspective() {
@@ -2926,6 +3134,27 @@ function renderQuestionQuarterPerspective() {
         element.style.width = '100%';
         element.style.height = '100%';
       });
+
+    const sourceBounds = sourceMiniLobby.getBoundingClientRect();
+    if (sourceBounds.width && sourceBounds.height) {
+      const sourcePlayers = new Map(
+        Array.from(sourceMiniLobby.querySelectorAll('.player[data-player-index]'))
+          .map(player => [player.dataset.playerIndex, player])
+      );
+      miniLobby.querySelectorAll('.player[data-player-index]').forEach(player => {
+        const sourcePlayer = sourcePlayers.get(player.dataset.playerIndex);
+        if (!sourcePlayer) return;
+
+        const bounds = sourcePlayer.getBoundingClientRect();
+        player.style.position = 'absolute';
+        player.style.left =
+          `${((bounds.left - sourceBounds.left) / sourceBounds.width) * 100}%`;
+        player.style.top =
+          `${((bounds.top - sourceBounds.top) / sourceBounds.height) * 100}%`;
+        player.style.right = 'auto';
+        player.style.bottom = 'auto';
+      });
+    }
 
     if (perspective.type === 'lobby') {
       const sourceBounds = isFullscreenLobby
@@ -3126,6 +3355,7 @@ function handleUniversalPerspectiveChange(data) {
   }
 
   if (miniLobby && miniLobby.contains(target)) {
+    detachScoreCirclesFromMiniLobby(miniLobby);
     applyUniversalPerspectiveZoom(
       miniLobby,
       target,

@@ -20,15 +20,16 @@
         <div class="status-text">Geen verbinding met de quizserver.</div>
         <div class="hint-text">Controleer of de host-tool geopend is.</div>
     </div>
-    <!-- 🎬 SCENE: Ronde Bumper -->
-    <div id="scene-round-bumper" class="scene">
-        <div class="bumper-container">
-            <div class="bumper-title-bar">
-                de slimste mens
-                <img src="assets/slimstemens.png" alt="Het Slimste Mens logo">
-                van twitch
+    <div id="roundBumperOverlay" class="round-bumper-overlay" aria-hidden="true">
+        <div class="bumper-oval" id="roundBumperOval">
+            <div class="bumper-content">
+                <div class="bumper-title-bar">
+                    de slimste mens
+                    <img src="assets/slimstemens.png" alt="Het Slimste Mens logo">
+                    van twitch
+                </div>
+                <div class="bumper-round-title" id="bumperRoundTitle"></div>
             </div>
-            <div class="bumper-round-title" id="bumperRoundTitle"></div>
         </div>
     </div>
     <!-- 🎬 SCENE 2: Verbonden met server -->

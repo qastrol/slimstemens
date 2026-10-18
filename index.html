@@ -1380,14 +1380,14 @@
         fullscreenLobbyPerspectiveActive = false;
         fullscreenPerspectivePlayerIndex = null;
         selectedPerspectivePlayerIndex = null;
-        sendDisplayUpdate({
-          type: 'universal_perspective',
-          fullscreenLobby: false,
-          fullscreenPlayer: false,
-          playerIndex: null
-        });
 
         if (mode === 'normal' || mode === 'miniLobby') {
+          sendDisplayUpdate({
+            type: 'universal_perspective',
+            fullscreenLobby: false,
+            fullscreenPlayer: false,
+            playerIndex: null
+          });
           setQuestionQuarterPerspective(null);
         } else if (mode === 'player') {
           const player = players.find(candidate => candidate.index === playerIndex);

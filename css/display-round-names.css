@@ -1539,6 +1539,10 @@ body :is(
   gap: 0;
 }
 
+#scene-standings .players-bar {
+  top: 75px;
+}
+
 #lobbyStandingsPlayersBar {
   position: absolute;
   top: 61px;

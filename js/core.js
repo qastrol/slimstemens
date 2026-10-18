@@ -6,6 +6,8 @@ let currentRoundIndex = 0;
 let roundsSequence = ["threeSixNine","opendeur","puzzel","galerij","collectief","finale"];
 let playerModeSettings = { playerCount: 3, questionsPerRound: 1 };
 let bumpersEnabled = true;
+let roundBumperSequence = 0;
+let pendingRoundBumper = null;
 let introEnabled = false;
 let outroEnabled = false;
 let introText = '';
@@ -129,6 +131,29 @@ const desktopBridge = typeof window !== 'undefined' ? window.slimstemensDesktopB
 
 const WS_ADDRESS = 'ws://127.0.0.1:8081/';
 
+function completeRoundBumper(bumperId) {
+  if (!pendingRoundBumper || pendingRoundBumper.id !== bumperId) return;
+
+  clearTimeout(pendingRoundBumper.timeoutId);
+  const callback = pendingRoundBumper.callback;
+  pendingRoundBumper = null;
+  callback(bumperId);
+}
+
+function handleQuizTransportMessage(message) {
+  let data;
+  try {
+    data = typeof message === 'string' ? JSON.parse(message) : message;
+  } catch (error) {
+    console.error('Ongeldig bericht ontvangen via de quizverbinding:', error);
+    return;
+  }
+
+  if (data?.type === 'bumper_covered' && typeof data.bumperId === 'string') {
+    completeRoundBumper(data.bumperId);
+  }
+}
+
 function connectToQuizServer() {
   if (desktopBridge && typeof desktopBridge.send === 'function') {
     if (!streamerBotWS || streamerBotWS.__transport !== 'electron') {
@@ -139,6 +164,9 @@ function connectToQuizServer() {
           desktopBridge.send(message);
         }
       };
+      if (typeof desktopBridge.onMessage === 'function') {
+        desktopBridge.onMessage(handleQuizTransportMessage);
+      }
       console.log('Verbonden met lokale Electron-bridge.');
       sendDisplayUpdate({ type: 'init', players, active: activePlayerIndex, round: perRoundState?.round || '-' });
     }
@@ -170,10 +198,7 @@ function connectToQuizServer() {
     };
 
     
-    streamerBotWS.onmessage = (event) => {
-      
-      
-    };
+    streamerBotWS.onmessage = (event) => handleQuizTransportMessage(event.data);
 
   } catch (e) {
     console.error('Kon geen WebSocket object aanmaken:', e.message);
@@ -1253,15 +1278,13 @@ function startRound(roundKey) {
 
   // Als bumpers enabled zijn, toon eerst de bumper
   if (bumpersEnabled) {
-    showRoundBumper(roundKey, () => {
-      startRoundAfterBumper(roundKey);
-    });
+    showRoundBumper(roundKey, (bumperId) => startRoundAfterBumper(roundKey, bumperId));
   } else {
     startRoundAfterBumper(roundKey);
   }
 }
 
-function startRoundAfterBumper(roundKey) {
+function startRoundAfterBumper(roundKey, bumperId) {
   roundRunning = true;
   perRoundState = { round: roundKey, roundComplete: false };
   currentQuestionIndex = 0;
@@ -1301,6 +1324,7 @@ function startRoundAfterBumper(roundKey) {
       key: roundKey,
       players,
       activeIndex: activePlayerIndex,
+      bumperId,
       scene: roundKey === 'puzzel' ? 'scene-round-puzzel-waiting' : undefined
   });
 }
@@ -1352,17 +1376,20 @@ function markCurrentRoundComplete() {
 
 function showRoundBumper(roundKey, callback) {
   const roundTitle = niceRoundName(roundKey);
-  
+  const bumperId = `${Date.now()}-${++roundBumperSequence}`;
+
+  if (pendingRoundBumper) {
+    clearTimeout(pendingRoundBumper.timeoutId);
+  }
+  const timeoutId = setTimeout(() => completeRoundBumper(bumperId), 4500);
+  pendingRoundBumper = { id: bumperId, callback, timeoutId };
+
   // Stuur bumper naar display
   sendDisplayUpdate({
     type: 'show_bumper',
-    roundTitle: roundTitle
+    roundTitle,
+    bumperId
   });
-  
-  // Wacht 4.5 seconden en ga dan verder
-  setTimeout(() => {
-    if (callback) callback();
-  }, 4500);
 }
 
 function nextQuestion() {
