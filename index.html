@@ -208,6 +208,13 @@
           </label>
         </div>
 
+        <div style="margin-top:10px;">
+          <label>
+            <input id="openDeurQuestionerAnimationCheckbox" type="checkbox" checked />
+            Animatie bij kiezen in Open Deur
+          </label>
+        </div>
+
           </div>
         </aside>
 
@@ -999,6 +1006,13 @@
           automaticSceneChangesCheckbox.checked =
             config.settings.automaticSceneChanges?.enabled !== false;
           automaticSceneChangesCheckbox.dispatchEvent(new Event('change'));
+        }
+
+        const openDeurAnimationCheckbox =
+          document.getElementById('openDeurQuestionerAnimationCheckbox');
+        if (openDeurAnimationCheckbox &&
+            typeof config.settings.opendeur?.animateQuestionerSelection === 'boolean') {
+          openDeurAnimationCheckbox.checked = config.settings.opendeur.animateQuestionerSelection;
         }
 
         // Intro / Outro instellingen

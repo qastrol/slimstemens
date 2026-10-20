@@ -1738,13 +1738,25 @@ function renderOpenDeurVragensteller(data) {
         : '';
 
       return `
-        <div class="vragensteller-box${q.isChosen ? ' gespeeld' : ' beschikbaar'}${introThumbnailUrl ? ' has-video-thumb' : ''}" data-questioner-index="${q.index}" data-thumb-url="${introThumbnailUrl}">
+        <div class="vragensteller-box${q.isChosen ? ' gespeeld' : ' beschikbaar'}${q.isPreviewDimmed ? ' preview-dimmed-pending' : ''}${introThumbnailUrl ? ' has-video-thumb' : ''}${q.hideNameDuringSelection && introThumbnailUrl ? ' hide-name-during-selection' : ''}" data-questioner-index="${q.index}" data-thumb-url="${introThumbnailUrl}">
           ${mediaMarkup}
           ${videoOverlayMarkup}
           <div class="vragensteller-name">${q.name}</div>
         </div>
       `;
     }).join('');
+
+    const previewDimmedBoxes = container.querySelectorAll('.vragensteller-box.preview-dimmed-pending');
+    if (previewDimmedBoxes.length > 0) {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          previewDimmedBoxes.forEach((box) => {
+            box.classList.remove('preview-dimmed-pending');
+            box.classList.add('preview-dimmed');
+          });
+        });
+      });
+    }
 
     renderPlayersBarCompact(data.players, data.activeChoosingPlayerIndex, 'od-vragensteller-scores');
     renderQuestionQuarterPerspective();

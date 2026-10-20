@@ -29,6 +29,7 @@ function validateOpenDeurVideoThumbnails() {
 
 let openDeurForcedPerspectiveTimer = null;
 let openDeurForcedPerspectiveRequest = 0;
+let openDeurPreviewQuestionIndex = null;
 
 function cancelOpenDeurForcedPerspectiveChange() {
   openDeurForcedPerspectiveRequest += 1;
@@ -113,6 +114,7 @@ function setupOpenDeurRound() {
   perRoundState.openDeurAwaitingReturn = false;
   perRoundState.allPlayersHavePassed = false;
   perRoundState.openDeurFirstQuestionReached = false;
+  openDeurPreviewQuestionIndex = null;
   currentQuestionIndex = 0;
 
 
@@ -142,7 +144,29 @@ function renderOpenDeurChoices() {
   if (!cont) return; 
   cont.innerHTML = '';
 
-  
+  if (openDeurPreviewQuestionIndex !== null) {
+    const previewQuestion = perRoundState.questions[openDeurPreviewQuestionIndex];
+    if (!previewQuestion || previewQuestion.played) {
+      openDeurPreviewQuestionIndex = null;
+    } else {
+      const prompt = document.createElement('p');
+      prompt.textContent = `Naar de video of vraag van ${previewQuestion.from} gaan?`;
+      cont.appendChild(prompt);
+
+      const continueButton = document.createElement('button');
+      continueButton.textContent = 'Ja, ga naar de vraag';
+      continueButton.addEventListener('click', confirmOpenDeurQuestion);
+      cont.appendChild(continueButton);
+
+      const cancelButton = document.createElement('button');
+      cancelButton.textContent = 'Nee, kies opnieuw';
+      cancelButton.className = 'secondary';
+      cancelButton.addEventListener('click', cancelOpenDeurQuestionPreview);
+      cont.appendChild(cancelButton);
+      return;
+    }
+  }
+
   const remainingQuestions = perRoundState.questions.filter(q => !q.played);
   if (remainingQuestions.length === 0) {
     cont.innerHTML = '<em>Geen vragen meer over.</em>';
@@ -171,7 +195,36 @@ function renderOpenDeurChoices() {
 
 function chooseOpenDeurQuestion(index){
   const q = perRoundState.questions[index];
-  if(q.played) return;
+  if (!q || q.played || openDeurPreviewQuestionIndex !== null) return;
+
+  const animationToggle = document.getElementById('openDeurQuestionerAnimationCheckbox');
+  if (animationToggle?.checked !== false) {
+    openDeurPreviewQuestionIndex = index;
+    sendOpenDeurDisplayUpdate('update', 'scene-round-opendeur-vragensteller');
+    renderOpenDeurChoices();
+    return;
+  }
+
+  startOpenDeurQuestion(index);
+}
+
+function confirmOpenDeurQuestion() {
+  const questionIndex = openDeurPreviewQuestionIndex;
+  openDeurPreviewQuestionIndex = null;
+  if (questionIndex !== null) {
+    startOpenDeurQuestion(questionIndex);
+  }
+}
+
+function cancelOpenDeurQuestionPreview() {
+  openDeurPreviewQuestionIndex = null;
+  sendOpenDeurDisplayUpdate('update', 'scene-round-opendeur-vragensteller');
+  renderOpenDeurChoices();
+}
+
+function startOpenDeurQuestion(index) {
+  const q = perRoundState.questions[index];
+  if (!q || q.played) return;
 
   q.played = true;
   q.introVideoPlayed = false;
@@ -468,6 +521,12 @@ if (scene === 'scene-round-opendeur-vragensteller') {
         index: idx,
         name: q.from,
         isChosen: q.played,
+        isPreviewDimmed: openDeurPreviewQuestionIndex !== null &&
+            idx !== openDeurPreviewQuestionIndex &&
+            !q.played,
+        hideNameDuringSelection: q.hideNameDuringSelection === true &&
+            !!getOpenDeurIntroVideoUrl(q) &&
+            !!getOpenDeurIntroThumbnailUrl(q),
         introThumbnailUrl: getOpenDeurIntroThumbnailUrl(q) || null
     }));
 

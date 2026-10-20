@@ -827,6 +827,12 @@
 
     const fromField = createTextField('Van (vragensteller)', data.from || data.questioner || '');
     const questionField = createTextField('Vraag', data.question || data.text || '');
+    const hideNameLabel = document.createElement('label');
+    const hideNameInput = document.createElement('input');
+    hideNameInput.type = 'checkbox';
+    hideNameInput.checked = data.hideNameDuringSelection === true;
+    hideNameInput.className = 'field-open-hide-name';
+    hideNameLabel.append(hideNameInput, ' Naam verbergen tijdens kiezen (alleen met video en thumbnail)');
     const remarksField = createTextAreaField('Opmerking (optioneel)', getOptionalRemark(data));
     const answersField = createFixedAnswerGroup('Antwoord', 4, Array.isArray(data.answers) ? data.answers : splitAnswers(data.answers), 'field-open-answer');
     const mediaField = createMediaInput(
@@ -871,7 +877,7 @@
     mediaField.pathInput.classList.add('field-open-video');
     thumbnailField.pathInput.classList.add('field-open-thumbnail');
 
-    item.append(fromField.label, questionField.label, answersField, mediaField.wrapper, thumbnailField.wrapper, remarksField.label);
+    item.append(fromField.label, questionField.label, answersField, mediaField.wrapper, thumbnailField.wrapper, hideNameLabel, remarksField.label);
   }
 
   function addPuzzelItem(data = {}) {
@@ -1035,7 +1041,8 @@
         maxQuestions: Math.max(1, parseInt(document.getElementById('maxQuestions369').value, 10) || 12)
       },
       opendeur: {
-        shuffle: !!document.getElementById('shuffleOpenDeur').checked
+        shuffle: !!document.getElementById('shuffleOpenDeur').checked,
+        animateQuestionerSelection: !!document.getElementById('animateOpenDeurQuestionerSelection').checked
       },
       puzzel: {
         shuffle: !!document.getElementById('shufflePuzzel').checked
@@ -1195,6 +1202,7 @@
       const answerValues = getFixedAnswerValues(item, 'field-open-answer', 4);
       const introVideo = item.querySelector('.field-open-video')?.value?.trim() || '';
       const introThumbnail = item.querySelector('.field-open-thumbnail')?.value?.trim() || '';
+      const hideNameDuringSelection = item.querySelector('.field-open-hide-name')?.checked === true;
       const remarks = item.querySelector('.field-open-remarks')?.value?.trim() || '';
 
       if (!from && !question && !introVideo && !introThumbnail && !hasAnyValue(answerValues)) {
@@ -1221,6 +1229,10 @@
 
       if (introThumbnail) {
         entry.introThumbnailUrl = normalizePath(introThumbnail);
+      }
+
+      if (hideNameDuringSelection && introVideo && introThumbnail) {
+        entry.hideNameDuringSelection = true;
       }
 
       if (remarks) {
@@ -1500,6 +1512,7 @@
 
     setCheckboxValue('shuffle369', config?.settings?.threeSixNine?.shuffle !== false);
     setCheckboxValue('shuffleOpenDeur', config?.settings?.opendeur?.shuffle !== false);
+    setCheckboxValue('animateOpenDeurQuestionerSelection', config?.settings?.opendeur?.animateQuestionerSelection !== false);
     setCheckboxValue('shufflePuzzel', config?.settings?.puzzel?.shuffle !== false);
     setCheckboxValue('shuffleGalerij', config?.settings?.galerij?.shuffle !== false);
     setCheckboxValue('shuffleCollectief', config?.settings?.collectief?.shuffle !== false);

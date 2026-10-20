@@ -479,7 +479,7 @@
   justify-content: center;
   align-items: center;
   position: relative;
-  transition: all 0.3s ease;
+  transition: opacity 2.5s ease, filter 2.5s ease, transform 0.3s ease;
   border: 0;
   height: 100%;
   width: 100%;
@@ -522,11 +522,16 @@
   text-shadow: 0 3px 10px rgba(0, 0, 0, 0.85);
 }
 
+#vragenstellersContainer .vragensteller-box.hide-name-during-selection .vragensteller-name {
+  display: none;
+}
+
 #vragenstellersContainer .vragensteller-box.beschikbaar {
   border: 0;
 }
 
-#vragenstellersContainer .vragensteller-box.gespeeld {
+#vragenstellersContainer .vragensteller-box.gespeeld,
+#vragenstellersContainer .vragensteller-box.preview-dimmed {
   border: 0;
   background: var(--opendeur-questioner-background);
   opacity: 0.4;
