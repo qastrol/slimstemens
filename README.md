@@ -18,11 +18,10 @@ Voor de Electron-versie is `DeSlimsteMens.exe` voldoende, je hebt geen andere pr
 4. Laat het servervenster open zolang je speelt. De dashboard is voor de presentator of host, alles verschijnt op de display.
 
 ## Een spel spelen
-1. Open het hostdashboard (`index.html`) en het display (`display.html`), of start de desktop-app.
+1. Open het hostdashboard (`index.html`) en het display (`display.html`), of start de Electron-versie.
 2. Kies het aantal spelers en stel eventueel de opties in.
-3. Vul de spelersnamen en eventuele spelerafbeeldingen in.
-4. Klik op **Start spel** en gebruik de bediening in het dashboard om rondes, vragen en antwoorden te beheren.
-5. Gebruik **Reset** om een nieuw spel klaar te zetten.
+3. Stel de spelersnamen en eventuele spelerafbeeldingen in.
+4. Klik op **Start spel** en gebruik de bediening in het dashboard om het spel te beheren.
 
 ## Streamen of samen op locatie spelen
 - **OBS Studio:** voeg `display.html` als browserbron toe en stel de resolutie in op **1920 × 1080**. Je kan ook het Display-venster van de Electron-versie toevoegen als Game Capture of Vensteropname.
