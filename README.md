@@ -25,13 +25,12 @@ Voor de Electron-versie is `DeSlimsteMens.exe` voldoende, je hebt geen andere pr
 5. Gebruik **Reset** om een nieuw spel klaar te zetten.
 
 ## Streamen of samen op locatie spelen
-
 - **OBS Studio:** voeg `display.html` als browserbron toe en stel de resolutie in op **1920 × 1080**. Je kan ook het Display-venster van de Electron-versie toevoegen als Game Capture of Vensteropname.
 - **Discord:** open `display.html` in een browser en deel dat venster of scherm. Je kan ook het Display-venster van de Electron-versie delen.
 - **Op locatie:** toon het display op een tweede beeldscherm en bedien het spel vanaf het hostscherm.
 
-## Eigen vragen en spelconfiguraties
-Je kunt configuraties rechtstreeks in het dashboard laden of maken met de **Custom Game Builder**:
+## Aangepaste vragenlijst
+Je kunt vragenlijsten rechtstreeks in het dashboard laden of maken met de **Custom Game Builder**:
 
 1. Open het dashboard en kies **Custom game maken**, of open `custom-game-builder.html`.
 2. Laad eventueel een al bestaande configuratie in.
@@ -40,7 +39,6 @@ Je kunt configuraties rechtstreeks in het dashboard laden of maken met de **Cust
 5. Laad de configuratie in het dashboard.
 
 ## Integratie met Streamer.bot
-
 In de Electron-versie kun je de optionele Streamer.bot-integratie gebruiken om hostacties vanuit Streamer.bot uit te voeren:
 
 1. Schakel in Streamer.bot de WebSocket Server in.
@@ -60,7 +58,7 @@ In de Electron-versie kun je de optionele Streamer.bot-integratie gebruiken om h
 | `setQuizName` | Wijzig de quiznaam vóór en na het logo op het display. | `titlePrefix`, `titleSuffix` |
 | `swapPlayers` | Wissel twee kandidaten van stoel, inclusief naam, foto en score. | `playerIndex`, `otherPlayerIndex` |
 
-## Sfeerimpressie
+## Foto's
 
 |  |  |  |
 | --- | --- | --- |
