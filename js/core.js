@@ -812,10 +812,28 @@ window.executeStreamerBotHostRequest = function executeStreamerBotHostRequest(re
   const args = request.arguments && typeof request.arguments === 'object'
     ? request.arguments
     : {};
-  const getPlayer = (index) => players.find(player => player.index === Number(index));
-  const getRequiredPlayer = () => {
-    const player = getPlayer(args.playerIndex);
-    if (!player) throw new Error('Kandidaat niet gevonden; geef een geldige playerIndex mee.');
+  const getPlayer = (index, name) => {
+    if (index !== undefined && index !== null && String(index).trim() !== '') {
+      const numericIndex = Number(index);
+      return Number.isFinite(numericIndex)
+        ? players.find(player => player.index === numericIndex)
+        : undefined;
+    }
+    if (typeof name !== 'string' || !name.trim()) return undefined;
+    const normalizedName = name.trim().toLocaleLowerCase();
+    const matchingPlayers = players.filter(player =>
+      player.name.trim().toLocaleLowerCase() === normalizedName
+    );
+    if (matchingPlayers.length > 1) {
+      throw new Error(`Meerdere kandidaten hebben de naam "${name.trim()}"; gebruik playerIndex.`);
+    }
+    return matchingPlayers[0];
+  };
+  const getRequiredPlayer = (index = args.playerIndex, name = args.playerName) => {
+    const player = getPlayer(index, name);
+    if (!player) {
+      throw new Error('Kandidaat niet gevonden; geef een geldige playerIndex of playerName mee.');
+    }
     return player;
   };
   const amount = Number(args.amount);
@@ -831,10 +849,12 @@ window.executeStreamerBotHostRequest = function executeStreamerBotHostRequest(re
           return applyHostScoreChange(getRequiredPlayer(), 'set', amount);
         case 'giveTurn':
           return setHostActivePlayer(getRequiredPlayer());
-        case 'setTimerSpeed':
-          return setHostTimerSpeed(getRequiredPlayer(), Number(args.speed));
-        case 'setAnswerMultiplier':
-          return setHostAnswerMultiplier(getRequiredPlayer(), Number(args.multiplier));
+        case 'speedUpTimer':
+          return setHostTimerSpeed(getRequiredPlayer(), 2);
+        case 'slowDownTimer':
+          return setHostTimerSpeed(getRequiredPlayer(), 0.5);
+        case 'doubleAnswerPoints':
+          return setHostAnswerMultiplier(getRequiredPlayer(), 2);
         case 'revealAnswer':
           return revealRandomHostAnswer();
         case 'setQuizName': {
@@ -857,8 +877,10 @@ window.executeStreamerBotHostRequest = function executeStreamerBotHostRequest(re
         }
         case 'swapPlayers': {
           const playerA = getRequiredPlayer();
-          const playerB = getPlayer(args.otherPlayerIndex);
-          if (!playerB) throw new Error('Tweede kandidaat niet gevonden; geef een geldige otherPlayerIndex mee.');
+          const playerB = getPlayer(args.otherPlayerIndex, args.otherPlayerName);
+          if (!playerB) {
+            throw new Error('Tweede kandidaat niet gevonden; geef een geldige otherPlayerIndex of otherPlayerName mee.');
+          }
           if (playerA === playerB) throw new Error('Kies twee verschillende kandidaten om te wisselen.');
           [playerA.name, playerB.name] = [playerB.name, playerA.name];
           [playerA.photoUrl, playerB.photoUrl] = [playerB.photoUrl, playerA.photoUrl];
@@ -869,7 +891,7 @@ window.executeStreamerBotHostRequest = function executeStreamerBotHostRequest(re
         case 'extension': {
           const action = hostCheatActions.get(String(args.actionId || ''));
           if (!action) throw new Error(`Niet-geregistreerde hostuitbreiding: ${String(args.actionId)}`);
-          const player = args.playerIndex === undefined
+          const player = args.playerIndex === undefined && args.playerName === undefined
             ? getHostCheatSelectedPlayer()
             : getRequiredPlayer();
           if (!player) throw new Error('Selecteer een kandidaat voor deze hostuitbreiding.');

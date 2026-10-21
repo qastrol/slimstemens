@@ -1,9 +1,7 @@
 # De Slimste Mens
-
 Een quiz-applicatie voor één tot drie spelers en één host, geïnspireerd op *De Slimste Mens* en *De Slimste Mens ter Wereld*. De host bedient het spel via het dashboard, het aparte display toont de quiz voor spelers, publiek en/of stream. Er bestaat ook een Electron-versie, die over het algemeen iets stabieler en sneller is.
 
 ## Installeren
-
 ### Via de Electron-versie:
 1. Download de nieuwste versie bij de releases https://github.com/qastrol/slimstemens/releases/latest
 2. `DeSlimsteMens.exe` opent zowel de dashboard als de display
@@ -43,22 +41,22 @@ In de Electron-versie kun je de Streamer.bot-integratie gebruiken om hostacties 
 1. Schakel in Streamer.bot de WebSocket Server in.
 2. Start het spel in de Electron-app en schakel in het hostdashboard **Uitgebreide hostmodus** en **Streamer.bot-integratie** in.
 3. Vul het WebSocket-adres van Streamer.bot in. Standaard is dat `ws://127.0.0.1:8080/`.
-4. Laat via Streamer.bot een custom event met de naam `HostCheat` een van de acties hieronder versturen:
+4. Laat via Streamer.bot een custom event met de naam `HostCheat` één van de acties hieronder versturen:
 
 | `operation` | Wat de actie doet | Benodigde argumenten |
 | --- | --- | --- |
-| `addScore` | Tel seconden op bij een kandidaat. | `playerIndex`, `amount` |
-| `subtractScore` | Trek seconden af bij een kandidaat. | `playerIndex`, `amount` |
-| `setScore` | Stel de score van een kandidaat in. | `playerIndex`, `amount` |
-| `giveTurn` | Geef een kandidaat de beurt. | `playerIndex` |
-| `setTimerSpeed` | Zet de timersnelheid van een kandidaat 2 keer zo snel of 2 keer zo langzaam. | `playerIndex`, `speed` |
-| `setAnswerMultiplier` | De eerstvolgende vraag van een kandidaat naar keuze krijgt 2 keer zo veel punten. | `playerIndex`, `multiplier` |
+| `addScore` | Tel seconden op bij een kandidaat. | `playerIndex` of `playerName`, `amount` |
+| `subtractScore` | Trek seconden af bij een kandidaat. | `playerIndex` of `playerName`, `amount` |
+| `setScore` | Stel de score van een kandidaat in. | `playerIndex` of `playerName`, `amount` |
+| `giveTurn` | Geef een kandidaat de beurt. | `playerIndex` of `playerName` |
+| `speedUpTimer` | Laat de timer van een kandidaat 2 keer zo snel lopen. | `playerIndex` of `playerName` |
+| `slowDownTimer` | Laat de timer van een kandidaat 2 keer zo langzaam lopen. | `playerIndex` of `playerName` |
+| `doubleAnswerPoints` | Verdubbel de punten voor de eerstvolgende vraag/beurt van een kandidaat. | `playerIndex` of `playerName` |
 | `revealAnswer` | Onthul een willekeurig antwoord in de huidige vraag. | Geen |
 | `setQuizName` | Wijzig de quiznaam vóór en na het logo. | `titlePrefix`, `titleSuffix` |
-| `swapPlayers` | Wissel de scores van twee kandidaten. | `playerIndex`, `otherPlayerIndex` |
+| `swapPlayers` | Wissel de scores van twee kandidaten. | `playerIndex` of `playerName`, en `otherPlayerIndex` of `otherPlayerName` |
 
 ## Foto's
-
 |  |  |  |
 | --- | --- | --- |
 | <img src="./assets/github/1.png" width="240"> | <img src="./assets/github/2.png" width="240"> | <img src="./assets/github/3.png" width="240"> |
