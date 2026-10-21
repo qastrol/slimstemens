@@ -23,7 +23,7 @@ Voor de Electron-versie is `DeSlimsteMens.exe` voldoende, je hebt geen andere pr
 3. Stel de spelersnamen en eventuele spelerafbeeldingen in.
 4. Klik op **Start spel** en gebruik de bediening in het dashboard om het spel te beheren.
 
-## Streamen of samen op locatie spelen
+## Streamen/op locatie spelen
 - **OBS Studio:** voeg `display.html` als browserbron toe en stel de resolutie in op **1920 × 1080**. Je kan ook het Display-venster van de Electron-versie toevoegen als Game Capture of Vensteropname.
 - **Discord:** open `display.html` in een browser en deel dat venster of scherm. Je kan ook het Display-venster van de Electron-versie delen.
 - **Op locatie:** toon het display op een tweede beeldscherm en bedien het spel vanaf het hostscherm.
@@ -37,8 +37,8 @@ Je kunt vragenlijsten rechtstreeks in het dashboard laden of maken met de **Cust
 4. Exporteer als ZIP (aanbevolen) of JSON.
 5. Laad de configuratie in het dashboard.
 
-## Integratie met Streamer.bot
-In de Electron-versie kun je de optionele Streamer.bot-integratie gebruiken om hostacties vanuit Streamer.bot uit te voeren:
+## Streamer.bot-integratie
+In de Electron-versie kun je de Streamer.bot-integratie gebruiken om hostacties vanuit Streamer.bot uit te voeren:
 
 1. Schakel in Streamer.bot de WebSocket Server in.
 2. Start het spel in de Electron-app en schakel in het hostdashboard **Uitgebreide hostmodus** en **Streamer.bot-integratie** in.
@@ -54,14 +54,14 @@ In de Electron-versie kun je de optionele Streamer.bot-integratie gebruiken om h
 | `setTimerSpeed` | Zet de timersnelheid van een kandidaat 2 keer zo snel of 2 keer zo langzaam. | `playerIndex`, `speed` |
 | `setAnswerMultiplier` | De eerstvolgende vraag van een kandidaat naar keuze krijgt 2 keer zo veel punten. | `playerIndex`, `multiplier` |
 | `revealAnswer` | Onthul een willekeurig antwoord in de huidige vraag. | Geen |
-| `setQuizName` | Wijzig de quiznaam vóór en na het logo op het display. | `titlePrefix`, `titleSuffix` |
-| `swapPlayers` | Wissel twee kandidaten van stoel, inclusief naam, foto en score. | `playerIndex`, `otherPlayerIndex` |
+| `setQuizName` | Wijzig de quiznaam vóór en na het logo. | `titlePrefix`, `titleSuffix` |
+| `swapPlayers` | Wissel de scores van twee kandidaten. | `playerIndex`, `otherPlayerIndex` |
 
 ## Foto's
 
 |  |  |  |
 | --- | --- | --- |
-| <img src="./assets/github/1.png" alt="Screenshot 1" width="240"> | <img src="./assets/github/2.png" alt="Screenshot 2" width="240"> | <img src="./assets/github/3.png" alt="Screenshot 3" width="240"> |
-| <img src="./assets/github/4.png" alt="Screenshot 4" width="240"> | <img src="./assets/github/5.png" alt="Screenshot 5" width="240"> | <img src="./assets/github/6.png" alt="Screenshot 6" width="240"> |
-| <img src="./assets/github/7.png" alt="Screenshot 7" width="240"> | <img src="./assets/github/8.png" alt="Screenshot 8" width="240"> | <img src="./assets/github/9.png" alt="Screenshot 9" width="240"> |
-| <img src="./assets/github/10.png" alt="Screenshot 10" width="240"> | <img src="./assets/github/11.png" alt="Screenshot 11" width="240"> | <img src="./assets/github/12.png" alt="Screenshot 12" width="240"> |
+| <img src="./assets/github/1.png" width="240"> | <img src="./assets/github/2.png" width="240"> | <img src="./assets/github/3.png" width="240"> |
+| <img src="./assets/github/4.png" width="240"> | <img src="./assets/github/5.png" width="240"> | <img src="./assets/github/6.png" width="240"> |
+| <img src="./assets/github/7.png" width="240"> | <img src="./assets/github/8.png" width="240"> | <img src="./assets/github/9.png" width="240"> |
+| <img src="./assets/github/10.png" width="240"> | <img src="./assets/github/11.png" width="240"> | <img src="./assets/github/12.png" width="240"> |
