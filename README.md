@@ -1,6 +1,6 @@
 # De Slimste Mens
 
-Een quiz-applicatie voor één tot drie spelers en één host, geïnspireerd op *De Slimste Mens* en *De Slimste Mens ter Wereld*. De host bedient het spel via het dashboard; het aparte display toont de quiz voor spelers, publiek of stream. De applicatie is gebouwd met HTML, CSS en JavaScript, met Node.js voor de lokale verbinding tussen dashboard en display. Er bestaat ook een Electron-versie, die over het algemeen iets stabieler en sneller is.
+Een quiz-applicatie voor één tot drie spelers en één host, geïnspireerd op *De Slimste Mens* en *De Slimste Mens ter Wereld*. De host bedient het spel via het dashboard, het aparte display toont de quiz voor spelers, publiek en/of stream. Er bestaat ook een Electron-versie, die over het algemeen iets stabieler en sneller is.
 
 ## Installeren
 
