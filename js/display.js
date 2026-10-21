@@ -72,10 +72,16 @@ let allGalleryAnswers = [];
 const answerRevealStates = new WeakMap();
 let openDeurIntroVideoActive = false;
 let openDeurPendingVraagData = null;
+let openDeurPreloadedIntroVideoUrl = '';
 let collectiefPreloadedVideoUrl = '';
 let threeSixNineVideoActive = false;
 let lastThreeSixNineData = null;
 let threeSixNineActiveAudio = null;
+let threeSixNinePreloadedMedia = {
+  images: new Map(),
+  audio: new Map(),
+  videos: new Map()
+};
 let hostAnswerRevealTimeout = null;
 const DEFAULT_DISPLAY_BRANDING = {
   titlePrefix: 'de slimste mens',
@@ -550,6 +556,7 @@ function connectWebSocket() {
       case 'round_start':
         currentRoundDisplayName = getCanonicalRoundDisplayName(data.name || data.key);
         currentRoundDisplayKey = data.key || '';
+        releaseThreeSixNinePreloadedMedia();
         if (data.key !== 'threeSixNine') {
           if (threeSixNineVideoActive) {
             threeSixNineVideoActive = false;
@@ -1389,6 +1396,9 @@ function renderThreeSixNine(data){
     const previousQuestionIndex = lastThreeSixNineData?.currentQuestionIndex;
     const isNewQuestion = Number.isFinite(data.currentQuestionIndex) &&
       data.currentQuestionIndex !== previousQuestionIndex;
+    if (desktopBridge && isNewQuestion) {
+      releaseThreeSixNinePreloadedMedia();
+    }
     if (isNewQuestion && data.questionType !== 'multiple-choice') {
       threeSixNineOptionsPerspectiveMode = 'together';
     }
@@ -1411,6 +1421,12 @@ function renderThreeSixNine(data){
         videoUrl: payload.questionVideoUrl || payload.videoUrl || null
       };
     };
+    if (desktopBridge && isNewQuestion) {
+      preloadThreeSixNineMedia([
+        resolveMedia(data, 'question'),
+        resolveMedia(data, 'after')
+      ]);
+    }
     const photoContainer = document.getElementById('threeSixNinePhotoContainer');
     const answersContainer = document.getElementById('threeSixNineAnswersContainer');
     const scene = document.getElementById('scene-round-369');
@@ -1507,7 +1523,10 @@ function renderThreeSixNine(data){
     if (data.action === 'playAudio' && data.audioUrl) {
         console.log('🔊 Poging audio af te spelen:', data.audioUrl);
       stopThreeSixNineAudio();
-      const audio = new Audio(data.audioUrl);
+      const audio = desktopBridge
+        ? threeSixNinePreloadedMedia.audio.get(data.audioUrl) || new Audio(data.audioUrl)
+        : new Audio(data.audioUrl);
+      audio.currentTime = 0;
       threeSixNineActiveAudio = audio;
         
         // Event listeners voor betere debugging
@@ -1551,7 +1570,7 @@ function renderThreeSixNine(data){
       threeSixNinePerspectivePhotoVisible = null;
       if (photoContainer) {
         if (data.photoVisible) {
-          photoContainer.innerHTML = `<img src="${data.photoUrl}" alt="Vraagfoto" />`;
+          renderThreeSixNinePhoto(photoContainer, data.photoUrl, 'Vraagfoto');
           photoContainer.style.display = 'block';
         } else {
           photoContainer.style.display = 'none';
@@ -1569,6 +1588,9 @@ function renderThreeSixNine(data){
     const rondeEinde = !data.currentQuestionDisplay || data.currentQuestionIndex > data.maxQuestions;
 
     if (rondeEinde) {
+        if (desktopBridge) {
+          releaseThreeSixNinePreloadedMedia();
+        }
         
         roundStatusEl.textContent = "Einde van deze ronde";
         roundQuestionEl.textContent = ""; 
@@ -1590,7 +1612,7 @@ function renderThreeSixNine(data){
         const activePlayerName = data.activePlayer || '-';
         const qType = data.questionType || 'classic';
         const activeMediaPhase = data.activeMediaPhase || 'question';
-        const phaseMedia = resolveMedia(data, activeMediaPhase);
+        const phaseMedia = resolveMedia(lastThreeSixNineData, activeMediaPhase);
 
         roundStatusEl.textContent = `Beurt: ${activePlayerName} | Vraag ${data.currentQuestionIndex} van ${data.maxQuestions}`;
         
@@ -1602,9 +1624,11 @@ function renderThreeSixNine(data){
         
         // Multiple choice opties
         if (qType === 'multiple-choice' && data.options) {
-            questionHTML += '<div class="multiple-choice-options">';
-            for (const key of ['A', 'B', 'C', 'D']) {
-                questionHTML += `<div>${key}) ${data.options[key] || '-'}</div>`;
+            const optionKeys = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+              .filter((key) => data.options[key] !== undefined && data.options[key] !== null && String(data.options[key]).trim());
+            questionHTML += `<div class="multiple-choice-options" data-option-count="${optionKeys.length}">`;
+            for (const key of optionKeys) {
+                questionHTML += `<div>${key}) ${data.options[key]}</div>`;
             }
             questionHTML += '</div>';
         }
@@ -1613,9 +1637,12 @@ function renderThreeSixNine(data){
           if (qType === 'multiple-choice' && data.options) {
             const optionsList = document.createElement('div');
             optionsList.className = 'multiple-choice-options';
-            for (const key of ['A', 'B', 'C', 'D']) {
+            const optionKeys = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+              .filter((key) => data.options[key] !== undefined && data.options[key] !== null && String(data.options[key]).trim());
+            optionsList.dataset.optionCount = String(optionKeys.length);
+            for (const key of optionKeys) {
               const option = document.createElement('div');
-              option.textContent = `${key}) ${data.options[key] || '-'}`;
+              option.textContent = `${key}) ${data.options[key]}`;
               optionsList.appendChild(option);
             }
             answersContainer.appendChild(optionsList);
@@ -1632,7 +1659,7 @@ function renderThreeSixNine(data){
                 // Toon foto in linkervlak
                 setTimeout(() => {
               if (photoContainer && phaseMedia.photoUrl) {
-                photoContainer.innerHTML = `<img src="${phaseMedia.photoUrl}" alt="Vraagfoto" />`;
+                renderThreeSixNinePhoto(photoContainer, phaseMedia.photoUrl, 'Vraagfoto');
                         photoContainer.style.display = 'block';
                     }
                 }, 0);
@@ -1698,6 +1725,96 @@ function normalizeActiveIndex(playersData, activeIndex) {
   return activeIndex;
 }
 
+function releaseThreeSixNinePreloadedMedia() {
+  if (!desktopBridge) return;
+
+  if (threeSixNineVideoActive) {
+    const videoPlayer = document.getElementById('threeSixNineVideoPlayer');
+    const videoSource = document.getElementById('threeSixNineVideoSource');
+    threeSixNineVideoActive = false;
+    if (videoPlayer) {
+      videoPlayer.onended = null;
+      videoPlayer.onerror = null;
+      videoPlayer.pause();
+      videoPlayer.currentTime = 0;
+    }
+    if (videoSource && videoPlayer) {
+      videoSource.removeAttribute('src');
+      videoPlayer.load();
+    }
+  }
+
+  if (threeSixNineActiveAudio) {
+    threeSixNineActiveAudio.pause();
+    threeSixNineActiveAudio.currentTime = 0;
+    threeSixNineActiveAudio = null;
+  }
+
+  threeSixNinePreloadedMedia.images.forEach((image) => {
+    image.src = '';
+  });
+  threeSixNinePreloadedMedia.audio.forEach((audio) => {
+    audio.pause();
+    audio.removeAttribute('src');
+    audio.load();
+  });
+  threeSixNinePreloadedMedia.videos.forEach((video) => {
+    video.pause();
+    video.removeAttribute('src');
+    video.load();
+  });
+  threeSixNinePreloadedMedia = {
+    images: new Map(),
+    audio: new Map(),
+    videos: new Map()
+  };
+}
+
+function preloadThreeSixNineMedia(mediaGroups) {
+  if (!desktopBridge) return;
+
+  const mediaUrls = {
+    images: new Set(),
+    audio: new Set(),
+    videos: new Set()
+  };
+  mediaGroups.forEach((media) => {
+    if (media.photoUrl) mediaUrls.images.add(media.photoUrl);
+    if (media.audioUrl) mediaUrls.audio.add(media.audioUrl);
+    if (media.videoUrl) mediaUrls.videos.add(media.videoUrl);
+  });
+
+  mediaUrls.images.forEach((url) => {
+    const image = new Image();
+    image.decoding = 'async';
+    image.src = url;
+    threeSixNinePreloadedMedia.images.set(url, image);
+  });
+  mediaUrls.audio.forEach((url) => {
+    const audio = new Audio();
+    audio.preload = 'auto';
+    audio.src = url;
+    threeSixNinePreloadedMedia.audio.set(url, audio);
+  });
+  mediaUrls.videos.forEach((url) => {
+    const video = document.createElement('video');
+    video.preload = 'auto';
+    video.muted = true;
+    video.src = url;
+    video.load();
+    threeSixNinePreloadedMedia.videos.set(url, video);
+  });
+}
+
+function renderThreeSixNinePhoto(container, imageUrl, altText) {
+  const image = desktopBridge
+    ? threeSixNinePreloadedMedia.images.get(imageUrl) || new Image()
+    : document.createElement('img');
+  image.src = imageUrl;
+  image.alt = altText;
+  container.replaceChildren(image);
+}
+
 function renderOpenDeurLobby(data) {
     
     if (data.statusText) {
@@ -1758,9 +1875,39 @@ function renderOpenDeurVragensteller(data) {
       });
     }
 
+    preloadOpenDeurIntroVideo(data.preloadIntroVideoUrl);
     renderPlayersBarCompact(data.players, data.activeChoosingPlayerIndex, 'od-vragensteller-scores');
     renderQuestionQuarterPerspective();
 }
+
+  function preloadOpenDeurIntroVideo(videoUrl) {
+    if (!desktopBridge) return;
+
+    const videoPlayer = document.getElementById('openDeurIntroVideoPlayer');
+    const videoSource = document.getElementById('openDeurIntroVideoSource');
+    if (!videoPlayer || !videoSource) return;
+
+    if (!videoUrl) {
+      if (openDeurPreloadedIntroVideoUrl) {
+        videoPlayer.pause();
+        videoSource.removeAttribute('src');
+        videoPlayer.load();
+        openDeurPreloadedIntroVideoUrl = '';
+      }
+      return;
+    }
+
+    if (openDeurPreloadedIntroVideoUrl === videoUrl &&
+        videoSource.getAttribute('src') === videoUrl) {
+      return;
+    }
+
+    videoPlayer.pause();
+    videoPlayer.preload = 'auto';
+    videoSource.setAttribute('src', videoUrl);
+    videoPlayer.load();
+    openDeurPreloadedIntroVideoUrl = videoUrl;
+  }
 
   function stopOpenDeurIntroVideoPlayback() {
     const videoPlayer = document.getElementById('openDeurIntroVideoPlayer');
@@ -1779,9 +1926,13 @@ function renderOpenDeurVragensteller(data) {
     videoPlayer.onended = null;
     videoPlayer.onerror = null;
 
-    if (videoSource) {
-      videoSource.src = '';
+    if (videoSource &&
+        (!desktopBridge ||
+         !openDeurPreloadedIntroVideoUrl ||
+         videoSource.getAttribute('src') !== openDeurPreloadedIntroVideoUrl)) {
+      videoSource.removeAttribute('src');
       videoPlayer.load();
+      openDeurPreloadedIntroVideoUrl = '';
     }
   }
 
@@ -1841,8 +1992,14 @@ function renderOpenDeurVragensteller(data) {
       videoPlayer.removeAttribute('poster');
     }
 
-    videoSource.src = introVideoUrl;
-    videoPlayer.load();
+    const sourceAlreadyPrepared = desktopBridge &&
+      openDeurPreloadedIntroVideoUrl === introVideoUrl &&
+      videoSource.getAttribute('src') === introVideoUrl;
+    if (!sourceAlreadyPrepared) {
+      videoSource.setAttribute('src', introVideoUrl);
+      videoPlayer.load();
+    }
+    openDeurPreloadedIntroVideoUrl = '';
     videoPlayer.onended = finishIntroVideo;
     videoPlayer.onerror = finishIntroVideo;
 

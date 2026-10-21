@@ -1024,10 +1024,30 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  font-size: 0.7em;
-  max-width: 80%;
+  font-size: 1em;
+  max-width: 100%;
   margin-left: auto;
   margin-right: auto;
+}
+
+#scene-round-369 #roundQuestion .multiple-choice-options[data-option-count="5"],
+#scene-round-369 #roundQuestion .multiple-choice-options[data-option-count="6"] {
+  font-size: 0.75em;
+}
+
+#scene-round-369 #roundQuestion .multiple-choice-options[data-option-count="7"],
+#scene-round-369 #roundQuestion .multiple-choice-options[data-option-count="8"] {
+  font-size: 0.6em;
+}
+
+#scene-round-369[data-options-perspective="together"] #roundQuestion .multiple-choice-options[data-option-count="5"],
+#scene-round-369[data-options-perspective="together"] #roundQuestion .multiple-choice-options[data-option-count="6"],
+#scene-round-369[data-options-perspective="together"] #roundQuestion .multiple-choice-options[data-option-count="7"],
+#scene-round-369[data-options-perspective="together"] #roundQuestion .multiple-choice-options[data-option-count="8"] {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 0.8em;
+  row-gap: 0.35em;
 }
 
 #scene-round-369 .multiple-choice-options div {
@@ -1151,10 +1171,22 @@ body {
   gap: 20px;
   width: 100%;
   margin: 0;
-  font-size: 2.8em;
+  font-size: 4em;
   line-height: 1.2;
   text-align: left;
   overflow-wrap: anywhere;
+}
+
+#scene-round-369 .answers-display-container .multiple-choice-options[data-option-count="5"],
+#scene-round-369 .answers-display-container .multiple-choice-options[data-option-count="6"] {
+  font-size: 3em;
+  gap: 16px;
+}
+
+#scene-round-369 .answers-display-container .multiple-choice-options[data-option-count="7"],
+#scene-round-369 .answers-display-container .multiple-choice-options[data-option-count="8"] {
+  font-size: 2.4em;
+  gap: 12px;
 }
 
 #scene-round-369 .answers-display-container .multiple-choice-options div {

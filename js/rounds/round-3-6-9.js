@@ -225,12 +225,11 @@ function nextThreeSixNineQuestion() {
   questionHTML += `<div>${q.text}</div>`;
 
   if (qType === 'multiple-choice' && q.options) {
+    const optionKeys = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+      .filter((key) => q.options[key] !== undefined && q.options[key] !== null && String(q.options[key]).trim());
     questionHTML += `
       <div class="multiple-choice-options">
-        <div><strong>A:</strong> ${q.options.A || '-'}</div>
-        <div><strong>B:</strong> ${q.options.B || '-'}</div>
-        <div><strong>C:</strong> ${q.options.C || '-'}</div>
-        <div><strong>D:</strong> ${q.options.D || '-'}</div>
+        ${optionKeys.map((key) => `<div><strong>${key}:</strong> ${q.options[key]}</div>`).join('')}
       </div>
       <div class="muted small">Juiste antwoord: ${q.correctAnswer || 'Onbekend'}</div>`;
   }
@@ -300,6 +299,12 @@ function nextThreeSixNineQuestion() {
     hasAfterPhoto: !!afterMedia.photoUrl,
     hasAfterAudio: !!afterMedia.audioUrl,
     hasAfterVideo: !!afterMedia.videoUrl,
+    questionPhotoUrl: questionMedia.photoUrl,
+    questionAudioUrl: questionMedia.audioUrl,
+    questionVideoUrl: questionMedia.videoUrl,
+    afterPhotoUrl: afterMedia.photoUrl,
+    afterAudioUrl: afterMedia.audioUrl,
+    afterVideoUrl: afterMedia.videoUrl,
     photoVisible: false,
     activeMediaPhase: 'question',
     options: q.options,

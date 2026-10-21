@@ -645,19 +645,17 @@
 
     const mcWrapper = document.createElement('div');
     mcWrapper.className = 'compact-grid';
-    const optionA = createTextField('Optie A', data.options?.A || '');
-    const optionB = createTextField('Optie B', data.options?.B || '');
-    const optionC = createTextField('Optie C', data.options?.C || '');
-    const optionD = createTextField('Optie D', data.options?.D || '');
-    optionA.input.classList.add('field-369-option-a');
-    optionB.input.classList.add('field-369-option-b');
-    optionC.input.classList.add('field-369-option-c');
-    optionD.input.classList.add('field-369-option-d');
+    const optionKeys = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+    const optionFields = optionKeys.map((key) => {
+      const field = createTextField(`Optie ${key}`, data.options?.[key] || '');
+      field.input.classList.add(`field-369-option-${key.toLowerCase()}`);
+      return field;
+    });
 
     const correctLabel = document.createElement('label');
     correctLabel.textContent = 'Correct antwoord';
     const correctSelect = document.createElement('select');
-    ['A', 'B', 'C', 'D'].forEach((key) => {
+    optionKeys.forEach((key) => {
       const option = document.createElement('option');
       option.value = key;
       option.textContent = key;
@@ -677,10 +675,7 @@
     shuffleOptionsLabel.append(shuffleOptionsCheckbox, document.createTextNode(' Antwoorden husselen'));
 
     mcWrapper.append(
-      optionA.label,
-      optionB.label,
-      optionC.label,
-      optionD.label,
+      ...optionFields.map((field) => field.label),
       correctLabel,
       shuffleOptionsLabel
     );
@@ -1140,14 +1135,18 @@
       const remarks = item.querySelector('.field-369-remarks')?.value?.trim();
 
       if (type === 'multiple-choice') {
-        const options = {
-          A: item.querySelector('.field-369-option-a')?.value?.trim() || '',
-          B: item.querySelector('.field-369-option-b')?.value?.trim() || '',
-          C: item.querySelector('.field-369-option-c')?.value?.trim() || '',
-          D: item.querySelector('.field-369-option-d')?.value?.trim() || ''
-        };
+        const optionKeys = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+        const options = Object.fromEntries(optionKeys
+          .map((key) => [key, item.querySelector(`.field-369-option-${key.toLowerCase()}`)?.value?.trim() || ''])
+          .filter(([, value]) => value));
+        if (Object.keys(options).length < 4) {
+          throw new Error(`3-6-9 vraag ${index + 1}: vul minimaal vier meerkeuzeantwoorden in.`);
+        }
         q.options = options;
         q.correctAnswer = item.querySelector('.field-369-correct')?.value || 'A';
+        if (!options[q.correctAnswer]) {
+          throw new Error(`3-6-9 vraag ${index + 1}: het juiste antwoord moet een ingevulde optie zijn.`);
+        }
         q.shuffleOptions = !!item.querySelector('.field-369-shuffle-options')?.checked;
       }
 

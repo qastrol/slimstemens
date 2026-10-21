@@ -977,12 +977,12 @@ function getQuestionsForRound(roundKey, defaultQuestions = []) {
   return defaultQuestions;
 }
 
-// Shuffle helper for multiple-choice options (A/B/C/D) while keeping correctAnswer aligned.
+// Shuffle helper for multiple-choice options (A-H) while keeping correctAnswer aligned.
 function shuffleMultipleChoiceOptions(options, correctAnswerKey) {
   const entries = Object.entries(options);
   shuffleArray(entries);
 
-  const optionKeys = ['A', 'B', 'C', 'D', 'E', 'F'];
+  const optionKeys = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
   const shuffledOptions = {};
   let newCorrectKey = null;
 

@@ -530,6 +530,13 @@ if (scene === 'scene-round-opendeur-vragensteller') {
         introThumbnailUrl: getOpenDeurIntroThumbnailUrl(q) || null
     }));
 
+    if (openDeurPreviewQuestionIndex !== null &&
+        document.getElementById('openDeurQuestionerAnimationCheckbox')?.checked !== false) {
+        data.preloadIntroVideoUrl = getOpenDeurIntroVideoUrl(
+            perRoundState.questions[openDeurPreviewQuestionIndex]
+        ) || null;
+    }
+
     data.activeChoosingPlayerIndex = activePlayerIndex;
     data.activeChoosingPlayer = players[activePlayerIndex]?.name || '—';
 }
