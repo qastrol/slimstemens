@@ -11,7 +11,7 @@ Een quiz-applicatie voor één tot drie spelers en één host, geïnspireerd op 
 
 Voor de Electron-versie is `DeSlimsteMens.exe` voldoende, je hebt geen andere programma's nodig.
 
-## Via de Node.js versie:
+### Via de Node.js versie:
 1. Installeer [Node.js](https://nodejs.org/).
 2. [Download de code](https://github.com/qastrol/slimstemens/archive/refs/heads/main.zip) en pak het archief uit.
 3. Open `start_server.bat`. Er openen twee webpagina's in je browser.
