@@ -1549,6 +1549,19 @@ document.getElementById('resetBtn').addEventListener('click', ()=>{
   flash('Spel gereset');
 });
 
+const electronGameMediaBridge = window.slimstemensDesktopBridge;
+if (electronGameMediaBridge && typeof electronGameMediaBridge.setGameMediaInUse === 'function') {
+  window.addEventListener('slimstemens:game-started', () => {
+    electronGameMediaBridge.setGameMediaInUse(true).catch((error) => {
+      console.error('Electron kon game-media niet als actief markeren:', error);
+    });
+  });
+  window.addEventListener('slimstemens:game-reset', () => {
+    electronGameMediaBridge.setGameMediaInUse(false).catch((error) => {
+      console.error('Electron kon game-media niet vrijgeven:', error);
+    });
+  });
+}
 
 document.getElementById('startRound').addEventListener('click', ()=>{
   const expectedCount = playerModeSettings.playerCount;

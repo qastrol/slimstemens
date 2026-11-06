@@ -134,6 +134,11 @@ sendDisplayUpdate({
     currentQuestionDisplay: null,
     currentQuestionIndex: 0,
     maxQuestions: perRoundState.max,
+    ...(window.slimstemensDesktopBridge && {
+      preloadMedia: perRoundState.questions[0]
+        ? getThreeSixNineMediaItems(perRoundState.questions[0])
+        : []
+    }),
     activePlayer: players[activePlayerIndex]?.name || '-',
     activeIndex: activePlayerIndex,
     players
@@ -321,6 +326,11 @@ function nextThreeSixNineQuestion() {
     questionAudioUrl: questionMedia.audioUrl,
     questionVideoUrl: questionMedia.videoUrl,
     media: getThreeSixNineMediaItems(q),
+    ...(window.slimstemensDesktopBridge && {
+      preloadMedia: currentQuestionIndex < perRoundState.max && perRoundState.questions[currentQuestionIndex]
+        ? getThreeSixNineMediaItems(perRoundState.questions[currentQuestionIndex])
+        : []
+    }),
     activeMediaIndex: 0,
     photoMediaIndex: 0,
     photoVisible: false,

@@ -21,7 +21,8 @@
   "dependencies": {
     "express": "^5.1.0",
     "jszip": "^3.10.1",
-    "ws": "^8.19.0"
+    "ws": "^8.19.0",
+    "yauzl": "^3.4.0"
   },
   "devDependencies": {
     "electron": "^31.0.0",
@@ -54,10 +55,13 @@
         "nsis",
         "portable"
       ],
-      "icon": "assets/slimstemens.ico" 
+      "icon": "assets/slimstemens.ico"
     },
     "linux": {
-      "target": ["AppImage", "deb"],
+      "target": [
+        "AppImage",
+        "deb"
+      ],
       "icon": "assets/slimstemens.png",
       "category": "Game"
     },

@@ -604,6 +604,9 @@ function connectWebSocket() {
           }
           if (data.players) players = data.players;
           updateScene('round-369');
+          preloadThreeSixNineMedia(
+            threeSixNineMediaItemsToGroups(data.preloadMedia)
+          );
           if (Number.isFinite(data.maxQuestions)) perRoundState.max = data.maxQuestions;
           perRoundState.currentQuestionIndex = null;
           renderMiniLobby(players, 'miniLobbyPlayers');
@@ -1397,7 +1400,7 @@ function renderThreeSixNine(data){
     const isNewQuestion = Number.isFinite(data.currentQuestionIndex) &&
       data.currentQuestionIndex !== previousQuestionIndex;
     if (desktopBridge && isNewQuestion) {
-      releaseThreeSixNinePreloadedMedia();
+      stopThreeSixNineActiveMedia();
     }
     if (isNewQuestion && data.questionType !== 'multiple-choice') {
       threeSixNineOptionsPerspectiveMode = 'together';
@@ -1432,14 +1435,17 @@ function renderThreeSixNine(data){
       };
     };
     if (desktopBridge && isNewQuestion) {
-      const mediaGroups = Array.isArray(data.media) && data.media.length > 0
+      const currentMediaGroups = Array.isArray(data.media) && data.media.length > 0
         ? data.media.map((media) => ({
             photoUrl: media.type === 'photo' ? media.url : null,
             audioUrl: media.type === 'audio' ? media.url : null,
             videoUrl: media.type === 'video' ? media.url : null
           }))
         : [resolveMedia(data, 'question'), resolveMedia(data, 'after')];
-      preloadThreeSixNineMedia(mediaGroups);
+      preloadThreeSixNineMedia([
+        ...currentMediaGroups,
+        ...threeSixNineMediaItemsToGroups(data.preloadMedia)
+      ]);
     }
     const photoContainer = document.getElementById('threeSixNinePhotoContainer');
     const answersContainer = document.getElementById('threeSixNineAnswersContainer');
@@ -1741,27 +1747,7 @@ function normalizeActiveIndex(playersData, activeIndex) {
 function releaseThreeSixNinePreloadedMedia() {
   if (!desktopBridge) return;
 
-  if (threeSixNineVideoActive) {
-    const videoPlayer = document.getElementById('threeSixNineVideoPlayer');
-    const videoSource = document.getElementById('threeSixNineVideoSource');
-    threeSixNineVideoActive = false;
-    if (videoPlayer) {
-      videoPlayer.onended = null;
-      videoPlayer.onerror = null;
-      videoPlayer.pause();
-      videoPlayer.currentTime = 0;
-    }
-    if (videoSource && videoPlayer) {
-      videoSource.removeAttribute('src');
-      videoPlayer.load();
-    }
-  }
-
-  if (threeSixNineActiveAudio) {
-    threeSixNineActiveAudio.pause();
-    threeSixNineActiveAudio.currentTime = 0;
-    threeSixNineActiveAudio = null;
-  }
+  stopThreeSixNineActiveMedia();
 
   threeSixNinePreloadedMedia.images.forEach((image) => {
     image.src = '';
@@ -1783,6 +1769,43 @@ function releaseThreeSixNinePreloadedMedia() {
   };
 }
 
+function stopThreeSixNineActiveMedia() {
+  if (threeSixNineVideoActive) {
+    const videoPlayer = document.getElementById('threeSixNineVideoPlayer');
+    const videoSource = document.getElementById('threeSixNineVideoSource');
+    threeSixNineVideoActive = false;
+    if (videoPlayer) {
+      videoPlayer.onended = null;
+      videoPlayer.onerror = null;
+      videoPlayer.pause();
+      try {
+        videoPlayer.currentTime = 0;
+      } catch (error) {
+        console.warn('3-6-9-video kon niet worden teruggespoeld:', error);
+      }
+    }
+    if (videoSource && videoPlayer) {
+      videoSource.removeAttribute('src');
+      videoPlayer.load();
+    }
+  }
+
+  if (threeSixNineActiveAudio) {
+    threeSixNineActiveAudio.pause();
+    threeSixNineActiveAudio.currentTime = 0;
+    threeSixNineActiveAudio = null;
+  }
+}
+
+function threeSixNineMediaItemsToGroups(mediaItems) {
+  if (!Array.isArray(mediaItems)) return [];
+  return mediaItems.map((media) => ({
+    photoUrl: media?.type === 'photo' ? media.url : null,
+    audioUrl: media?.type === 'audio' ? media.url : null,
+    videoUrl: media?.type === 'video' ? media.url : null
+  }));
+}
+
 function preloadThreeSixNineMedia(mediaGroups) {
   if (!desktopBridge) return;
 
@@ -1797,19 +1820,43 @@ function preloadThreeSixNineMedia(mediaGroups) {
     if (media.videoUrl) mediaUrls.videos.add(media.videoUrl);
   });
 
+  const releaseUnusedMedia = (mediaMap, urls, release) => {
+    mediaMap.forEach((media, url) => {
+      if (urls.has(url)) return;
+      release(media);
+      mediaMap.delete(url);
+    });
+  };
+  releaseUnusedMedia(threeSixNinePreloadedMedia.images, mediaUrls.images, (image) => {
+    image.src = '';
+  });
+  releaseUnusedMedia(threeSixNinePreloadedMedia.audio, mediaUrls.audio, (audio) => {
+    audio.pause();
+    audio.removeAttribute('src');
+    audio.load();
+  });
+  releaseUnusedMedia(threeSixNinePreloadedMedia.videos, mediaUrls.videos, (video) => {
+    video.pause();
+    video.removeAttribute('src');
+    video.load();
+  });
+
   mediaUrls.images.forEach((url) => {
+    if (threeSixNinePreloadedMedia.images.has(url)) return;
     const image = new Image();
     image.decoding = 'async';
     image.src = url;
     threeSixNinePreloadedMedia.images.set(url, image);
   });
   mediaUrls.audio.forEach((url) => {
+    if (threeSixNinePreloadedMedia.audio.has(url)) return;
     const audio = new Audio();
     audio.preload = 'auto';
     audio.src = url;
     threeSixNinePreloadedMedia.audio.set(url, audio);
   });
   mediaUrls.videos.forEach((url) => {
+    if (threeSixNinePreloadedMedia.videos.has(url)) return;
     const video = document.createElement('video');
     video.preload = 'auto';
     video.muted = true;

@@ -259,12 +259,120 @@ function findConfigEntryInZip(zip) {
   return files.find(entry => normalizeZipPath(entry.name).toLowerCase().endsWith('.json')) || null;
 }
 
-async function remapConfigMediaFromZip(config, zip) {
+async function remapConfigMediaFromZip(config, zip, electronZipImportId = null) {
   const lookup = buildZipLookup(zip);
   const mediaUrlByZipPath = new Map();
   const generatedBlobUrls = [];
   const unresolvedPaths = [];
   const desktopBridge = typeof window !== 'undefined' ? window.slimstemensDesktopBridge : null;
+  const mapWithConcurrency = async (items, mapper) => {
+    let nextIndex = 0;
+    let firstError = null;
+    const concurrency = desktopBridge ? 2 : 1;
+    const workerCount = Math.min(concurrency, items.length);
+    await Promise.all(Array.from({ length: workerCount }, async () => {
+      while (nextIndex < items.length) {
+        if (firstError) return;
+        const index = nextIndex++;
+        try {
+          await mapper(items[index], index);
+        } catch (error) {
+          firstError = firstError || error;
+          return;
+        }
+      }
+    }));
+    if (firstError) throw firstError;
+  };
+  const cacheZipEntryInElectron = async (entry, mimeType, electronZipImportId) => {
+    if (electronZipImportId && typeof desktopBridge.cacheZipEntry === 'function') {
+      return desktopBridge.cacheZipEntry(electronZipImportId, entry.name, mimeType);
+    }
+
+    const uploadId = await desktopBridge.beginMediaUpload(mimeType);
+    const stream = entry.internalStream('uint8array');
+    const maxChunkSize = 1024 * 1024;
+    return new Promise((resolve, reject) => {
+      let pendingChunks = [];
+      let pendingBytes = 0;
+      let isWriting = false;
+      let isSettled = false;
+
+      const takePendingBytes = (length) => {
+        const output = new Uint8Array(length);
+        let outputOffset = 0;
+        while (outputOffset < length) {
+          const firstChunk = pendingChunks[0];
+          const copyLength = Math.min(firstChunk.byteLength, length - outputOffset);
+          output.set(firstChunk.subarray(0, copyLength), outputOffset);
+          outputOffset += copyLength;
+          pendingBytes -= copyLength;
+          if (copyLength === firstChunk.byteLength) {
+            pendingChunks.shift();
+          } else {
+            pendingChunks[0] = firstChunk.subarray(copyLength);
+          }
+        }
+        return output;
+      };
+
+      const fail = (error) => {
+        if (isSettled) return;
+        isSettled = true;
+        stream.pause();
+        desktopBridge.abortMediaUpload(uploadId)
+          .catch((cleanupError) => {
+            console.error('Mislukte Electron-media-upload kon niet worden afgebroken:', cleanupError);
+          })
+          .finally(() => reject(error));
+      };
+
+      const flushAvailableChunks = async () => {
+        if (isWriting || isSettled) return;
+        isWriting = true;
+        try {
+          while (pendingBytes >= maxChunkSize && !isSettled) {
+            await desktopBridge.writeMediaUploadChunk(
+              uploadId,
+              takePendingBytes(maxChunkSize)
+            );
+          }
+          if (!isSettled) stream.resume();
+        } catch (error) {
+          fail(error);
+        } finally {
+          isWriting = false;
+        }
+      };
+
+      stream
+        .on('data', (data) => {
+          stream.pause();
+          pendingChunks.push(data);
+          pendingBytes += data.byteLength;
+          void flushAvailableChunks();
+        })
+        .on('error', fail)
+        .on('end', async () => {
+          if (isSettled) return;
+          try {
+            while (pendingBytes > 0) {
+              const chunkSize = Math.min(pendingBytes, maxChunkSize);
+              await desktopBridge.writeMediaUploadChunk(
+                uploadId,
+                takePendingBytes(chunkSize)
+              );
+            }
+            const mediaUrl = await desktopBridge.finishMediaUpload(uploadId);
+            isSettled = true;
+            resolve(mediaUrl);
+          } catch (error) {
+            fail(error);
+          }
+        })
+        .resume();
+    });
+  };
 
   const getMediaUrlForMatch = async (match, cacheElectronVideo = false) => {
     if (!match || !match.path || !match.entry) {
@@ -280,21 +388,41 @@ async function remapConfigMediaFromZip(config, zip) {
     const mimeType = cacheElectronVideo && /\.(ogg|ogv)$/i.test(match.path)
       ? 'video/ogg'
       : guessMimeType(match.path);
-    if (
-      desktopBridge &&
-      typeof desktopBridge.cacheMedia === 'function' &&
-      /^(audio|image|video)\//.test(mimeType)
-    ) {
-      const bytes = await match.entry.async('uint8array');
-      const mediaUrl = await desktopBridge.cacheMedia(bytes, mimeType);
+    const mediaUrlPromise = (async () => {
+      if (
+        desktopBridge &&
+        electronZipImportId &&
+        typeof desktopBridge.cacheZipEntry === 'function'
+      ) {
+        return cacheZipEntryInElectron(match.entry, mimeType, electronZipImportId);
+      }
+
+      if (
+        desktopBridge &&
+        typeof desktopBridge.beginMediaUpload === 'function' &&
+        typeof desktopBridge.writeMediaUploadChunk === 'function' &&
+        typeof desktopBridge.finishMediaUpload === 'function' &&
+        typeof desktopBridge.abortMediaUpload === 'function' &&
+        /^(audio|image|video)\//.test(mimeType)
+      ) {
+        return cacheZipEntryInElectron(match.entry, mimeType, null);
+      }
+
+      const base64Data = await match.entry.async('base64');
+      return `data:${mimeType};base64,${base64Data}`;
+    })();
+    mediaUrlByZipPath.set(match.path, mediaUrlPromise);
+
+    try {
+      const mediaUrl = await mediaUrlPromise;
       mediaUrlByZipPath.set(match.path, mediaUrl);
       return mediaUrl;
+    } catch (error) {
+      if (mediaUrlByZipPath.get(match.path) === mediaUrlPromise) {
+        mediaUrlByZipPath.delete(match.path);
+      }
+      throw error;
     }
-
-    const base64Data = await match.entry.async('base64');
-    const dataUrl = `data:${mimeType};base64,${base64Data}`;
-    mediaUrlByZipPath.set(match.path, dataUrl);
-    return dataUrl;
   };
 
   const tryMapPath = async (rawPath, label, cacheElectronVideo = false) => {
@@ -320,10 +448,9 @@ async function remapConfigMediaFromZip(config, zip) {
         continue;
       }
 
-      for (let imageIndex = 0; imageIndex < gallery.images.length; imageIndex += 1) {
-        const image = gallery.images[imageIndex];
+      await mapWithConcurrency(gallery.images, async (image, imageIndex) => {
         if (!image || typeof image !== 'object') {
-          continue;
+          return;
         }
 
         const result = await tryMapPath(
@@ -334,15 +461,14 @@ async function remapConfigMediaFromZip(config, zip) {
         if (result.found && result.mapped) {
           image.src = result.mapped;
         }
-      }
+      });
     }
   }
 
   if (Array.isArray(config?.threeSixNine)) {
-    for (let questionIndex = 0; questionIndex < config.threeSixNine.length; questionIndex += 1) {
-      const question = config.threeSixNine[questionIndex];
+    await mapWithConcurrency(config.threeSixNine, async (question, questionIndex) => {
       if (!question || typeof question !== 'object') {
-        continue;
+        return;
       }
 
       if (Array.isArray(question.media) && question.media.length > 0) {
@@ -425,14 +551,13 @@ async function remapConfigMediaFromZip(config, zip) {
           question.afterVideoUrl = afterVideoResult.mapped;
         }
       }
-    }
+    });
   }
 
   if (Array.isArray(config?.opendeur)) {
-    for (let questionIndex = 0; questionIndex < config.opendeur.length; questionIndex += 1) {
-      const question = config.opendeur[questionIndex];
+    await mapWithConcurrency(config.opendeur, async (question, questionIndex) => {
       if (!question || typeof question !== 'object') {
-        continue;
+        return;
       }
 
       const introVideoResult = await tryMapPath(
@@ -471,14 +596,13 @@ async function remapConfigMediaFromZip(config, zip) {
           question.posterUrl = introThumbnailResult.mapped;
         }
       }
-    }
+    });
   }
 
   if (Array.isArray(config?.collectief)) {
-    for (let entryIndex = 0; entryIndex < config.collectief.length; entryIndex += 1) {
-      const entry = config.collectief[entryIndex];
+    await mapWithConcurrency(config.collectief, async (entry, entryIndex) => {
       if (!entry || typeof entry !== 'object') {
-        continue;
+        return;
       }
 
       const currentVideoPath = entry.video || entry.videoUrl || entry.clip;
@@ -496,21 +620,20 @@ async function remapConfigMediaFromZip(config, zip) {
           entry.video = result.mapped;
         }
       }
-    }
+    });
   }
 
   if (Array.isArray(config?.settings?.playerMode?.players)) {
-    for (let playerIndex = 0; playerIndex < config.settings.playerMode.players.length; playerIndex += 1) {
-      const player = config.settings.playerMode.players[playerIndex];
+    await mapWithConcurrency(config.settings.playerMode.players, async (player, playerIndex) => {
       if (!player || typeof player !== 'object') {
-        continue;
+        return;
       }
 
       const result = await tryMapPath(player.photoUrl, `Spelerfoto ${playerIndex + 1}`);
       if (result.found && result.mapped) {
         player.photoUrl = result.mapped;
       }
-    }
+    });
   }
 
   if (config?.settings?.presenter && typeof config.settings.presenter === 'object') {
@@ -544,6 +667,62 @@ async function remapConfigMediaFromZip(config, zip) {
 }
 
 async function parseConfigFromZip(file) {
+  const desktopBridge = typeof window !== 'undefined' ? window.slimstemensDesktopBridge : null;
+  if (
+    desktopBridge &&
+    typeof desktopBridge.beginZipImport === 'function' &&
+    typeof desktopBridge.writeZipImportChunk === 'function' &&
+    typeof desktopBridge.finishZipImport === 'function' &&
+    typeof desktopBridge.cacheZipEntry === 'function' &&
+    typeof desktopBridge.discardZipImport === 'function' &&
+    typeof desktopBridge.abortZipImportUpload === 'function'
+  ) {
+    const maxZipSize = 1024 * 1024 * 1024;
+    const chunkSize = 1024 * 1024;
+    if (file.size > maxZipSize) {
+      throw new Error('Het ZIP-bestand is groter dan de maximale Electron-uploadgrootte (1 GB).');
+    }
+
+    let uploadId = null;
+    let importId = null;
+    try {
+      uploadId = await desktopBridge.beginZipImport();
+      for (let offset = 0; offset < file.size; offset += chunkSize) {
+        const bytes = new Uint8Array(
+          await file.slice(offset, Math.min(offset + chunkSize, file.size)).arrayBuffer()
+        );
+        await desktopBridge.writeZipImportChunk(uploadId, bytes);
+      }
+
+      const importedZip = await desktopBridge.finishZipImport(uploadId);
+      uploadId = null;
+      importId = importedZip.importId;
+      const parsedConfig = JSON.parse(importedZip.configJson);
+      const files = Object.create(null);
+      importedZip.entries.forEach((entry) => {
+        files[entry.name] = { name: entry.name, dir: entry.dir };
+      });
+      const config = await remapConfigMediaFromZip(
+        parsedConfig,
+        { files },
+        importId
+      );
+      config._electronMediaImportId = importId;
+      return config;
+    } catch (error) {
+      if (importId) {
+        await desktopBridge.discardZipImport(importId).catch((cleanupError) => {
+          console.error('Mislukte Electron-ZIP-import kon niet worden opgeruimd:', cleanupError);
+        });
+      } else if (uploadId) {
+        await desktopBridge.abortZipImportUpload(uploadId).catch((cleanupError) => {
+          console.error('Onvolledige Electron-ZIP-upload kon niet worden afgebroken:', cleanupError);
+        });
+      }
+      throw error;
+    }
+  }
+
   if (typeof JSZip === 'undefined') {
     throw new Error('ZIP ondersteuning is niet beschikbaar (JSZip ontbreekt).');
   }
@@ -560,12 +739,18 @@ async function parseConfigFromZip(file) {
 }
 
 async function applyLoadedConfig(config) {
+  const desktopBridge = typeof window !== 'undefined' ? window.slimstemensDesktopBridge : null;
   const mediaWarnings = await validateConfigMediaPaths(config);
   if (mediaWarnings.length > 0) {
     console.warn('⚠️ Config media-waarschuwingen:', mediaWarnings);
   }
 
   config._mediaWarnings = mediaWarnings;
+  if (desktopBridge && typeof desktopBridge.commitConfigMediaImport === 'function') {
+    await desktopBridge.commitConfigMediaImport(config._electronMediaImportId || null);
+  }
+  delete config._electronMediaImportId;
+
   setActiveConfigBlobUrls(config._generatedBlobUrls || []);
   gameConfig = config;
   configLoaded = true;
@@ -1176,7 +1361,19 @@ async function uploadConfigFile(file) {
 
     if (isZip) {
       parseConfigFromZip(file)
-        .then(config => applyLoadedConfig(config))
+        .then(async (config) => {
+          try {
+            return await applyLoadedConfig(config);
+          } catch (error) {
+            const importId = config._electronMediaImportId;
+            if (importId && window.slimstemensDesktopBridge?.discardZipImport) {
+              await window.slimstemensDesktopBridge.discardZipImport(importId).catch((cleanupError) => {
+                console.error('Mislukte Electron-mediaconfiguratie kon niet worden opgeruimd:', cleanupError);
+              });
+            }
+            throw error;
+          }
+        })
         .then(resolve)
         .catch((error) => {
           console.error('Fout bij verwerken van ZIP configuratie:', error);
