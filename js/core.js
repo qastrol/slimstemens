@@ -1963,31 +1963,21 @@ function handleRoundHotkey(key) {
   }
 
   if (round === 'threeSixNine' && perRoundState.currentQuestion && typeof getThreeSixNineMediaUrls === 'function') {
-    const questionMedia = getThreeSixNineMediaUrls(perRoundState.currentQuestion, 'question');
-    const afterMedia = getThreeSixNineMediaUrls(perRoundState.currentQuestion, 'after');
+    const mediaItems = typeof getThreeSixNineMediaItems === 'function'
+      ? getThreeSixNineMediaItems(perRoundState.currentQuestion)
+      : [];
+    const firstMediaIndex = (mediaType) => mediaItems.findIndex((media) => media.type === mediaType);
 
-    if (key === 'q' && questionMedia?.photoUrl && typeof toggleThreeSixNinePhoto === 'function') {
-      toggleThreeSixNinePhoto('question');
+    if (key === 'q' && firstMediaIndex('photo') >= 0 && typeof toggleThreeSixNinePhoto === 'function') {
+      toggleThreeSixNinePhoto(firstMediaIndex('photo'));
       return true;
     }
-    if (key === 'w' && questionMedia?.audioUrl && typeof playThreeSixNineAudio === 'function') {
-      playThreeSixNineAudio('question');
+    if (key === 'w' && firstMediaIndex('audio') >= 0 && typeof playThreeSixNineAudio === 'function') {
+      playThreeSixNineAudio(firstMediaIndex('audio'));
       return true;
     }
-    if (key === 'e' && questionMedia?.videoUrl && typeof playThreeSixNineVideo === 'function') {
-      playThreeSixNineVideo('question');
-      return true;
-    }
-    if (key === 'a' && afterMedia?.photoUrl && typeof toggleThreeSixNinePhoto === 'function') {
-      toggleThreeSixNinePhoto('after');
-      return true;
-    }
-    if (key === 's' && afterMedia?.audioUrl && typeof playThreeSixNineAudio === 'function') {
-      playThreeSixNineAudio('after');
-      return true;
-    }
-    if (key === 'd' && afterMedia?.videoUrl && typeof playThreeSixNineVideo === 'function') {
-      playThreeSixNineVideo('after');
+    if (key === 'e' && firstMediaIndex('video') >= 0 && typeof playThreeSixNineVideo === 'function') {
+      playThreeSixNineVideo(firstMediaIndex('video'));
       return true;
     }
   }

@@ -1407,6 +1407,16 @@ function renderThreeSixNine(data){
     console.log('🎵 renderThreeSixNine aangeroepen met data.action:', data.action, 'audioUrl:', data.audioUrl);
 
     const resolveMedia = (payload, phase = 'question') => {
+      if (Array.isArray(payload.media) && payload.media.length > 0) {
+        const selected = payload.media[payload.activeMediaIndex || 0];
+        const selectedPhoto = payload.media[payload.photoMediaIndex || 0];
+        return {
+          photoUrl: selectedPhoto?.type === 'photo' ? selectedPhoto.url : null,
+          audioUrl: selected?.type === 'audio' ? selected.url : null,
+          videoUrl: selected?.type === 'video' ? selected.url : null
+        };
+      }
+
       if (phase === 'after') {
         return {
           photoUrl: payload.afterPhotoUrl || payload.revealPhotoUrl || null,
@@ -1422,10 +1432,14 @@ function renderThreeSixNine(data){
       };
     };
     if (desktopBridge && isNewQuestion) {
-      preloadThreeSixNineMedia([
-        resolveMedia(data, 'question'),
-        resolveMedia(data, 'after')
-      ]);
+      const mediaGroups = Array.isArray(data.media) && data.media.length > 0
+        ? data.media.map((media) => ({
+            photoUrl: media.type === 'photo' ? media.url : null,
+            audioUrl: media.type === 'audio' ? media.url : null,
+            videoUrl: media.type === 'video' ? media.url : null
+          }))
+        : [resolveMedia(data, 'question'), resolveMedia(data, 'after')];
+      preloadThreeSixNineMedia(mediaGroups);
     }
     const photoContainer = document.getElementById('threeSixNinePhotoContainer');
     const answersContainer = document.getElementById('threeSixNineAnswersContainer');
@@ -1611,8 +1625,7 @@ function renderThreeSixNine(data){
         const qText = data.currentQuestionDisplay || "—";
         const activePlayerName = data.activePlayer || '-';
         const qType = data.questionType || 'classic';
-        const activeMediaPhase = data.activeMediaPhase || 'question';
-        const phaseMedia = resolveMedia(lastThreeSixNineData, activeMediaPhase);
+        const photoMedia = resolveMedia(lastThreeSixNineData);
 
         roundStatusEl.textContent = `Beurt: ${activePlayerName} | Vraag ${data.currentQuestionIndex} van ${data.maxQuestions}`;
         
@@ -1654,12 +1667,12 @@ function renderThreeSixNine(data){
         }
         
         // Foto weergave in linkervlak (zonder extra status-tekst in de vraag).
-        if (phaseMedia.photoUrl) {
+        if (photoMedia.photoUrl) {
             if (threeSixNinePerspectivePhotoVisible ?? data.photoVisible) {
                 // Toon foto in linkervlak
                 setTimeout(() => {
-              if (photoContainer && phaseMedia.photoUrl) {
-                renderThreeSixNinePhoto(photoContainer, phaseMedia.photoUrl, 'Vraagfoto');
+              if (photoContainer && photoMedia.photoUrl) {
+                renderThreeSixNinePhoto(photoContainer, photoMedia.photoUrl, 'Vraagfoto');
                         photoContainer.style.display = 'block';
                     }
                 }, 0);

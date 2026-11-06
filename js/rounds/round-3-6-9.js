@@ -152,31 +152,56 @@ function setThreeSixNineMax(num) {
   }
 }
 
-function getThreeSixNineMediaUrls(question, phase = 'question') {
+function getThreeSixNineMediaUrls(question) {
   const q = question || {};
+  return getThreeSixNineMediaItems(q).reduce((urls, media) => {
+    urls[`${media.type}Url`] = urls[`${media.type}Url`] || media.url;
+    return urls;
+  }, { photoUrl: null, audioUrl: null, videoUrl: null });
+}
 
-  if (phase === 'after') {
-    return {
-      photoUrl: q.afterPhotoUrl || q.revealPhotoUrl || null,
-      audioUrl: q.afterAudioUrl || q.revealAudioUrl || null,
-      videoUrl: q.afterVideoUrl || q.revealVideoUrl || null
-    };
+function getThreeSixNineMediaItems(question) {
+  const q = question || {};
+  if (Array.isArray(q.media) && q.media.length > 0) {
+    return q.media
+      .filter((media) => media && ['photo', 'audio', 'video'].includes(media.type) && typeof media.url === 'string' && media.url.trim())
+      .map((media) => ({
+        type: media.type,
+        url: media.url.trim(),
+        note: typeof media.note === 'string' ? media.note.trim() : (typeof media.remarks === 'string' ? media.remarks.trim() : '')
+      }));
   }
 
+  const legacyUrls = {
+    photo: [q.questionPhotoUrl || q.photoUrl, q.afterPhotoUrl || q.revealPhotoUrl],
+    audio: [q.questionAudioUrl || q.audioUrl, q.afterAudioUrl || q.revealAudioUrl],
+    video: [q.questionVideoUrl || q.videoUrl || q.clip, q.afterVideoUrl || q.revealVideoUrl]
+  };
+  return Object.entries(legacyUrls).flatMap(([type, urls]) => (
+    [...new Set(urls.filter((url) => typeof url === 'string' && url.trim()))]
+      .map((url) => ({ type, url: url.trim(), note: '' }))
+  ));
+}
+
+function getThreeSixNineMediaItem(question, index = 0) {
+  const media = getThreeSixNineMediaItems(question)[index];
+  if (!media) {
+    return null;
+  }
   return {
-    photoUrl: q.questionPhotoUrl || q.photoUrl || null,
-    audioUrl: q.questionAudioUrl || q.audioUrl || null,
-    videoUrl: q.questionVideoUrl || q.videoUrl || q.clip || null
+    photoUrl: media.type === 'photo' ? media.url : null,
+    audioUrl: media.type === 'audio' ? media.url : null,
+    videoUrl: media.type === 'video' ? media.url : null
   };
 }
 
 function resetThreeSixNineMediaState() {
   perRoundState.mediaQuestionPhotoVisible = false;
-  perRoundState.mediaAfterPhotoVisible = false;
+  perRoundState.mediaQuestionPhotoIndex = 0;
   perRoundState.mediaQuestionAudioPlaying = false;
-  perRoundState.mediaAfterAudioPlaying = false;
+  perRoundState.mediaQuestionAudioIndex = -1;
   perRoundState.mediaQuestionVideoPlaying = false;
-  perRoundState.mediaAfterVideoPlaying = false;
+  perRoundState.mediaQuestionVideoIndex = -1;
 }
 
 function nextThreeSixNineQuestion() {
@@ -215,8 +240,7 @@ function nextThreeSixNineQuestion() {
   }
 
   const activePlayerName = players[activePlayerIndex]?.name || '-';
-  const questionMedia = getThreeSixNineMediaUrls(q, 'question');
-  const afterMedia = getThreeSixNineMediaUrls(q, 'after');
+  const questionMedia = getThreeSixNineMediaUrls(q);
 
   // Render vraag gebaseerd op type
   let questionHTML = `<strong>Vraag ${currentQuestionIndex} (3-6-9)</strong>`;
@@ -251,12 +275,9 @@ function nextThreeSixNineQuestion() {
     questionHTML += `<div class="muted small">Antwoord: ${q.answers ? q.answers.join(', ') : 'Onbekend'}</div>`;
   }
 
-  if (questionMedia.photoUrl || questionMedia.audioUrl || questionMedia.videoUrl) {
-    questionHTML += `<div class="small">Vraagmedia beschikbaar:${questionMedia.photoUrl ? ' 📷 foto' : ''}${questionMedia.audioUrl ? ' 🔊 audio' : ''}${questionMedia.videoUrl ? ' 🎬 video' : ''}</div>`;
-  }
-
-  if (afterMedia.photoUrl || afterMedia.audioUrl || afterMedia.videoUrl) {
-    questionHTML += `<div class="small">Na-vraagmedia beschikbaar:${afterMedia.photoUrl ? ' 📷 foto' : ''}${afterMedia.audioUrl ? ' 🔊 audio' : ''}${afterMedia.videoUrl ? ' 🎬 video' : ''}</div>`;
+  const questionMediaCount = getThreeSixNineMediaItems(q).length;
+  if (questionMediaCount > 0) {
+    questionHTML += `<div class="small">${questionMediaCount} vraagmediabestand(en) beschikbaar</div>`;
   }
 
   if (q.remarks) {
@@ -296,17 +317,13 @@ function nextThreeSixNineQuestion() {
     hasQuestionPhoto: !!questionMedia.photoUrl,
     hasQuestionAudio: !!questionMedia.audioUrl,
     hasQuestionVideo: !!questionMedia.videoUrl,
-    hasAfterPhoto: !!afterMedia.photoUrl,
-    hasAfterAudio: !!afterMedia.audioUrl,
-    hasAfterVideo: !!afterMedia.videoUrl,
     questionPhotoUrl: questionMedia.photoUrl,
     questionAudioUrl: questionMedia.audioUrl,
     questionVideoUrl: questionMedia.videoUrl,
-    afterPhotoUrl: afterMedia.photoUrl,
-    afterAudioUrl: afterMedia.audioUrl,
-    afterVideoUrl: afterMedia.videoUrl,
+    media: getThreeSixNineMediaItems(q),
+    activeMediaIndex: 0,
+    photoMediaIndex: 0,
     photoVisible: false,
-    activeMediaPhase: 'question',
     options: q.options,
     players
   });
@@ -318,8 +335,7 @@ function markThreeSixNineAnswer(isRight) {
 
   const currentPlayer = players[activePlayerIndex];
   const currentQuestion = perRoundState.currentQuestion;
-  const questionMedia = getThreeSixNineMediaUrls(currentQuestion, 'question');
-  const afterMedia = getThreeSixNineMediaUrls(currentQuestion, 'after');
+  const questionMedia = getThreeSixNineMediaUrls(currentQuestion);
 
   if (isRight) {
     // KLOK RESET: Goed antwoord
@@ -363,10 +379,10 @@ function markThreeSixNineAnswer(isRight) {
     hasQuestionPhoto: !!questionMedia.photoUrl,
     hasQuestionAudio: !!questionMedia.audioUrl,
     hasQuestionVideo: !!questionMedia.videoUrl,
-    hasAfterPhoto: !!afterMedia.photoUrl,
-    hasAfterAudio: !!afterMedia.audioUrl,
-    hasAfterVideo: !!afterMedia.videoUrl,
     photoVisible: !!perRoundState.mediaQuestionPhotoVisible,
+    media: getThreeSixNineMediaItems(currentQuestion),
+    activeMediaIndex: perRoundState.mediaQuestionPhotoIndex,
+    photoMediaIndex: perRoundState.mediaQuestionPhotoIndex,
     players
   });
 
@@ -385,9 +401,6 @@ function renderThreeSixNineControls() {
 
     const q = perRoundState.currentQuestion;
     const qType = q?.type || 'classic';
-    const questionMedia = getThreeSixNineMediaUrls(q, 'question');
-    const afterMedia = getThreeSixNineMediaUrls(q, 'after');
-    
     let controlsHTML = `
       <button onclick="nextThreeSixNineQuestion()" id="roundNextQuestionBtn">Volgende vraag (N)</button>
         <button onclick="klok369_toggleLoop()" id="playKlok369" class="secondary" style="background:#E2904A">
@@ -395,55 +408,32 @@ function renderThreeSixNineControls() {
         </button>
     `;
     
-    // Vraagmedia knoppen
-    if (questionMedia.photoUrl) {
-        controlsHTML += `
-        <button onclick="toggleThreeSixNinePhoto('question')" id="toggleQuestionPhotoBtn" class="secondary" style="background:#4A90E2">
-          📷 Vraagfoto tonen/verbergen (Q)
-            </button>
-        `;
-    }
+    const renderMediaButtons = (mediaItems) => {
+      const typeCounts = { photo: 0, audio: 0, video: 0 };
+      return mediaItems.map((media, index) => {
+        typeCounts[media.type] += 1;
+        const typeLabel = media.type === 'photo' ? 'Foto' : media.type === 'audio' ? 'Audio' : 'Video';
+        const label = media.note || `${typeLabel} ${typeCounts[media.type]}`;
+        const safeLabel = String(label).replace(/[&<>"']/g, (character) => ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        })[character]);
+        if (media.type === 'photo') {
+          return `<button onclick="toggleThreeSixNinePhoto(${index})" class="secondary" style="background:#4A90E2">📷 ${safeLabel} ${perRoundState.mediaQuestionPhotoVisible && perRoundState.mediaQuestionPhotoIndex === index ? 'verbergen' : 'tonen'}</button>`;
+        }
+        if (media.type === 'audio') {
+          const isPlaying = perRoundState.mediaQuestionAudioPlaying && perRoundState.mediaQuestionAudioIndex === index;
+          return `<button onclick="playThreeSixNineAudio(${index})" class="secondary" style="background:#E24A90">${isPlaying ? '⏹️' : '🔊'} ${safeLabel} ${isPlaying ? 'stoppen' : 'afspelen'}</button>`;
+        }
+        const isPlaying = perRoundState.mediaQuestionVideoPlaying && perRoundState.mediaQuestionVideoIndex === index;
+        return `<button onclick="playThreeSixNineVideo(${index})" class="secondary" style="background:#6b4ae2">${isPlaying ? '⏹️' : '🎬'} ${safeLabel} ${isPlaying ? 'stoppen' : 'fullscreen'}</button>`;
+      }).join('');
+    };
 
-    if (questionMedia.audioUrl) {
-        controlsHTML += `
-        <button onclick="playThreeSixNineAudio('question')" id="playQuestionAudioBtn" class="secondary" style="background:#E24A90">
-          ${perRoundState.mediaQuestionAudioPlaying ? '⏹️ Vraagaudio stoppen (W)' : '🔊 Vraagaudio afspelen (W)'}
-        </button>
-      `;
-    }
-
-    if (questionMedia.videoUrl) {
-      controlsHTML += `
-        <button onclick="playThreeSixNineVideo('question')" id="playQuestionVideoBtn" class="secondary" style="background:#6b4ae2">
-          ${perRoundState.mediaQuestionVideoPlaying ? '⏹️ Vraagvideo stoppen (E)' : '🎬 Vraagvideo fullscreen (E)'}
-        </button>
-      `;
-    }
-
-    // Na-vraagmedia knoppen
-    if (afterMedia.photoUrl) {
-      controlsHTML += `
-        <button onclick="toggleThreeSixNinePhoto('after')" id="toggleAfterPhotoBtn" class="secondary" style="background:#2f7ecf">
-          📷 Na-vraag foto tonen/verbergen (A)
-        </button>
-      `;
-    }
-
-    if (afterMedia.audioUrl) {
-      controlsHTML += `
-        <button onclick="playThreeSixNineAudio('after')" id="playAfterAudioBtn" class="secondary" style="background:#cc3f82">
-          ${perRoundState.mediaAfterAudioPlaying ? '⏹️ Na-vraag audio stoppen (S)' : '🔊 Na-vraag audio afspelen (S)'}
-        </button>
-      `;
-    }
-
-    if (afterMedia.videoUrl) {
-      controlsHTML += `
-        <button onclick="playThreeSixNineVideo('after')" id="playAfterVideoBtn" class="secondary" style="background:#5b3ad6">
-          ${perRoundState.mediaAfterVideoPlaying ? '⏹️ Na-vraag video stoppen (D)' : '🎬 Na-vraag video fullscreen (D)'}
-            </button>
-        `;
-    }
+    controlsHTML += renderMediaButtons(getThreeSixNineMediaItems(q));
     
     // Goed/Fout knoppen voor alle types behalve doe en estimation
     if (qType !== 'doe' && qType !== 'estimation') {
@@ -484,19 +474,23 @@ function renderThreeSixNineControls() {
 }
 
 // Foto tonen/verbergen
-function toggleThreeSixNinePhoto(phase = 'question') {
+function toggleThreeSixNinePhoto(index = null) {
     const q = perRoundState.currentQuestion;
   if (!q) return;
 
-  const media = getThreeSixNineMediaUrls(q, phase);
-  if (!media.photoUrl) return;
+  const mediaItems = getThreeSixNineMediaItems(q);
+  const photoIndex = typeof index === 'number'
+    ? index
+    : mediaItems.findIndex((item) => item.type === 'photo');
+  const media = getThreeSixNineMediaItem(q, photoIndex);
+  if (!media?.photoUrl) return;
 
-  const visibilityKey = phase === 'after' ? 'mediaAfterPhotoVisible' : 'mediaQuestionPhotoVisible';
-  const otherVisibilityKey = phase === 'after' ? 'mediaQuestionPhotoVisible' : 'mediaAfterPhotoVisible';
-  const nextVisibleState = !perRoundState[visibilityKey];
+  const visibilityKey = 'mediaQuestionPhotoVisible';
+  const currentPhotoIndexKey = 'mediaQuestionPhotoIndex';
+  const nextVisibleState = !perRoundState[visibilityKey] || perRoundState[currentPhotoIndexKey] !== photoIndex;
 
   perRoundState[visibilityKey] = nextVisibleState;
-  perRoundState[otherVisibilityKey] = false;
+  perRoundState[currentPhotoIndexKey] = photoIndex;
     
     const activePlayerName = players[activePlayerIndex]?.name || '-';
     
@@ -510,8 +504,10 @@ function toggleThreeSixNinePhoto(phase = 'question') {
         maxQuestions: perRoundState.max,
         activePlayer: activePlayerName,
         activeIndex: activePlayerIndex,
-    activeMediaPhase: phase,
+    photoMediaIndex: photoIndex,
+    activeMediaIndex: photoIndex,
     photoUrl: media.photoUrl,
+    media: getThreeSixNineMediaItems(q),
         photoVisible: !!perRoundState[visibilityKey],
         players
     });
@@ -520,24 +516,29 @@ function toggleThreeSixNinePhoto(phase = 'question') {
 }
 
 // Audio afspelen
-function playThreeSixNineAudio(phase = 'question') {
+function playThreeSixNineAudio(index = null) {
     const q = perRoundState.currentQuestion;
-  console.log('🎵 playThreeSixNineAudio aangeroepen met vraag:', q, 'fase:', phase);
+  console.log('🎵 playThreeSixNineAudio aangeroepen met vraag:', q);
     
-  const media = getThreeSixNineMediaUrls(q, phase);
-  if (!q || !media.audioUrl) {
-    console.warn('❌ Geen vraag of audioUrl gevonden:', { q, audioUrl: media.audioUrl, phase });
+  const mediaItems = getThreeSixNineMediaItems(q);
+  const mediaIndex = typeof index === 'number'
+    ? index
+    : mediaItems.findIndex((item) => item.type === 'audio');
+  const media = getThreeSixNineMediaItem(q, mediaIndex);
+  if (!q || !media?.audioUrl) {
+    console.warn('❌ Geen vraag of audioUrl gevonden:', { q, audioUrl: media?.audioUrl });
         return;
     }
     
     const activePlayerName = players[activePlayerIndex]?.name || '-';
 
-    const playingKey = phase === 'after' ? 'mediaAfterAudioPlaying' : 'mediaQuestionAudioPlaying';
-    const isAlreadyPlaying = !!perRoundState[playingKey];
+    const playingKey = 'mediaQuestionAudioPlaying';
+    const playingIndexKey = 'mediaQuestionAudioIndex';
+    const isAlreadyPlaying = !!perRoundState[playingKey] && perRoundState[playingIndexKey] === mediaIndex;
 
     if (isAlreadyPlaying) {
       perRoundState.mediaQuestionAudioPlaying = false;
-      perRoundState.mediaAfterAudioPlaying = false;
+      perRoundState.mediaQuestionAudioIndex = -1;
 
       sendDisplayUpdate({
         type: 'update',
@@ -549,7 +550,7 @@ function playThreeSixNineAudio(phase = 'question') {
         maxQuestions: perRoundState.max,
         activePlayer: activePlayerName,
         activeIndex: activePlayerIndex,
-        activeMediaPhase: phase,
+        activeMediaIndex: mediaIndex,
         players
       });
 
@@ -559,8 +560,9 @@ function playThreeSixNineAudio(phase = 'question') {
     }
 
     perRoundState.mediaQuestionAudioPlaying = false;
-    perRoundState.mediaAfterAudioPlaying = false;
+    perRoundState.mediaQuestionAudioIndex = -1;
     perRoundState[playingKey] = true;
+    perRoundState[playingIndexKey] = mediaIndex;
     
     console.log('📤 Versturen audio update naar display:', media.audioUrl);
     
@@ -575,7 +577,7 @@ function playThreeSixNineAudio(phase = 'question') {
         maxQuestions: perRoundState.max,
         activePlayer: activePlayerName,
         activeIndex: activePlayerIndex,
-        activeMediaPhase: phase,
+        activeMediaIndex: mediaIndex,
         audioUrl: media.audioUrl,
         players
     });
@@ -585,21 +587,26 @@ function playThreeSixNineAudio(phase = 'question') {
     // NIET op host afspelen: playSFX() verwijderd
 }
 
-function playThreeSixNineVideo(phase = 'question') {
+function playThreeSixNineVideo(index = null) {
     const q = perRoundState.currentQuestion;
-    const media = getThreeSixNineMediaUrls(q, phase);
-    if (!q || !media.videoUrl) {
+    const mediaItems = getThreeSixNineMediaItems(q);
+    const mediaIndex = typeof index === 'number'
+      ? index
+      : mediaItems.findIndex((item) => item.type === 'video');
+    const media = getThreeSixNineMediaItem(q, mediaIndex);
+    if (!q || !media?.videoUrl) {
       return;
     }
 
     const activePlayerName = players[activePlayerIndex]?.name || '-';
 
-    const playingKey = phase === 'after' ? 'mediaAfterVideoPlaying' : 'mediaQuestionVideoPlaying';
-    const isAlreadyPlaying = !!perRoundState[playingKey];
+    const playingKey = 'mediaQuestionVideoPlaying';
+    const playingIndexKey = 'mediaQuestionVideoIndex';
+    const isAlreadyPlaying = !!perRoundState[playingKey] && perRoundState[playingIndexKey] === mediaIndex;
 
     if (isAlreadyPlaying) {
       perRoundState.mediaQuestionVideoPlaying = false;
-      perRoundState.mediaAfterVideoPlaying = false;
+      perRoundState.mediaQuestionVideoIndex = -1;
 
       sendDisplayUpdate({
         type: 'update',
@@ -611,7 +618,7 @@ function playThreeSixNineVideo(phase = 'question') {
         maxQuestions: perRoundState.max,
         activePlayer: activePlayerName,
         activeIndex: activePlayerIndex,
-        activeMediaPhase: phase,
+        activeMediaIndex: mediaIndex,
         players
       });
 
@@ -621,8 +628,9 @@ function playThreeSixNineVideo(phase = 'question') {
     }
 
     perRoundState.mediaQuestionVideoPlaying = false;
-    perRoundState.mediaAfterVideoPlaying = false;
+    perRoundState.mediaQuestionVideoIndex = -1;
     perRoundState[playingKey] = true;
+    perRoundState[playingIndexKey] = mediaIndex;
 
     sendDisplayUpdate({
       type: 'update',
@@ -634,7 +642,7 @@ function playThreeSixNineVideo(phase = 'question') {
       maxQuestions: perRoundState.max,
       activePlayer: activePlayerName,
       activeIndex: activePlayerIndex,
-      activeMediaPhase: phase,
+      activeMediaIndex: mediaIndex,
       videoUrl: media.videoUrl,
       players
     });

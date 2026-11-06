@@ -275,16 +275,15 @@ async function remapConfigMediaFromZip(config, zip) {
       return mediaUrlByZipPath.get(match.path);
     }
 
-    // Gebruik data-URL's i.p.v. blob-URL's zodat media ook in display.html werkt
+    // De browserversie gebruikt data-URL's zodat media ook in display.html werkt
     // wanneer host en display als losse file:// documenten draaien.
     const mimeType = cacheElectronVideo && /\.(ogg|ogv)$/i.test(match.path)
       ? 'video/ogg'
       : guessMimeType(match.path);
     if (
-      cacheElectronVideo &&
-      mimeType.startsWith('video/') &&
       desktopBridge &&
-      typeof desktopBridge.cacheMedia === 'function'
+      typeof desktopBridge.cacheMedia === 'function' &&
+      /^(audio|image|video)\//.test(mimeType)
     ) {
       const bytes = await match.entry.async('uint8array');
       const mediaUrl = await desktopBridge.cacheMedia(bytes, mimeType);
@@ -346,55 +345,85 @@ async function remapConfigMediaFromZip(config, zip) {
         continue;
       }
 
-      const questionPhotoResult = await tryMapPath(
-        question.questionPhotoUrl || question.photoUrl,
-        `3-6-9 vraag ${questionIndex + 1} vraagfoto`
-      );
-      if (questionPhotoResult.found && questionPhotoResult.mapped) {
-        question.questionPhotoUrl = questionPhotoResult.mapped;
-        question.photoUrl = questionPhotoResult.mapped;
-      }
+      if (Array.isArray(question.media) && question.media.length > 0) {
+        for (let mediaIndex = 0; mediaIndex < question.media.length; mediaIndex += 1) {
+          const media = question.media[mediaIndex];
+          if (!media || typeof media !== 'object') {
+            continue;
+          }
 
-      const questionAudioResult = await tryMapPath(
-        question.questionAudioUrl || question.audioUrl,
-        `3-6-9 vraag ${questionIndex + 1} vraagaudio`
-      );
-      if (questionAudioResult.found && questionAudioResult.mapped) {
-        question.questionAudioUrl = questionAudioResult.mapped;
-        question.audioUrl = questionAudioResult.mapped;
-      }
+          const result = await tryMapPath(
+            media.url,
+            `3-6-9 vraag ${questionIndex + 1} media ${mediaIndex + 1}`
+          );
+          if (result.found && result.mapped) {
+            media.url = result.mapped;
+          }
+        }
 
-      const questionVideoResult = await tryMapPath(
-        question.questionVideoUrl || question.videoUrl || question.clip,
-        `3-6-9 vraag ${questionIndex + 1} vraagvideo`
-      );
-      if (questionVideoResult.found && questionVideoResult.mapped) {
-        question.questionVideoUrl = questionVideoResult.mapped;
-        question.videoUrl = questionVideoResult.mapped;
-      }
+        question.media.forEach((media) => {
+          if (!media || !['photo', 'audio', 'video'].includes(media.type) || !media.url) {
+            return;
+          }
+          const key = `question${media.type.charAt(0).toUpperCase()}${media.type.slice(1)}Url`;
+          if (!question[key]) {
+            question[key] = media.url;
+          }
+          if (!question[`${media.type}Url`]) {
+            question[`${media.type}Url`] = media.url;
+          }
+        });
+      } else {
+        const questionPhotoResult = await tryMapPath(
+          question.questionPhotoUrl || question.photoUrl,
+          `3-6-9 vraag ${questionIndex + 1} vraagfoto`
+        );
+        if (questionPhotoResult.found && questionPhotoResult.mapped) {
+          question.questionPhotoUrl = questionPhotoResult.mapped;
+          question.photoUrl = questionPhotoResult.mapped;
+        }
 
-      const afterPhotoResult = await tryMapPath(
-        question.afterPhotoUrl || question.revealPhotoUrl,
-        `3-6-9 vraag ${questionIndex + 1} na-vraag foto`
-      );
-      if (afterPhotoResult.found && afterPhotoResult.mapped) {
-        question.afterPhotoUrl = afterPhotoResult.mapped;
-      }
+        const questionAudioResult = await tryMapPath(
+          question.questionAudioUrl || question.audioUrl,
+          `3-6-9 vraag ${questionIndex + 1} vraagaudio`
+        );
+        if (questionAudioResult.found && questionAudioResult.mapped) {
+          question.questionAudioUrl = questionAudioResult.mapped;
+          question.audioUrl = questionAudioResult.mapped;
+        }
 
-      const afterAudioResult = await tryMapPath(
-        question.afterAudioUrl || question.revealAudioUrl,
-        `3-6-9 vraag ${questionIndex + 1} na-vraag audio`
-      );
-      if (afterAudioResult.found && afterAudioResult.mapped) {
-        question.afterAudioUrl = afterAudioResult.mapped;
-      }
+        const questionVideoResult = await tryMapPath(
+          question.questionVideoUrl || question.videoUrl || question.clip,
+          `3-6-9 vraag ${questionIndex + 1} vraagvideo`
+        );
+        if (questionVideoResult.found && questionVideoResult.mapped) {
+          question.questionVideoUrl = questionVideoResult.mapped;
+          question.videoUrl = questionVideoResult.mapped;
+        }
 
-      const afterVideoResult = await tryMapPath(
-        question.afterVideoUrl || question.revealVideoUrl,
-        `3-6-9 vraag ${questionIndex + 1} na-vraag video`
-      );
-      if (afterVideoResult.found && afterVideoResult.mapped) {
-        question.afterVideoUrl = afterVideoResult.mapped;
+        const afterPhotoResult = await tryMapPath(
+          question.afterPhotoUrl || question.revealPhotoUrl,
+          `3-6-9 vraag ${questionIndex + 1} media foto 2`
+        );
+        if (afterPhotoResult.found && afterPhotoResult.mapped) {
+          question.afterPhotoUrl = afterPhotoResult.mapped;
+        }
+
+        const afterAudioResult = await tryMapPath(
+          question.afterAudioUrl || question.revealAudioUrl,
+          `3-6-9 vraag ${questionIndex + 1} media audio 2`
+        );
+        if (afterAudioResult.found && afterAudioResult.mapped) {
+          question.afterAudioUrl = afterAudioResult.mapped;
+        }
+
+        const afterVideoResult = await tryMapPath(
+          question.afterVideoUrl || question.revealVideoUrl,
+          `3-6-9 vraag ${questionIndex + 1} media video 2`
+        );
+        if (afterVideoResult.found && afterVideoResult.mapped) {
+          question.afterVideoUrl = afterVideoResult.mapped;
+        }
       }
     }
   }
@@ -588,14 +617,19 @@ function collectMediaPathChecks(config) {
 
   if (Array.isArray(config?.threeSixNine)) {
     config.threeSixNine.forEach((question, questionIndex) => {
-      const questionMedia = [
-        { label: 'vraagfoto', path: question?.questionPhotoUrl || question?.photoUrl },
-        { label: 'vraagaudio', path: question?.questionAudioUrl || question?.audioUrl },
-        { label: 'vraagvideo', path: question?.questionVideoUrl || question?.videoUrl || question?.clip },
-        { label: 'na-vraag foto', path: question?.afterPhotoUrl || question?.revealPhotoUrl },
-        { label: 'na-vraag audio', path: question?.afterAudioUrl || question?.revealAudioUrl },
-        { label: 'na-vraag video', path: question?.afterVideoUrl || question?.revealVideoUrl }
-      ];
+      const questionMedia = Array.isArray(question?.media) && question.media.length > 0
+        ? question.media.map((media, mediaIndex) => ({
+            label: `media ${mediaIndex + 1}`,
+            path: media?.url
+          }))
+        : [
+            { label: 'vraagfoto', path: question?.questionPhotoUrl || question?.photoUrl },
+            { label: 'vraagaudio', path: question?.questionAudioUrl || question?.audioUrl },
+            { label: 'vraagvideo', path: question?.questionVideoUrl || question?.videoUrl || question?.clip },
+            { label: 'media foto 2', path: question?.afterPhotoUrl || question?.revealPhotoUrl },
+            { label: 'media audio 2', path: question?.afterAudioUrl || question?.revealAudioUrl },
+            { label: 'media video 2', path: question?.afterVideoUrl || question?.revealVideoUrl }
+          ];
 
       questionMedia.forEach((entry) => {
         const path = typeof entry.path === 'string' ? entry.path.trim() : '';
@@ -844,6 +878,15 @@ function getQuestionsForRound(roundKey, defaultQuestions = []) {
           answers: normalizeAnswerList(q.answers),
           type: normalizedType || 'classic',
           remarks: normalizeRemarksValue(q.remarks, q.opmerking, q.comment, q.note),
+          media: Array.isArray(q.media)
+            ? q.media
+              .filter((media) => media && ['photo', 'audio', 'video'].includes(media.type) && typeof media.url === 'string' && media.url.trim())
+              .map((media) => ({
+                type: media.type,
+                url: media.url.trim(),
+                note: pickFirstNonEmptyString(media.note, media.remarks)
+              }))
+            : q.media,
           questionPhotoUrl: q.questionPhotoUrl || q.photoUrl || undefined,
           questionAudioUrl: q.questionAudioUrl || q.audioUrl || undefined,
           questionVideoUrl: q.questionVideoUrl || q.videoUrl || q.clip || undefined,

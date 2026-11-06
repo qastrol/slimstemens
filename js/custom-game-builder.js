@@ -535,18 +535,36 @@
       return 'classic';
     })();
 
-    const questionPhotoUrl = data.questionPhotoUrl || data.photoUrl || '';
-    const questionAudioUrl = data.questionAudioUrl || data.audioUrl || '';
-    const questionVideoUrl = data.questionVideoUrl || data.videoUrl || data.clip || '';
-    const afterPhotoUrl = data.afterPhotoUrl || data.revealPhotoUrl || '';
-    const afterAudioUrl = data.afterAudioUrl || data.revealAudioUrl || '';
-    const afterVideoUrl = data.afterVideoUrl || data.revealVideoUrl || '';
+    const legacyMedia = [
+      { type: 'photo', url: data.questionPhotoUrl || data.photoUrl || '' },
+      { type: 'audio', url: data.questionAudioUrl || data.audioUrl || '' },
+      { type: 'video', url: data.questionVideoUrl || data.videoUrl || data.clip || '' },
+      { type: 'photo', url: data.afterPhotoUrl || data.revealPhotoUrl || '' },
+      { type: 'audio', url: data.afterAudioUrl || data.revealAudioUrl || '' },
+      { type: 'video', url: data.afterVideoUrl || data.revealVideoUrl || '' }
+    ].filter((media) => media.url);
+    const importedMedia = Array.isArray(data.media)
+      ? data.media
+        .filter((media) => media && typeof media === 'object')
+        .map((media) => ({
+          type: media.type,
+          url: media.url,
+          note: media.note || media.remarks || ''
+        }))
+      : [];
+    const mediaSeed = importedMedia.length > 0
+      ? importedMedia
+      : legacyMedia.length > 0
+        ? legacyMedia
+        : [{ type: 'photo', url: '' }];
+    const initialMedia = mediaSeed;
 
     const questionField = createTextField('Vraag', data.text || data.question || '');
     questionField.input.classList.add('field-369-question');
 
     const mediaEnabled = Boolean(
       data.mediaEnabled ||
+      initialMedia.some((media) => media.url) ||
       data.questionPhotoUrl || data.photoUrl ||
       data.questionAudioUrl || data.audioUrl ||
       data.questionVideoUrl || data.videoUrl || data.clip ||
@@ -680,91 +698,75 @@
       shuffleOptionsLabel
     );
 
-    const questionPhotoField = createMediaInput(
-      'Vraag: foto pad',
-      questionPhotoUrl,
-      'media/369',
-      {
-        placeholder: 'media/369/vraag-foto',
-        helperText: 'Optioneel: foto die je tijdens de vraag kan tonen.',
-        uploadAccept: 'image/*',
-        uploadTitle: 'Kies een vraagfoto'
-      }
-    );
-    questionPhotoField.pathInput.classList.add('field-369-question-photo');
+    const mediaList = document.createElement('div');
+    mediaList.className = 'list field-369-media-list';
 
-    const questionAudioField = createMediaInput(
-      'Vraag: audio pad',
-      questionAudioUrl,
-      'media/369',
-      {
-        placeholder: 'media/369/vraag-audio',
-        helperText: 'Optioneel: audiofragment dat je tijdens de vraag kan afspelen.',
-        uploadAccept: 'audio/*',
-        uploadTitle: 'Kies een vraagaudio'
-      }
-    );
-    questionAudioField.pathInput.classList.add('field-369-question-audio');
+    function addMediaField(media = {}) {
+      const row = document.createElement('div');
+      row.className = 'field-369-media-row';
 
-    const questionVideoField = createMediaInput(
-      'Vraag: video pad',
-      questionVideoUrl,
-      'media/369',
-      {
-        placeholder: 'media/369/vraag-video',
-        helperText: 'Optioneel: videofragment dat je tijdens de vraag kan afspelen.',
-        uploadAccept: 'video/*',
-        uploadTitle: 'Kies een vraagvideo'
-      }
-    );
-    questionVideoField.pathInput.classList.add('field-369-question-video');
+      const typeSelect = document.createElement('select');
+      typeSelect.className = 'field-369-media-type';
+      [
+        ['photo', 'Foto'],
+        ['video', 'Video'],
+        ['audio', 'Audio']
+      ].forEach(([value, label]) => {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = label;
+        typeSelect.appendChild(option);
+      });
+      typeSelect.value = ['photo', 'video', 'audio'].includes(media.type) ? media.type : 'photo';
+      const typeLabel = document.createElement('label');
+      typeLabel.textContent = 'Type';
+      typeLabel.appendChild(typeSelect);
 
-    const afterPhotoField = createMediaInput(
-      'Na vraag: foto pad',
-      afterPhotoUrl,
-      'media/369',
-      {
-        placeholder: 'media/369/na-vraag-foto',
-        helperText: 'Optioneel: extra foto die je na de vraag kan tonen.',
-        uploadAccept: 'image/*',
-        uploadTitle: 'Kies een na-vraagfoto'
-      }
-    );
-    afterPhotoField.pathInput.classList.add('field-369-after-photo');
+      const input = createMediaInput(
+        'Mediabestand',
+        media.url || '',
+        'media/369',
+        {
+          placeholder: `media/369/${typeSelect.value}`,
+          helperText: 'Optioneel: upload een bestand of vul het pad in.',
+          uploadAccept: `${typeSelect.value === 'photo' ? 'image' : typeSelect.value}/*`,
+          uploadTitle: `Kies een ${typeSelect.value}`
+        }
+      );
+      input.pathInput.classList.add('field-369-media-url');
+      typeSelect.addEventListener('change', () => {
+        input.fileInput.accept = `${typeSelect.value === 'photo' ? 'image' : typeSelect.value}/*`;
+        input.fileInput.title = `Kies een ${typeSelect.value}`;
+        input.pathInput.placeholder = `media/369/${typeSelect.value}`;
+      });
 
-    const afterAudioField = createMediaInput(
-      'Na vraag: audio pad',
-      afterAudioUrl,
-      'media/369',
-      {
-        placeholder: 'media/369/na-vraag-audio',
-        helperText: 'Optioneel: extra audiofragment na de vraag.',
-        uploadAccept: 'audio/*',
-        uploadTitle: 'Kies een na-vraagaudio'
-      }
-    );
-    afterAudioField.pathInput.classList.add('field-369-after-audio');
+      const noteField = createTextField('Opmerking', media.note || '', 'bijv. Introfragment');
+      noteField.input.classList.add('field-369-media-note');
 
-    const afterVideoField = createMediaInput(
-      'Na vraag: video pad',
-      afterVideoUrl,
-      'media/369',
-      {
-        placeholder: 'media/369/na-vraag-video',
-        helperText: 'Optioneel: extra fullscreen video na de vraag.',
-        uploadAccept: 'video/*',
-        uploadTitle: 'Kies een na-vraagvideo'
-      }
-    );
-    afterVideoField.pathInput.classList.add('field-369-after-video');
+      const removeButton = document.createElement('button');
+      removeButton.type = 'button';
+      removeButton.className = 'secondary';
+      removeButton.textContent = 'Verwijder media';
+      removeButton.addEventListener('click', () => row.remove());
 
-    const questionMediaGroup = document.createElement('div');
-    questionMediaGroup.className = 'compact-grid';
-    questionMediaGroup.append(questionPhotoField.wrapper, questionAudioField.wrapper, questionVideoField.wrapper);
+      row.append(typeLabel, noteField.label, input.wrapper, removeButton);
+      mediaList.appendChild(row);
+    }
 
-    const afterMediaGroup = document.createElement('div');
-    afterMediaGroup.className = 'compact-grid';
-    afterMediaGroup.append(afterPhotoField.wrapper, afterAudioField.wrapper, afterVideoField.wrapper);
+    initialMedia.forEach(addMediaField);
+
+    const addMediaButtons = document.createElement('div');
+    addMediaButtons.className = 'button-row';
+    const addMediaButton = document.createElement('button');
+    addMediaButton.type = 'button';
+    addMediaButton.className = 'secondary';
+    addMediaButton.textContent = '+ Media toevoegen';
+    addMediaButton.addEventListener('click', () => addMediaField({ type: 'photo' }));
+    addMediaButtons.appendChild(addMediaButton);
+
+    const mediaEditor = document.createElement('div');
+    mediaEditor.className = 'field-369-media-editor';
+    mediaEditor.append(mediaList, addMediaButtons);
 
     const estimationAnswerField = createTextField('Schatting correct antwoord', data.correctAnswer || '');
     estimationAnswerField.input.classList.add('field-369-estimation-answer');
@@ -778,8 +780,7 @@
 
     function updateMediaVisibility() {
       const showMedia = mediaToggle.checked;
-      questionMediaGroup.style.display = showMedia ? 'grid' : 'none';
-      afterMediaGroup.style.display = showMedia ? 'grid' : 'none';
+      mediaEditor.style.display = showMedia ? 'grid' : 'none';
     }
 
     function updateByType() {
@@ -809,8 +810,7 @@
       typeHelp,
       classicAnswersWrapper,
       mcWrapper,
-      questionMediaGroup,
-      afterMediaGroup,
+      mediaEditor,
       estimationWrapper,
       remarksField.label
     );
@@ -1156,24 +1156,21 @@
           .filter(Boolean);
       }
 
-      const questionPhotoPath = item.querySelector('.field-369-question-photo')?.value?.trim() || '';
-      const questionAudioPath = item.querySelector('.field-369-question-audio')?.value?.trim() || '';
-      const questionVideoPath = item.querySelector('.field-369-question-video')?.value?.trim() || '';
-      const afterPhotoPath = item.querySelector('.field-369-after-photo')?.value?.trim() || '';
-      const afterAudioPath = item.querySelector('.field-369-after-audio')?.value?.trim() || '';
-      const afterVideoPath = item.querySelector('.field-369-after-video')?.value?.trim() || '';
+      const media = Array.from(item.querySelectorAll('.field-369-media-row')).map((row) => ({
+        type: row.querySelector('.field-369-media-type')?.value || 'photo',
+        url: normalizePath(row.querySelector('.field-369-media-url')?.value || ''),
+        note: row.querySelector('.field-369-media-note')?.value?.trim() || ''
+      })).filter((entry) => entry.url);
 
-      if (questionPhotoPath) q.questionPhotoUrl = normalizePath(questionPhotoPath);
-      if (questionAudioPath) q.questionAudioUrl = normalizePath(questionAudioPath);
-      if (questionVideoPath) q.questionVideoUrl = normalizePath(questionVideoPath);
-      if (afterPhotoPath) q.afterPhotoUrl = normalizePath(afterPhotoPath);
-      if (afterAudioPath) q.afterAudioUrl = normalizePath(afterAudioPath);
-      if (afterVideoPath) q.afterVideoUrl = normalizePath(afterVideoPath);
+      if (media.length > 0) {
+        q.media = media;
+      }
 
       // Backward compatibility velden voor oudere spelversies.
-      if (q.questionPhotoUrl) q.photoUrl = q.questionPhotoUrl;
-      if (q.questionAudioUrl) q.audioUrl = q.questionAudioUrl;
-      if (q.questionVideoUrl) q.videoUrl = q.questionVideoUrl;
+      const firstMediaOfType = (type) => media.find((entry) => entry.type === type)?.url;
+      if (firstMediaOfType('photo')) q.photoUrl = firstMediaOfType('photo');
+      if (firstMediaOfType('audio')) q.audioUrl = firstMediaOfType('audio');
+      if (firstMediaOfType('video')) q.videoUrl = firstMediaOfType('video');
 
       const estimationAnswer = item.querySelector('.field-369-estimation-answer')?.value?.trim();
 

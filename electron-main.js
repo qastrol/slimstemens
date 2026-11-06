@@ -24,6 +24,17 @@ let mediaCacheDirectory = null;
 let mediaCacheCleanupStarted = false;
 const cachedMedia = new Map();
 const mediaTypeExtensions = new Map([
+  ['audio/mpeg', '.mp3'],
+  ['audio/wav', '.wav'],
+  ['audio/ogg', '.ogg'],
+  ['audio/mp4', '.m4a'],
+  ['audio/aac', '.aac'],
+  ['audio/flac', '.flac'],
+  ['image/jpeg', '.jpg'],
+  ['image/png', '.png'],
+  ['image/gif', '.gif'],
+  ['image/webp', '.webp'],
+  ['image/svg+xml', '.svg'],
   ['video/mp4', '.mp4'],
   ['video/webm', '.webm'],
   ['video/ogg', '.ogv'],
@@ -66,10 +77,10 @@ ipcMain.handle('cache-quiz-media', async (event, bytes, mimeType) => {
     throw new Error('Media mag alleen vanuit een quizvenster worden opgeslagen.');
   }
   if (!ArrayBuffer.isView(bytes) || bytes.BYTES_PER_ELEMENT !== 1 || bytes.byteLength === 0) {
-    throw new Error('Ongeldige videodata voor de Electron-mediacache.');
+    throw new Error('Ongeldige mediadata voor de Electron-cache.');
   }
   if (bytes.byteLength > 512 * 1024 * 1024) {
-    throw new Error('Videobestand is groter dan de maximale Electron-cachegrootte (512 MB).');
+    throw new Error('Mediabestand is groter dan de maximale Electron-cachegrootte (512 MB).');
   }
 
   const extension = mediaTypeExtensions.get(mimeType);
