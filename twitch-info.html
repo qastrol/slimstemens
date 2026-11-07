@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#a92420">
+  <meta name="description" content="De Slimste Mens van Twitch: Kerstknallers! Een feestelijke quiz waarin donaties invloed kunnen uitoefenen op de stream.">
+  <title>De Slimste Mens van Twitch: Kerstknallers</title>
+  <style>
+    @font-face {
+      font-family: "Formula Condensed";
+      src: url("assets/fonts/FormulaCondensed-Bold.otf") format("opentype");
+      font-weight: 700;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "DIN Condensed";
+      src: url("assets/fonts/FF_DIN_Condensed_Black.woff2") format("woff2");
+      font-weight: 900;
+      font-display: swap;
+    }
+
+    :root {
+      color-scheme: dark;
+      --red: #a92420;
+      --gold: #f3c66b;
+      --cream: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      overflow-x: clip;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      min-width: 320px;
+      margin: 0;
+      overflow-x: hidden;
+      color: var(--cream);
+      background:
+        radial-gradient(ellipse at 50% -18%, rgba(255, 190, 96, 0.34), transparent 48rem),
+        linear-gradient(145deg, #871e1b 0%, var(--red) 48%, #721b1a 100%);
+      font-family: "DIN Condensed", Impact, sans-serif;
+      font-size: 1.15rem;
+      letter-spacing: 0.025em;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .page-shell {
+      width: min(1120px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 28px 0 52px;
+    }
+
+    .masthead {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding-bottom: 22px;
+      border-bottom: 1px solid rgba(255, 243, 216, 0.3);
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      font-family: "Formula Condensed", Impact, sans-serif;
+      font-size: clamp(1.25rem, 3vw, 2rem);
+      line-height: 1;
+      text-decoration: none;
+      text-transform: lowercase;
+    }
+
+    .brand img {
+      width: auto;
+      height: 1.55em;
+      object-fit: contain;
+    }
+
+    .live-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 8px 13px;
+      border: 1px solid rgba(255, 243, 216, 0.45);
+      border-radius: 999px;
+      color: var(--cream);
+      font-size: 0.9rem;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+    }
+
+    .live-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #ff554d;
+      box-shadow: 0 0 12px rgba(255, 85, 77, 0.8);
+    }
+
+    .lobby {
+      position: relative;
+      margin: 30px 0 22px;
+      overflow: hidden;
+      border: 1px solid rgba(243, 198, 107, 0.5);
+      background: #080a16;
+    }
+
+    .lobby > img {
+      display: block;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+    }
+
+    .lobby-caption {
+      position: absolute;
+      top: 0;
+      right: 0;
+      left: 0;
+      display: flex;
+      align-items: center;
+      flex-direction: column;
+      gap: 8px;
+      padding: 22px 24px 34px;
+      color: var(--cream);
+      background: linear-gradient(rgba(12, 10, 15, 0.82), transparent);
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85);
+    }
+
+    .lobby-brand {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.22em;
+      font-family: "Formula Condensed", Impact, sans-serif;
+      font-size: clamp(1.7rem, 5vw, 3.8rem);
+      line-height: 1;
+      text-transform: lowercase;
+    }
+
+    .lobby-brand img {
+      width: auto;
+      height: 1em;
+      aspect-ratio: auto;
+      object-fit: contain;
+    }
+
+    .lobby-edition {
+      font-family: "Formula Condensed", Impact, sans-serif;
+      font-size: clamp(1.1rem, 3vw, 2rem);
+      line-height: 1;
+      text-transform: lowercase;
+    }
+
+    .info-panel {
+      padding: clamp(22px, 4vw, 34px);
+      border: 1px solid rgba(255, 243, 216, 0.24);
+      background: rgba(31, 23, 24, 0.84);
+      color: var(--cream);
+    }
+
+    .info-panel h1 {
+      margin: 0 0 12px;
+      color: var(--gold);
+      font-family: "Formula Condensed", Impact, sans-serif;
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      font-weight: 700;
+      line-height: 1;
+      text-transform: lowercase;
+    }
+
+    .info-panel p {
+      max-width: 900px;
+      margin: 0;
+      font-size: clamp(1.05rem, 2vw, 1.25rem);
+      line-height: 1.55;
+    }
+
+    footer {
+      padding-top: 22px;
+      color: rgb(255, 255, 255);
+      font-size: 0.88rem;
+      text-align: center;
+    }
+
+    @media (max-width: 720px) {
+      .page-shell {
+        width: min(100% - 28px, 560px);
+        padding-top: 18px;
+      }
+
+      .masthead {
+        align-items: flex-start;
+      }
+
+      .brand {
+        gap: 8px;
+        font-size: 1.15rem;
+      }
+
+      .live-label {
+        padding: 7px 9px;
+        font-size: 0.72rem;
+      }
+
+      .lobby {
+        margin-top: 22px;
+      }
+
+      .lobby > img {
+        min-height: 260px;
+        object-fit: cover;
+        object-position: center;
+      }
+
+      .lobby-caption {
+        gap: 6px;
+        padding: 16px 12px 30px;
+      }
+
+      .lobby-brand {
+        gap: 0.15em;
+        font-size: clamp(1.2rem, 5.2vw, 1.8rem);
+      }
+    }
+
+    @media (max-width: 420px) {
+      .live-label {
+        gap: 6px;
+        font-size: 0.65rem;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page-shell">
+    <header class="masthead">
+      <a class="brand" href="#boven" aria-label="De Slimste Mens van Twitch, naar boven">
+        <span>de slimste mens</span>
+        <img src="assets/slimstemens.png" alt="">
+        <span>van twitch</span>
+      </a>
+    </header>
+
+    <figure class="lobby">
+      <img src="assets/kandidatenstoelen.jpg" alt="De drie kandidatenstoelen in de Slimste Mens-studio">
+      <figcaption class="lobby-caption">
+        <span class="lobby-brand">
+          <span>de slimste mens</span>
+          <img src="assets/slimstemens.png" alt="">
+          <span>van twitch</span>
+        </span>
+        <span class="lobby-edition">kerstknallers-editie</span>
+      </figcaption>
+    </figure>
+
+    <section class="info-panel" aria-labelledby="info-title">
+      <h1 id="info-title">Info</h1>
+      <p>
+        Komende editie van Kerstknallers wordt De Slimste Mens van Twitch gespeeld. Dit is een quiz/spelshow met hetzelfde concept als 
+         <a href="https://nl.wikipedia.org/wiki/De_slimste_mens">De Slimste Mens (NPO 1)</a> of <a href="https://nl.wikipedia.org/wiki/De_Slimste_Mens_ter_Wereld">De Slimste Mens ter Wereld (België)</a>, maar dan met vragen over bijvoorbeeld: games, memes, Kerstknallers-streamers, gemeenschappelijke 
+        interesses, etc. Alle rondes van TV worden gespeeld: 3-6-9, Open Deur, Puzzel, Galerij, Collectief Geheugen en de Finale.
+      </p><br><br>
+      <h1 id="info-title">Doneren</h1>
+      <p>
+        Met donaties kan je invloed uitoefenen op de quiz en kandidaten saboteren of helpen. Wat je precies kan doen, is binnenkort op deze website te zien.
+      </p><br><br>
+      <h1 id="info-title">Meedoen</h1>
+      <p>
+        Wil je mogelijk meedoen als kandidaat? Stuur een DM naar @Qastrol op Discord om je aan te melden
+      </p><br><br>
+      <h1 id="info-title">Open Deur</h1>
+      <p>
+        In de ronde Open Deur kan je als kandidaat kiezen tussen drie verschillende mensen die een vraag stellen. Nadat iemand gekozen is, start dan een filmpje in waarin diegene de vraag stelt. 
+        <br><br>
+        Voor De Slimste Mens van Twitch ben ik op zoek naar mensen die mogelijk een vraag willen stellen in deze ronde. Wil je in Open Deur een vraag stellen? Stuur dan een DM sturen naar @Qastrol op Discord. Qastrol zal eind in november laten weten wat de vraag wordt.
+      </p><br>
+      <p>
+        Het Open Deur-filmpje heeft een limiet van maximaal 1 minuut en heeft verder een vrije invulling, zolang aan het eind van het filmpje de vraag uitgesproken wordt of te zien is, is het prima.
+      </p>
+    </section>
+  </main>
+</body>
+</html>

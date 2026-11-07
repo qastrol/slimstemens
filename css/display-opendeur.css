@@ -507,8 +507,17 @@
   inset: 0;
   z-index: 1;
   background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.20) 0%, rgba(0, 0, 0, 0.62) 100%),
-    radial-gradient(circle at center, rgba(255, 255, 255, 0.02) 0%, rgba(0, 0, 0, 0.10) 100%);
+    linear-gradient(180deg, rgba(0, 0, 0, 0.12) 0%, rgba(0, 0, 0, 0.45) 100%),
+    radial-gradient(circle at center, rgba(255, 255, 255, 0.02) 0%, rgba(0, 0, 0, 0.06) 100%);
+}
+
+#vragenstellersContainer .vragensteller-thumb-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.68);
+  opacity: 0;
+  transition: opacity 2.5s ease;
 }
 
 #vragenstellersContainer .vragensteller-box.has-video-thumb.beschikbaar {
@@ -536,6 +545,17 @@
   background: var(--opendeur-questioner-background);
   opacity: 0.4;
   filter: grayscale(100%);
+}
+
+#vragenstellersContainer .vragensteller-box.has-video-thumb.gespeeld,
+#vragenstellersContainer .vragensteller-box.has-video-thumb.preview-dimmed {
+  opacity: 1;
+  filter: none;
+}
+
+#vragenstellersContainer .vragensteller-box.has-video-thumb.gespeeld .vragensteller-thumb-overlay::after,
+#vragenstellersContainer .vragensteller-box.has-video-thumb.preview-dimmed .vragensteller-thumb-overlay::after {
+  opacity: 1;
 }
 
 #vragenstellersContainer .vragensteller-box .status-label {
