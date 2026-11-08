@@ -275,6 +275,60 @@ button {
   border-radius: 8px
 }
 
+.puzzel-host-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  width: min(100%, 600px);
+  aspect-ratio: 25 / 12;
+  margin: 15px auto;
+}
+
+.puzzel-host-grid .puzzel-word {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  padding: 4px;
+  border: 1px solid #444;
+  border-radius: 8px;
+  background: #c41e3a;
+  color: #fff;
+  text-align: center;
+  font-size: 1.1em;
+  font-weight: bold;
+}
+
+.puzzel-host-grid .puzzel-word-has-image {
+  padding: 0;
+}
+
+.puzzel-host-grid .puzzel-word-text {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.puzzel-host-grid .puzzel-word-image {
+  position: absolute;
+  inset: 6px;
+  display: block;
+  width: calc(100% - 12px);
+  height: calc(100% - 12px);
+  max-width: none;
+  max-height: none;
+  box-sizing: border-box;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 4px;
+}
+
 .player-row {
   display: flex;
   gap: 8px;

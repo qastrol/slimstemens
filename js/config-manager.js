@@ -465,6 +465,29 @@ async function remapConfigMediaFromZip(config, zip, electronZipImportId = null) 
     }
   }
 
+  if (Array.isArray(config?.puzzel)) {
+    await mapWithConcurrency(config.puzzel, async (question, questionIndex) => {
+      if (!Array.isArray(question?.answers)) {
+        return;
+      }
+
+      await mapWithConcurrency(question.answers, async (answer, answerIndex) => {
+        if (!answer || typeof answer !== 'object' || answer.type !== 'image') {
+          return;
+        }
+
+        const result = await tryMapPath(
+          answer.url || answer.src,
+          `Puzzel ${questionIndex + 1} puzzelwoord ${answerIndex + 1}`
+        );
+        if (result.found && result.mapped) {
+          answer.url = result.mapped;
+          delete answer.src;
+        }
+      });
+    });
+  }
+
   if (Array.isArray(config?.threeSixNine)) {
     await mapWithConcurrency(config.threeSixNine, async (question, questionIndex) => {
       if (!question || typeof question !== 'object') {
@@ -880,6 +903,30 @@ function collectMediaPathChecks(config) {
     });
   }
 
+  if (Array.isArray(config?.puzzel)) {
+    config.puzzel.forEach((question, questionIndex) => {
+      if (!Array.isArray(question?.answers)) {
+        return;
+      }
+
+      question.answers.forEach((answer, answerIndex) => {
+        const rawPath = answer && typeof answer === 'object' && answer.type === 'image'
+          ? answer.url || answer.src
+          : '';
+        const path = typeof rawPath === 'string' ? rawPath.trim() : '';
+        if (!path) {
+          return;
+        }
+
+        checks.push({
+          round: 'puzzel',
+          label: `Puzzel ${questionIndex + 1} puzzelwoord ${answerIndex + 1}`,
+          path
+        });
+      });
+    });
+  }
+
   if (Array.isArray(config?.collectief)) {
     config.collectief.forEach((entry, entryIndex) => {
       const rawPath = entry?.video || entry?.videoUrl || entry?.clip;
@@ -1125,7 +1172,17 @@ function getQuestionsForRound(roundKey, defaultQuestions = []) {
       normalizedQuestions = configQuestions.map((q, index) => ({
         ...q,
         link: pickFirstNonEmptyString(q.link, q.answer, q.question, q.text) || `Puzzel ${index + 1}`,
-        answers: normalizeAnswerList(q.answers),
+        answers: Array.isArray(q.answers)
+          ? q.answers.map((answer) => {
+            if (answer && typeof answer === 'object' && (answer.type === 'image' || answer.imageUrl)) {
+              return {
+                type: 'image',
+                url: pickFirstNonEmptyString(answer.url, answer.src, answer.imageUrl)
+              };
+            }
+            return String(answer || '').trim();
+          }).filter((answer) => typeof answer === 'string' ? !!answer : !!answer.url)
+          : normalizeAnswerList(q.answers),
         remarks: normalizeRemarksValue(q.remarks, q.opmerking, q.comment, q.note)
       }));
     }

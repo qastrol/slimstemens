@@ -103,7 +103,7 @@ body {
   gap: 15px;
   text-transform: lowercase;
   line-height: 1;
-  text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.6);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
 }
 
 .initial-title-bar-2 {
@@ -116,7 +116,7 @@ body {
   gap: 15px;
   text-transform: lowercase;
   line-height: 1;
-  text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.6);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
 }
 
 .initial-title-bar-2 img {
@@ -625,7 +625,7 @@ body {
   text-transform: uppercase;
   letter-spacing: 2px;
   color: #ffd17a;
-  text-shadow: 3px 3px 8px rgba(0, 0, 0, 0.6);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
 }
 
 #scene-standings .standings-subtitle {
@@ -745,7 +745,7 @@ body {
   margin-bottom: 18px;
   font-size: 2.2em;
   font-weight: 800;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
 }
 
 .lobby-standings-players .player-seconds {
@@ -999,7 +999,7 @@ body {
   letter-spacing: 2px;
   text-transform: uppercase;
   color: #ffd17a;
-  text-shadow: 3px 3px 8px rgba(0, 0, 0, 0.6);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
 }
 
 #scene-round-369 .round-status {
@@ -1013,7 +1013,7 @@ body {
   font-weight: 600;
   line-height: 1.3;
   color: white;
-  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
   word-wrap: break-word; /* Zorg dat lange woorden afbreken */
   overflow-wrap: break-word;
 }
@@ -1295,7 +1295,7 @@ body {
   font-weight: 800;
   font-size: 2.2em;
   margin-bottom: 18px;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
 }
 
 
@@ -1553,7 +1553,7 @@ body {
   color: #ffd17a;
   margin-bottom: 20px;
   text-transform: uppercase;
-  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.6);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
   letter-spacing: 1px;
 }
 
@@ -1562,7 +1562,7 @@ body {
   font-size: 2.0em;
   color: white;
   font-weight: 700;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
 }
 
 
@@ -1573,7 +1573,7 @@ body {
   text-align: center;
   line-height: 1.2;
   max-width: 90%;
-  text-shadow: 3px 3px 8px rgba(0, 0, 0, 0.6);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
 }
 
 
@@ -1582,7 +1582,7 @@ body {
   color: #eee;
   font-weight: 600;
   margin-top: 15px;
-  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
 }
 
 
@@ -1592,7 +1592,7 @@ body {
   line-height: 1.3;
   color: white;
   text-align: center;
-  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.6);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
   max-width: 90%;
 }
 
@@ -1615,7 +1615,7 @@ body {
   font-weight: 700;
   font-size: 1.6em;
   margin-bottom: 10px;
-  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
 }
 
 .players-bar-compact .player-seconds {
@@ -1693,7 +1693,7 @@ body {
   font-size: 2.2em;
   font-weight: 600;
   text-transform: uppercase;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
   transition: all 0.3s ease;
 }
 
@@ -1739,7 +1739,7 @@ body {
   letter-spacing: 2px;
   text-transform: uppercase;
   color: #ffd17a;
-  text-shadow: 3px 3px 8px rgba(0, 0, 0, 0.6);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
   margin-top: 40px;
 }
 
@@ -1762,7 +1762,7 @@ body {
   font-weight: 700;
   font-size: 1.8em;
   margin-bottom: 12px;
-  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
 }
 
 .players-bar-compact .player-seconds {
@@ -2006,6 +2006,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+  box-sizing: border-box;
   font-size: 2em;
   font-weight: 700;
   min-width: 0;
@@ -2017,30 +2019,74 @@ body {
   border-radius: 10px;
 }
 
+.puzzel-word-has-image {
+  padding: 0;
+}
+
+.puzzel-word-text {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.puzzel-word-border {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.puzzel-word-image {
+  position: absolute;
+  z-index: 1;
+  inset: 6px;
+  display: block;
+  width: calc(100% - 12px);
+  height: calc(100% - 12px);
+  max-width: none;
+  max-height: none;
+  box-sizing: border-box;
+  object-fit: contain;
+  background: transparent;
+  border-radius: 4px;
+}
+
 .puzzel-word.puzzel-word-compact {
   line-height: 1.05;
 }
 
 .puzzel-word.found {
   text-decoration: line-through;
+  transform: none;
+  box-shadow: none;
+}
+
+.puzzel-word-has-image.found {
+  transform: none;
 }
 
 .puzzel-word.found-link-0 {
   background: #7dd3f5;
   color: #0a3d52;
-  border: 3px solid #9aff9a;
+  border-color: #9aff9a;
 }
 
 .puzzel-word.found-link-1 {
   background: #ffffff;
   color: #333333;
-  border: 3px solid #9aff9a;
+  border-color: #9aff9a;
 }
 
 .puzzel-word.found-link-2 {
   background: #2b5a7d;
   color: #e8f4ff;
-  border: 3px solid #9aff9a;
+  border-color: #9aff9a;
 }
 
 #scene-round-puzzel-active .grid-part.part3 {
@@ -2069,7 +2115,7 @@ body {
   font-size: 1.6em;
   font-weight: bold;
   color: #ffd17a;
-  text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
   margin-bottom: 12px;
 }
 
@@ -2337,7 +2383,7 @@ body {
   font-size: 1.6em;
   font-weight: 600;
   text-align: center;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
   transition: all 0.3s ease;
   min-height: 100px;
   display: flex;
@@ -2401,7 +2447,7 @@ body {
 .galerij-answer-line.blurred .answer-text {
   filter: blur(6px);
   color: transparent;
-  text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
 }
 
 .galerij-answer-line .points {
@@ -2631,7 +2677,7 @@ body {
   font-family: 'Formula Condensed Bold', Impact, sans-serif;
   font-size: 6em;
   line-height: 1;
-  text-shadow: 0 5px 18px rgba(53, 5, 2, 0.7);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
 }
 
 .bumper-title-bar img {
@@ -2647,10 +2693,7 @@ body {
   font-weight: bold;
   letter-spacing: 0.05em;
   text-transform: lowercase;
-  text-shadow:
-    0 0 30px rgba(255, 209, 122, 0.8),
-    0 0 60px rgba(255, 209, 122, 0.5),
-    0 8px 28px rgba(53, 5, 2, 0.7);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3494,7 +3537,7 @@ body {
   font-size: 3em;
   font-weight: 900;
   text-transform: uppercase;
-  text-shadow: 3px 3px 8px rgba(0, 0, 0, 0.6);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
 }
 
 #finaleMainInfo .round-status {
@@ -3535,7 +3578,7 @@ body {
   font-size: 3em;
   font-weight: 900;
   text-transform: uppercase;
-  text-shadow: 3px 3px 8px rgba(0, 0, 0, 0.6);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
 }
 
 #finalePreMainContainer .finale-pre-finalists {
@@ -3589,7 +3632,7 @@ body {
   font-weight: 800;
   overflow-wrap: anywhere;
   text-align: right;
-  text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.6);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
 }
 
 #finalePrePlayersBar .player-card:nth-child(2) .player-name {
@@ -3730,7 +3773,7 @@ body {
   font-weight: 800;
   text-transform: uppercase;
   overflow-wrap: anywhere;
-  text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.6);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
 }
 
 .finale-standings-score {

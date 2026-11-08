@@ -227,6 +227,33 @@ button.remove {
   gap: 8px;
 }
 
+.puzzel-answer-field {
+  display: grid;
+  grid-template-columns: minmax(75px, 0.24fr) minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+}
+
+.puzzel-answer-field > select {
+  width: 100%;
+  min-width: 0;
+  max-width: 130px;
+}
+
+.puzzel-answer-field > label,
+.puzzel-answer-field > .puzzel-answer-media {
+  min-width: 0;
+}
+
+.puzzel-answer-field .media-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.puzzel-answer-field .media-row input[type="file"] {
+  max-width: 100%;
+}
+
 .field-369-answer-row {
   display: grid;
   grid-template-columns: 1fr auto;

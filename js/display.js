@@ -10,6 +10,7 @@ const UNIVERSAL_PERSPECTIVE_FULLSCREEN_ZOOM_SCALE = 4.2;
 const UNIVERSAL_PERSPECTIVE_VERTICAL_OFFSET = -55; // Pas dit getal aan om de kandidaat hoger of lager te plaatsen.
 const CANDIDATE_SCORE_ROTATION_DURATION_MS = 10000;
 const candidateScoreRotationStates = new Map();
+const preloadedPuzzelImages = new Map();
 let scoreCirclePlayerAssignments = new WeakMap();
 const detachedScoreCircleParents = new Map();
 let showingStandings = false;
@@ -2270,6 +2271,7 @@ function renderThreeSixNineLobbyPerspective(playersData) {
 
 
 function handlePuzzelDisplayUpdate(data) {
+    preloadPuzzelImages(data.preloadPuzzelImages);
     const incomingPlayers = Array.isArray(data.players)
       ? data.players
       : (Array.isArray(data.playersData) ? data.playersData : []);
@@ -2318,7 +2320,11 @@ function handlePuzzelDisplayUpdate(data) {
                             classes += ` found-link-${w.linkIndex}`; 
                         }
                     }
-                    return `<div class="${classes}">${w.text}</div>`;
+                    const wordContent = w.imageUrl
+                      ? `<img class="puzzel-word-image" src="${String(w.imageUrl).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')}" alt="Puzzelwoord als afbeelding">`
+                      : `<span class="puzzel-word-text">${String(w.text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>`;
+                    if (w.imageUrl) classes += ' puzzel-word-has-image';
+                    return `<div class="${classes}">${wordContent}<svg class="puzzel-word-border" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path class="top" d="M 0.33 1.5 H 99.67"></path><path class="right" d="M 99.67 1.5 L 99.9 98.5"></path><path class="bottom" d="M 99.9 98.5 H 0.1"></path><path class="left" d="M 0.1 98.5 L 0.33 1.5"></path></svg></div>`;
                 })
                 .join('');
               animateNewlyFoundAnswers(puzzelTableEl, getAnswerRevealKey(data, 'puzzel'));
@@ -2461,6 +2467,35 @@ function adjustPuzzelWordFontSizes(puzzelTableEl) {
   });
 
   document.body.removeChild(measurer);
+}
+
+function preloadPuzzelImages(imageSources) {
+  if (!desktopBridge || !Array.isArray(imageSources)) return;
+
+  const imageUrls = new Set(imageSources.filter(src => typeof src === 'string' && src));
+  preloadedPuzzelImages.forEach((image, url) => {
+    if (imageUrls.has(url)) return;
+    image.src = '';
+    preloadedPuzzelImages.delete(url);
+  });
+
+  imageUrls.forEach((url) => {
+    if (preloadedPuzzelImages.has(url)) return;
+    const image = new Image();
+    image.decoding = 'async';
+    image.onload = () => {
+      if (typeof image.decode === 'function') {
+        image.decode().catch(error => {
+          console.warn('Puzzelafbeelding kon niet vooraf worden gedecodeerd:', url, error);
+        });
+      }
+    };
+    image.onerror = () => {
+      console.warn('Puzzelafbeelding kon niet vooraf worden geladen:', url);
+    };
+    image.src = url;
+    preloadedPuzzelImages.set(url, image);
+  });
 }
 
 const preloadedGalerijImages = new Map();

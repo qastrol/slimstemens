@@ -47,6 +47,43 @@ function sendPuzzelDisplayUpdate(scene, extraData = {}) {
   }
 }
 
+function getPuzzelAnswerKey(answer) {
+  if (answer && typeof answer === 'object' && answer.type === 'image') {
+    return `image:${String(answer.url || answer.src || '').trim().toLowerCase()}`;
+  }
+  return `text:${String(answer).toLowerCase().trim()}`;
+}
+
+function getPuzzelAnswerLabel(answer) {
+  return answer && typeof answer === 'object' && answer.type === 'image'
+    ? 'Afbeelding'
+    : String(answer);
+}
+
+function escapePuzzelHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function getPuzzelImageUrls(puzzles) {
+  const imageUrls = new Set();
+  (Array.isArray(puzzles) ? puzzles : []).forEach(puzzel => {
+    (Array.isArray(puzzel.links) ? puzzel.links : []).forEach(link => {
+      (Array.isArray(link.answers) ? link.answers : []).forEach(answer => {
+        if (answer && typeof answer === 'object' && answer.type === 'image') {
+          const imageUrl = String(answer.url || answer.src || '').trim();
+          if (imageUrl) imageUrls.add(imageUrl);
+        }
+      });
+    });
+  });
+  return [...imageUrls];
+}
+
 
 
 
@@ -84,7 +121,7 @@ function setupPuzzelRound() {
     for (const l of links) {
       if (!Array.isArray(l.answers)) return false;
       for (const a of l.answers) {
-        const key = String(a).toLowerCase().trim();
+        const key = getPuzzelAnswerKey(a);
         if (seen.has(key)) return false;
         seen.add(key);
       }
@@ -151,10 +188,10 @@ function setupPuzzelRound() {
     const allWords = [];
     puzzel.links.forEach(link => {
       link.answers.forEach(a => {
-        const key = String(a).toLowerCase().trim();
+        const key = getPuzzelAnswerKey(a);
         if (!seen.has(key)) {
           seen.add(key);
-          allWords.push(String(a));
+          allWords.push(a);
         }
       });
     });
@@ -195,7 +232,9 @@ function setupPuzzelRound() {
     showPresenterScriptForPhase('puzzelFirstQuestion');
   }
 
-  sendPuzzelDisplayUpdate('scene-round-puzzel-waiting');
+  sendPuzzelDisplayUpdate('scene-round-puzzel-waiting', {
+    preloadPuzzelImages: getPuzzelImageUrls(perRoundState.puzzles)
+  });
   if (typeof window.applyAutomaticScenePerspective === 'function') {
     window.applyAutomaticScenePerspective('miniLobby');
   }
@@ -243,7 +282,8 @@ highlightActive();
   
   sendPuzzelDisplayUpdate('scene-round-puzzel-active', {
     puzzelWords: puzzel.currentWords.map(w => ({ 
-        text: w, 
+        text: w && typeof w === 'object' ? '' : w,
+        imageUrl: w && typeof w === 'object' && w.type === 'image' ? (w.url || w.src) : undefined,
         found: false, 
         linkIndex: null 
     })),
@@ -322,20 +362,15 @@ function startPuzzelTimer() {
 function renderPuzzelDisplay(puzzel) {
   const puzzelNumber = perRoundState.currentPuzzelIndex + 1;
   const allWords = puzzel.currentWords;
-  let tableHtml = '<table style="border-collapse: collapse; width: 100%; max-width: 600px; margin: 15px auto;"><tr>';
+  let tableHtml = '<div class="puzzel-host-grid">';
 
   for (let i = 0; i < allWords.length; i++) {
     const word = allWords[i];
     const isFound = !puzzel.remainingWords.includes(word);
 
-    if (i > 0 && i % 3 === 0) {
-      tableHtml += '</tr><tr>';
-    }
-
-    
     const linkIndices = puzzel.links.reduce((acc, link, idx) => {
       try {
-        if (Array.isArray(link.answers) && link.answers.some(a => String(a) === String(word))) acc.push(idx);
+        if (Array.isArray(link.answers) && link.answers.some(a => getPuzzelAnswerKey(a) === getPuzzelAnswerKey(word))) acc.push(idx);
       } catch (e) {}
       return acc;
     }, []);
@@ -352,25 +387,18 @@ function renderPuzzelDisplay(puzzel) {
     const classAttr = classes.join(' ');
     const dataLinks = linkIndices.join(',');
 
-    const cellStyle = 'border: 1px solid #444; padding: 15px 10px; text-align: center; height: 40px; font-size: 1.1em; font-weight: bold;';
-
-    tableHtml += `<td data-word="${escapeHtml(word)}" data-links="${dataLinks}" class="${classAttr}" style="${cellStyle}">${escapeHtml(word)}</td>`;
+    const isImage = word && typeof word === 'object' && word.type === 'image';
+    const answerHtml = isImage
+      ? `<img class="puzzel-word-image" src="${escapePuzzelHtml(word.url || word.src || '')}" alt="Puzzelwoord als afbeelding">`
+      : `<span class="puzzel-word-text">${escapePuzzelHtml(word)}</span>`;
+    const imageClasses = isImage ? `${classAttr} puzzel-word-has-image` : classAttr;
+    tableHtml += `<div data-word="${escapePuzzelHtml(getPuzzelAnswerKey(word))}" data-links="${dataLinks}" class="${imageClasses}">${answerHtml}</div>`;
   }
 
-  tableHtml += '</tr></table>';
-
-  
-  function escapeHtml(str) {
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
-  }
+  tableHtml += '</div>';
 
   const foundLinksDisplay = puzzel.foundLinks.map(link =>
-    `<div class="found-link">${link.link} (${link.answers.join(', ')})${link.remarks ? `<div class="host-remarks" style="font-size:0.85em;margin-top:4px;">💬 ${link.remarks}</div>` : ''}</div>`
+    `<div class="found-link">${link.link} (${link.answers.map(getPuzzelAnswerLabel).join(', ')})${link.remarks ? `<div class="host-remarks" style="font-size:0.85em;margin-top:4px;">💬 ${link.remarks}</div>` : ''}</div>`
   ).join('');
 
   currentQuestionEl.innerHTML = `
@@ -394,7 +422,7 @@ function renderPuzzelDisplay(puzzel) {
       if (puzzel.foundLinks.includes(link)) return null;
       
       // Gebruik altijd de originele index, niet de gefilterde index
-      return `<button onclick="markPuzzelLink('${link.link.replace(/'/g, "\\'")}')" class="right" ${disabledAttr}>(${originalIndex + 1}) ${link.link} goed (${link.answers.join(', ')})</button>`;
+      return `<button onclick="markPuzzelLink('${link.link.replace(/'/g, "\\'")}')" class="right" ${disabledAttr}>(${originalIndex + 1}) ${link.link} goed (${link.answers.map(getPuzzelAnswerLabel).join(', ')})</button>`;
     })
     .filter(btn => btn !== null)
     .join('');
@@ -407,10 +435,11 @@ function renderPuzzelDisplay(puzzel) {
 
 sendPuzzelDisplayUpdate('scene-round-puzzel-active', {
   puzzelWords: puzzel.currentWords.map(w => ({
-    text: w,
+    text: w && typeof w === 'object' ? '' : w,
+    imageUrl: w && typeof w === 'object' && w.type === 'image' ? (w.url || w.src) : undefined,
     found: !puzzel.remainingWords.includes(w),
     linkIndex: (() => {
-      const idxs = puzzel.links.reduce((acc, l, idx) => { if (l.answers.includes(w)) acc.push(idx); return acc; }, []);
+      const idxs = puzzel.links.reduce((acc, l, idx) => { if (l.answers.some(answer => getPuzzelAnswerKey(answer) === getPuzzelAnswerKey(w))) acc.push(idx); return acc; }, []);
       return idxs.length ? idxs[0] : null;
     })()
   })),
@@ -439,7 +468,7 @@ function markPuzzelLink(linkName) {
 
   
 puzzel.foundLinks.push(foundLink);
-  puzzel.remainingWords = puzzel.remainingWords.filter(word => !foundLink.answers.includes(word));
+  puzzel.remainingWords = puzzel.remainingWords.filter(word => !foundLink.answers.some(answer => getPuzzelAnswerKey(answer) === getPuzzelAnswerKey(word)));
   renderPlayers(); 
 
   renderPuzzelDisplay(puzzel);
@@ -584,7 +613,7 @@ function showPuzzelSolution(puzzel) {
     const status = isFound ? 'gevonden' : 'NIET gevonden';
     return `
       <div style="margin-bottom: 0.5em;">
-        <strong>${link.link}</strong> (${status}): ${link.answers.join(', ')}
+        <strong>${link.link}</strong> (${status}): ${link.answers.map(getPuzzelAnswerLabel).join(', ')}
         ${link.remarks ? `<div class="host-remarks" style="font-size:0.85em;margin-top:4px;">💬 ${link.remarks}</div>` : ''}
       </div>
     `;
@@ -598,10 +627,11 @@ function showPuzzelSolution(puzzel) {
   
   sendPuzzelDisplayUpdate('scene-round-puzzel-active', {
     puzzelWords: puzzel.currentWords.map(w => ({
-      text: w,
+      text: w && typeof w === 'object' ? '' : w,
+      imageUrl: w && typeof w === 'object' && w.type === 'image' ? (w.url || w.src) : undefined,
       found: true, 
       linkIndex: (() => {
-        const fl = puzzel.links.find(fl => fl.answers.includes(w));
+        const fl = puzzel.links.find(fl => fl.answers.some(answer => getPuzzelAnswerKey(answer) === getPuzzelAnswerKey(w)));
         return fl ? puzzel.links.indexOf(fl) : null;
       })()
     })),

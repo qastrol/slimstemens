@@ -880,12 +880,65 @@
 
     const linkField = createTextField('Antwoord', data.link || '');
     const remarksField = createTextAreaField('Opmerking (optioneel)', getOptionalRemark(data));
-    const answersField = createFixedAnswerGroup(
-      'Puzzelwoord',
-      4,
-      Array.isArray(data.answers) ? data.answers : splitAnswers(data.answers),
-      'field-puzzel-answer'
-    );
+    const answersField = document.createElement('div');
+    answersField.className = 'compact-grid field-puzzel-answers';
+    const answerValues = Array.isArray(data.answers) ? data.answers : splitAnswers(data.answers);
+
+    for (let index = 0; index < 4; index += 1) {
+      const answer = answerValues[index];
+      const isImage = answer && typeof answer === 'object' && answer.type === 'image';
+      const answerWrapper = document.createElement('div');
+      answerWrapper.className = 'puzzel-answer-field';
+
+      const typeSelect = document.createElement('select');
+      typeSelect.className = `field-puzzel-answer-type-${index + 1}`;
+      typeSelect.setAttribute('aria-label', `Puzzelwoord ${index + 1}: Tekst of Foto`);
+      typeSelect.title = `Puzzelwoord ${index + 1}: Tekst of Foto`;
+      [
+        { value: 'text', label: 'Tekst' },
+        { value: 'image', label: 'Foto' }
+      ].forEach(({ value, label }) => {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = label;
+        typeSelect.appendChild(option);
+      });
+      typeSelect.value = isImage ? 'image' : 'text';
+
+      const textField = createTextField(
+        `Puzzelwoord ${index + 1}`,
+        typeof answer === 'string' ? answer : ''
+      );
+      textField.input.classList.add(`field-puzzel-answer-${index + 1}`);
+      const imageField = createMediaInput(
+        `Puzzelwoord ${index + 1}`,
+        isImage ? (answer.url || answer.src || '') : '',
+        'puzzel',
+        {
+          placeholder: `puzzel/afbeelding-${index + 1}`,
+          uploadAccept: 'image/*',
+          uploadTitle: 'Kies een afbeelding voor dit puzzelwoord'
+        }
+      );
+      imageField.pathInput.classList.add(`field-puzzel-image-${index + 1}`);
+      textField.label.classList.add(`field-puzzel-text-${index + 1}`);
+      imageField.wrapper.classList.add(
+        'puzzel-answer-media',
+        `field-puzzel-image-wrapper-${index + 1}`
+      );
+
+      const updateAnswerType = () => {
+        const imageMode = typeSelect.value === 'image';
+        textField.label.style.display = imageMode ? 'none' : '';
+        imageField.wrapper.style.display = imageMode ? '' : 'none';
+      };
+      typeSelect.addEventListener('change', updateAnswerType);
+      updateAnswerType();
+
+      answerWrapper.append(typeSelect, textField.label, imageField.wrapper);
+      answersField.appendChild(answerWrapper);
+    }
+
     linkField.input.classList.add('field-puzzel-link');
     remarksField.textarea.classList.add('field-puzzel-remarks');
 
@@ -1245,10 +1298,18 @@
     const items = [];
     puzzelList.querySelectorAll('.item').forEach((item, index) => {
       const link = item.querySelector('.field-puzzel-link')?.value?.trim() || '';
-      const answerValues = getFixedAnswerValues(item, 'field-puzzel-answer', 4);
+      const answers = Array.from({ length: 4 }, (_, answerIndex) => {
+        const number = answerIndex + 1;
+        const type = item.querySelector(`.field-puzzel-answer-type-${number}`)?.value;
+        if (type === 'image') {
+          const url = item.querySelector(`.field-puzzel-image-${number}`)?.value?.trim() || '';
+          return url ? { type: 'image', url: normalizePath(url) } : '';
+        }
+        return item.querySelector(`.field-puzzel-answer-${number}`)?.value?.trim() || '';
+      });
       const remarks = item.querySelector('.field-puzzel-remarks')?.value?.trim() || '';
 
-      if (!link && !hasAnyValue(answerValues)) {
+      if (!link && !hasAnyValue(answers.map(answer => typeof answer === 'string' ? answer : answer.url))) {
         return;
       }
 
@@ -1256,7 +1317,11 @@
         throw new Error(`Puzzel ${index + 1}: antwoord is verplicht zodra dit item wordt gebruikt.`);
       }
 
-      const answers = readFixedAnswers(item, 'field-puzzel-answer', 4, `Puzzel ${index + 1}`);
+      answers.forEach((answer, answerIndex) => {
+        if (!answer) {
+          throw new Error(`Puzzel ${index + 1}: puzzelwoord ${answerIndex + 1} is verplicht.`);
+        }
+      });
       const entry = { link, answers };
       if (remarks) {
         entry.remarks = remarks;

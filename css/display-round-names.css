@@ -1030,6 +1030,17 @@
   font-weight: 400;
 }
 
+#scene-round-369 .multiple-choice-options > div,
+.od-answer-line .od-answer-text:not(.blurred),
+#galerijAanvulAnswers .answer-text:not(.blurred),
+.collectief-answer-line .collectief-answer-text:not(.blurred),
+.puzzel-link-line .puzzel-link-text:not(.blurred),
+.puzzel-word-text,
+#collectiefMainAnswers .collectief-answer-text:not(.blurred),
+#finaleMainAnswers .collectief-answer-text:not(.blurred) {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
 /*
  * Definitieve booglaag: deze regels staan bewust als laatste, zodat eerdere
  * scène-specifieke experimenten de veilige randposities niet kunnen overschrijven.
@@ -1685,6 +1696,12 @@ body :is(
 
 #scene-round-puzzel-active .puzzel-word:not(.found) {
   background: rgba(255, 255, 255, 0.04);
+}
+
+#scene-round-puzzel-active .puzzel-word.found {
+  border-width: 2px 1px !important;
+  box-shadow: none !important;
+  transform: none !important;
 }
 
 :is(.od-answer-points, .answer-points, .collectief-answer-points, .puzzel-link-points) {
